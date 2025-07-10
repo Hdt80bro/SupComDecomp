@@ -1,0 +1,6 @@
+
+namespace gpg {
+
+    class RObject {};
+
+};
