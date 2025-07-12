@@ -30,7 +30,7 @@ namespace gpg {
     };
 
     template<class T, int N>
-    struct fastvector_n : fastvector<T>
+    struct fastvector_n : public fastvector<T>
     {
         T *originalVec;
         T inlineVec[N];
@@ -54,7 +54,7 @@ namespace gpg {
             }
         }
 
-        void Resize(size_t newSize, T *fill) {
+        void Resize(unsigned int newSize, T *fill) {
             if (newSize > this->Size()) {
                 if (newSize > this->Capacity()) {
                     this->GrowInsert(newSize, this->start, this->start, this->start);
@@ -75,7 +75,7 @@ namespace gpg {
             }
         }
 
-        void InsertAt(T* pos, T* insStart, T* insEnd) {
+        void InsertAt(T *pos, T *insStart, T *insEnd) {
             size_t insSize = insEnd - insStart;
             size_t newSize = insSize + this->Size();
             if (newSize <= this->Capacity()) {
@@ -123,6 +123,14 @@ namespace gpg {
             this->capacity = &newArr[size];
         }
 
+    };
+
+    template<>
+    struct fastvector_n<char, 64>
+    {
+        void InsertAt(char *, char *, char *); // 0x0047C590
+        void Resize(unsigned int newSize, char *); // 0x0047C680
+        void GrowInsert(int, char *, char *, char *); // 0x0047C910
     };
 
 };

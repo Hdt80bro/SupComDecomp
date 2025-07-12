@@ -1,11 +1,165 @@
 #include "NetConnector.h"
 
+
+struct_Datagram::struct_Datagram(int size, char type) {
+    size += 3;
+    char fill = 0;
+    this->buf.Resize(size, &fill);       
+    this->SetSize(size);
+    this->SetType(type);
+}
+
+int struct_Datagram::GetMessageSize() {
+    int size = this->GetSize();
+    if (size >= 3) {
+        size -= 3;
+    }
+    return size;
+}
+
+unsigned int struct_Datagram::Append(char *ptr, int size) {
+    if (this->buf.Size() + size > 0x10000) {
+        throw std::runtime_error{std::string{"Message too large"}};
+    }
+    this->buf.InsertAt(this->buf.end, ptr, &ptr[size]);
+    this->SetSize(this->buf.Size());
+}
+
+bool struct_Datagram::ReadMessage(gpg::Stream *stream) {
+    char fill = 0;
+    this->buf.Resize(3, &fill);
+    if (stream->Read(this->buf.start, 3) != 3) {
+        return false;
+    }
+    int size = this->GetSize();
+    if (size < 3) {
+        return false;
+    }
+    if (size == 3) {
+        return true;
+    }
+    this->buf.Resize(size - 3, &fill);
+    return stream->Read(&this->buf[3], size - 3) == size - 3;
+}
+
+bool struct_Datagram::Read(gpg::Stream *stream) {
+    if (! this->HasReadLength()) {
+        if (this->buf.Size() == 0) {
+            char fill = 0;
+            this->buf.Resize(3, &fill);
+        }
+        this->pos += stream->ReadNonBlocking(&this->buf[this->pos], 3 - this->pos);
+        if (! this->HasReadLength()) {
+            return false;
+        }
+    }
+    int newSize = this->GetSize();
+    if (newSize < 3) {
+        return false;
+    }
+    if (newSize == this->pos) {
+        return true;
+    }
+    char fill = 0;
+    this->buf.Resize(newSize, &fill);
+    this->pos += stream->ReadNonBlocking(&this->buf[this->pos], newSize - this->pos);
+    return this->pos == newSize;
+}
+
+
+void *Moho::INetConnector::Debug() {}
+
+
+void Moho::CNetNullConnector::Destroy() {
+    delete this;
+}
+Moho::ENetProtocol Moho::CNetNullConnector::GetProtocol() {
+    return Moho::NETPROTO_None;
+}
+int Moho::CNetNullConnector::GetLocalPort() {
+    return 0;
+}
+Moho::INetConnection *Moho::CNetNullConnector::Connect(u_long, u_short) {
+    return nullptr;
+}
+bool Moho::CNetNullConnector::Func2(u_long &, u_short &) {
+    return false;
+}
+Moho::INetConnection *Moho::CNetNullConnector::Accept(u_long, u_short) {
+    return nullptr;
+}
+void Moho::CNetNullConnector::Reject(u_long, u_short) {}
+void Moho::CNetNullConnector::Pull() {}
+void Moho::CNetNullConnector::Push() {}
+void Moho::CNetNullConnector::SelectEvent(HANDLE) {}
+void *Moho::CNetNullConnector::Func3() {
+    return nullptr; // unknown type;
+}
+
+
+
+
+Moho::CNetDatagramSocketImpl::~CNetDatagramSocketImpl() {
+    closesocket(this->socket);
+    if (this->event ) {
+        WSACloseEvent(this->event);
+    }
+}
+void Moho::CNetDatagramSocketImpl::SendDefault(struct_Datagram *dat, u_short port) {
+    this->Send(dat, -1, port);
+}
+void Moho::CNetDatagramSocketImpl::Send(struct_Datagram *dat, u_long addr, u_short port) {
+    sockaddr_in to;
+    ZeroMemory(&to, sizeof(to));
+    to.sin_family = AF_INET;
+    to.sin_port = htons(port);
+    to.sin_addr.S_un.S_addr = htonl(addr);
+    int res = sendto(this->socket, dat->buf.start, dat->buf.Size(), 0, (SOCKADDR *) &to, sizeof(to));
+    if (res == SOCKET_ERROR) {
+        gpg::Logf("CNetDatagramSocketImpl::Send: send() failed: %s", Moho::NET_GetWinsockErrorString());
+    } else if (res < dat->buf.Size()) {
+        gpg::Logf("CNetDatagramSocketImpl::Send: msg truncated, only %d of %d bytes sent.", res, dat->buf.Size());
+    }
+}
+void Moho::CNetDatagramSocketImpl::Pull() {
+    if (this->event) {
+        WSAResetEvent(this->event);
+    }
+    char buf[2048];
+    while (true) {
+        sockaddr_in from;
+        ZeroMemory(&from, sizeof(from));
+        int fromlen = sizeof(from);
+        int res = recvfrom(this->socket, buf, sizeof(buf), 0, (SOCKADDR *) &from, &fromlen);
+        if (res == SOCKET_ERROR) {
+            break;
+        }
+
+        struct_Datagram dat{sizeof(buf), 0};
+        memcpy(dat.start, buf, res);
+        u_short port = ntohs(from.sin_port);
+        u_long addr = ntohl(from.sin_addr.S_un.S_addr);
+        this->datagramHandler->Pull(&dat, this, addr, port);
+    }
+    if (WSAGetLastError() != WSAEWOULDBLOCK) {
+        gpg::Logf("CNetBroadcastSocketImpl::Pull: recv() failed: %s", Moho::NET_GetWinsockErrorString());
+    }
+}
+HANDLE Moho::CNetDatagramSocketImpl::CreateEvent() {
+    if (! this->event) {
+        this->event = WSACreateEvent();
+        WSAEventSelect(this->socket, this->event, FD_READ);
+    }
+    return this->event;
+}
+
 Moho::CNetDatagramSocketImpl::CNetDatagramSocketImpl(Moho::INetDatagramHandler *handler, SOCKET sock) :
     Moho::INetDatagramSocket{},
     datagramHandler{handler},
     socket{sock},
     event{nullptr}
 {}
+
 
 Moho::INetConnector *Moho::NET_MakeConnector(unsigned short host, Moho::ENetProtocol prot, boost::weak_ptr<Moho::INetNATTraversalProvider> *prov) {
     switch (prot) {
@@ -127,7 +281,7 @@ bool Moho::NET_GetAddrInfo(const char *str, unsigned short unk, bool isTCP, unsi
         gpg::Logf("getaddrinfo(%s,%s) failed: %s [ret=%d]",
             nodeName.c_str(),
             serviceName.c_str(),
-            (const char *)message_format_buffer, res
+            (const char *) message_format_buffer, res
         );
         return false;
     } else {

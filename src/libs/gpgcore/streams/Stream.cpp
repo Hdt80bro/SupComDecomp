@@ -27,3 +27,21 @@ void gpg::Stream::VirtWrite(const char *data, unsigned int size) {
 }
 void gpg::Stream::VirtFlush() {}
 void gpg::Stream::VirtClose(gpg::Stream::Mode) {}
+
+void gpg::Stream::Write(const char *buf, int size) {
+    if (size > this->LeftInWriteBuffer()) {
+        this->VirtWrite(buf, size);
+    } else {
+        memcpy(this->writeStart, buf, size);
+        this->writeStart += size;
+    }
+}
+int gpg::Stream::Read(char *buf, int size) {
+    if (size > this->LeftInReadBuffer()) {
+        size = this->VirtRead(buf, size);
+    } else if (size) {
+        memcpy(buf, this->readHead, size);
+        this->readHead += size;
+    }
+    return size;
+}
