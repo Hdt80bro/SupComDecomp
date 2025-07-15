@@ -17,6 +17,7 @@ public:
         ModeNone = 0,
         ModeReceive = 1,
         ModeSend = 2,
+        ModeBoth = 3,
     };
     enum class SeekOrigin
     {
@@ -49,6 +50,7 @@ public:
     virtual void VirtClose(gpg::Stream::Mode mode); // 0x00956E10
 
     void Write(const char *buf, int size); // 0x0043D130
+    bool Close(gpg::Stream::Mode access); // 0x00955760
     int Read(char *buf, int size); // 0x0043D100
     int ReadNonBlocking(char *buf, int size) {
         if (size > this->LeftInReadBuffer()) {

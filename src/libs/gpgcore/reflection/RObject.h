@@ -1,6 +1,6 @@
 
 namespace gpg {
 
-    class RObject {};
+class RObject {};
 
 };

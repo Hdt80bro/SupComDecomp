@@ -36,6 +36,10 @@ void gpg::Stream::Write(const char *buf, int size) {
         this->writeStart += size;
     }
 }
+bool gpg::Stream::Close(gpg::Stream::Mode access) {
+    this->VirtClose(access);
+    return true;
+}
 int gpg::Stream::Read(char *buf, int size) {
     if (size > this->LeftInReadBuffer()) {
         size = this->VirtRead(buf, size);

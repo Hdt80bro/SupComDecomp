@@ -22,13 +22,7 @@ float Moho::CNetTCPConnection::GetTime() {
     return gpg::time::CyclesToMilliseconds(this->timer1.ElapsedCycles());
 }
 void Moho::CNetTCPConnection::Write(struct_DataSpan *data) {
-    size_t size = data->end - data->start;
-    if (size > this->pipestream2.dataEnd - this->pipestream2.writeStart) {
-        this->pipestream2.VirtWrite(data->start, size);
-    } else {
-        memcpy(this->pipestream2.writeStart, data->start, size);
-        this->pipestream2.writeStart += size;
-    }
+    this->pipestream2.Write(data->start, data->end - data->start);
 }
 void Moho::CNetTCPConnection::Close() {
     this->pipestream2.VirtClose(gpg::Stream::ModeSend);
@@ -63,7 +57,7 @@ Moho::CNetTCPConnection::CNetTCPConnection(Moho::CNetTCPConnector *connector, SO
 void Moho::CNetTCPConnection::Push() {
     if (this->scheduleDestroy) {
         delete this;
-    } else if (! this->hasShutdown && ! this->inError && (this->v266 == 3 || this->v266 == 4)) {
+    } else if (! this->hasShutdown && ! this->pushFailed && (this->v266 == 3 || this->v266 == 4)) {
         while (true) {
             if (this->size < 2048) {
                 int avail = this->pipestream2.GetLength();
@@ -83,7 +77,7 @@ void Moho::CNetTCPConnection::Push() {
             if (res == SOCKET_ERROR) {
                 if (WSAGetLastError() != 10035) {
                     gpg::Logf("CNetTCPConnection::Push: send() failed: %s", Moho::NET_GetWinsockErrorString());
-                    this->inError = true;
+                    this->pushFailed = true;
                     if (this->connector->handle) {
                         SetEvent(this->connector->handle);
                     }
@@ -347,11 +341,11 @@ int Moho::CNetTCPBuf::Read(char *buf, unsigned int amt, bool isBlocking) {
             int res = recv(this->socket, buf, amt, 0);
             if (res == SOCKET_ERROR) {
                 gpg::Logf("CNetTCPBuf::Read(): recv() failed: %s", Moho::NET_GetWinsockErrorString());
-                this->failed = 1;
+                this->failed = true;
                 return totalRead;
             }
             if (res == 0) {
-                this->failed = 1;
+                this->failed = true;
                 return totalRead;
             }
             buf += res;
@@ -366,11 +360,11 @@ int Moho::CNetTCPBuf::Read(char *buf, unsigned int amt, bool isBlocking) {
         int res = recv(this->socket, this->buffer, 2048, 0);
         if (res == SOCKET_ERROR) {
             gpg::Logf("CNetTCPBuf::Read(): recv() failed: %s", Moho::NET_GetWinsockErrorString());
-            this->failed = 1;
+            this->failed = true;
             return totalRead;
         }
         if (res == 0) {
-            this->failed = 1;
+            this->failed = true;
             return totalRead;
         }
         this->end = &this->buffer[res];

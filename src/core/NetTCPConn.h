@@ -34,8 +34,8 @@ public:
     bool v819d;
     struct_Datagram datagram;
     DWORD v841;
-    bool inError;
-    bool v842b;
+    bool pushFailed;
+    bool pullFailed;
     bool scheduleDestroy;
     bool v842d;
     int v843;

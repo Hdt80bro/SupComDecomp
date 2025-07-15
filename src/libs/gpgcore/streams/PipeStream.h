@@ -14,11 +14,14 @@ namespace gpg {
 
 class PipeStream : public gpg::Stream
 {
+public:
     gpg::Mutex lock;
     DWORD v11;
     boost::condition semaphore;
     struct_stream_buffer *buffer;
     struct_stream_buffer **pBuffer;
+
+    bool Empty(); // 0x00483470
 };
 
 };
