@@ -1,10 +1,12 @@
 #include "CIntelGrid.h"
 
+// 0x00506E20
 Moho::GridPos(Wm3::Vector3f *wldPos, int gridSize) {
     this->x = wldPos->x / gridSize;
     this->z = wldPos->z / gridSize;
 }
 
+// 0x00507540
 void Moho::CIntelGrid::Raster(Wm3::Vector3f *worldPos, int gridRadius, bool doAdd) {
     Moho::GridPos gridPos(worldPos, this->gridSize);
     

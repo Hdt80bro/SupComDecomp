@@ -1,5 +1,6 @@
 #include "ZLibStream.h"
 
+// 0x00957340
 gpg::ZLibOutputFilterStream::~ZLibOutputFilterStream() {
     this->Close(gpg::Stream::ModeBoth);
     if (this->operation == 0) {
@@ -8,7 +9,9 @@ gpg::ZLibOutputFilterStream::~ZLibOutputFilterStream() {
         deflateEnd(&this->mZStream);
     }
 }
-void gpg::ZLibOutputFilterStream::VirtWrite(const char *str, unsigned int len) {
+
+// 0x00957760
+void gpg::ZLibOutputFilterStream::VirtWrite(const char *str, size_t len) {
     if (this->closed) {
         throw std::runtime_error{std::string{"ZLibOutputFilterStream: stream closed."}};
     }
@@ -18,6 +21,8 @@ void gpg::ZLibOutputFilterStream::VirtWrite(const char *str, unsigned int len) {
     }
     this->BufWrite(str, len, Z_NO_FLUSH);
 }
+
+// 0x00957810
 void gpg::ZLibOutputFilterStream::VirtFlush() {
     if (this->closed) {
         throw std::runtime_error{std::string{"ZLibOutputFilterStream: stream closed."}};
@@ -25,6 +30,8 @@ void gpg::ZLibOutputFilterStream::VirtFlush() {
     this->BufWrite(this->writeHead, this->writeStart - this->writeHead, Z_SYNC_FLUSH);
     this->writeStart = this->writeHead;
 }
+
+// 0x009578B0
 void gpg::ZLibOutputFilterStream::VirtClose(gpg::Stream::Mode mode) {
     if ((mode & gpg::Stream::ModeSend) != 0 && ! this->closed) {
         this->BufWrite(this->writeHead, this->writeStart - this->writeHead, Z_FINISH);
@@ -35,6 +42,7 @@ void gpg::ZLibOutputFilterStream::VirtClose(gpg::Stream::Mode mode) {
     }
 }
 
+// 0x00957360
 gpg::ZLibOutputFilterStream::ZLibOutputFilterStream(gpg::PipeStream *strm, int operation) :
     gpg::Stream{}
 {
@@ -58,7 +66,9 @@ gpg::ZLibOutputFilterStream::ZLibOutputFilterStream(gpg::PipeStream *strm, int o
         throw std::logic_error{std::string{"invalid operation"}};
     }
 }
-void gpg::ZLibOutputFilterStream::BufWrite(const char *str, unsigned int len, int flush) {
+
+// 0x00957500
+void gpg::ZLibOutputFilterStream::BufWrite(const char *str, size_t len, int flush) {
     char buf[1024];
 
     if (this->v272a) {

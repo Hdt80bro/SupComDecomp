@@ -1,8 +1,10 @@
 namespace Moho {
 
-    class CScriptEvent : CTaskEvent, CScriptObject
-    {
-        
-    };
-
+class CScriptEvent :
+    public Moho::CTaskEvent,
+    public Moho::CScriptObject
+{
+    
 };
+
+}

@@ -3,4 +3,4 @@ namespace gpg {
 
 class RObject {};
 
-};
+}

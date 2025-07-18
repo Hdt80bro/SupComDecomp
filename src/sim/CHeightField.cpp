@@ -1,5 +1,6 @@
 #include "CHeightField.h"
 
+// 0x004783D0
 void Moho::CHeightField::InitField(int width, int height) {
     this->grid.width = width;
     this->grid.height = height;
@@ -9,6 +10,7 @@ void Moho::CHeightField::InitField(int width, int height) {
     }
 }
 
+// 0x00475DF0
 Wm3::AxisAlignedBox3f Moho::CHeightField::GetTierBox(int x,int z, char tier) {
     Moho::CHeightField *v5; // ebp
     float minY; // xmm5_4
@@ -57,6 +59,7 @@ Wm3::AxisAlignedBox3f Moho::CHeightField::GetTierBox(int x,int z, char tier) {
     return {minX, minY, minZ, maxX, maxY, maxZ};
 }
 
+// 0x00475BF0
 Moho::SMinMax<unsigned short> Moho::CHeightField::GetTierBoundsUWord(int idx, int x, int z) {
     if (idx <= 0) {
         unsigned short a = this->grid.Get(clamp(x,     0, this->grid.width - 1), clamp(z,     0, this->grid.height - 1));

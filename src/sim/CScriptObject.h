@@ -1,11 +1,12 @@
 
 namespace Moho {
 
-    class CScriptObject : TDatListItem<CScriptObject>
-    {
-        LuaObject cobj;
-        LuaObject luaobj;
-    };
+class CScriptObject : public Moho::TDatListItem<Moho::CScriptObject>
+{
+public:
+    LuaPlus::LuaObject cobj;
+    LuaPlus::LuaObject luaobj;
+};
 
 
 };

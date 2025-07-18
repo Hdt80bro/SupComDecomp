@@ -1,7 +1,8 @@
 #include <string>
+#include "LuaPlus.h"
 
 namespace Moho {
 
-    std::string *Loc(LuaPlus::LuaState *state, std::string *dest, const char *key);
+std::string Loc(LuaPlus::LuaState *state, const char *key);
 
 };

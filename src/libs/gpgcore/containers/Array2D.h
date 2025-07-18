@@ -17,4 +17,4 @@ struct Array2D
     }
 };
 
-};
+}

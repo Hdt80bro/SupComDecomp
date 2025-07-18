@@ -1,9 +1,10 @@
 
+// 0x00715FF0
 float Moho::CInfluenceMap::GetThreatRect(
     int x,
     int z,
     int radius,
-    char onMap,
+    bool onMap,
     Moho::EThreatType threatType,
     int army)
 {

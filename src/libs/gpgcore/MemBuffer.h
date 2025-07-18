@@ -59,6 +59,7 @@ struct MemBuffer
 };
 
 
+/*
 template<>
 struct MemBuffer<char>
 {
@@ -72,8 +73,9 @@ struct MemBuffer<const char>
 {
     gpg::MemBuffer<char> SubBuffer(unsigned int start, unsigned int len);
 };
+*/
 
 
-gpg::MemBuffer<char> AllocMemBuffer(unsigned int size); // 0x0094E320
+gpg::MemBuffer<char> AllocMemBuffer(size_t size); // 0x0094E320
 
-};
+}

@@ -14,7 +14,9 @@ namespace Moho {
 
 class CNetTCPConnector;
 
-class CNetTCPConnection : public Moho::INetConnection, public Moho::TDatListItem<Moho::CNetTCPConnection>
+class CNetTCPConnection :
+    public Moho::INetConnection,
+    public Moho::TDatListItem<Moho::CNetTCPConnection>
 {
 public:
     Moho::CNetTCPConnector *connector;
@@ -40,7 +42,6 @@ public:
     bool v842d;
     int v843;
     
-    
     int GetAddr() override; // 0x004835B0
     int GetPort() override; // 0x004835C0
     float GetPing() override; // 0x004835D0
@@ -55,7 +56,10 @@ public:
     void Pull(Moho::TDatListItem<Moho::SPartialConnection> *); // 0x00483A60
 };
 
-class CNetTCPConnector : public Moho::INetConnector, public Moho::INetNATTraversalHandler
+
+class CNetTCPConnector :
+    public Moho::INetConnector,
+    public Moho::INetNATTraversalHandler
 {
 public:
     struct_TCPConnLL ll;
@@ -65,19 +69,21 @@ public:
     HANDLE handle;
 
     ~CNetTCPConnector() override; // 0x00484AE0
-    void Destroy() override;
-    Moho::ENetProtocol GetProtocol() override;
-    int GetLocalPort() override;
-    Moho::INetConnection *Connect(u_long addr, u_short port) override;
-    bool Func2(OUT u_long &addr, OUT u_short &port) override;
-    Moho::INetConnection *Accept(u_long, u_short) override;
-    void Reject(u_long, u_short) override;
+    void Destroy() override; // 0x00483600
+    Moho::ENetProtocol GetProtocol() override; // 0x00483610
+    int GetLocalPort() override; // 0x00484C20
+    Moho::INetConnection *Connect(u_long addr, u_short port) override; // 0x00484C50
+    bool Func2(OUT u_long &addr, OUT u_short &port) override; // 0x00484EA0
+    Moho::INetConnection *Accept(u_long, u_short) override; // 0x00484F00
+    void Reject(u_long, u_short) override; // 0x00485050
     void Pull() override; // 0x004838D0
-    void Push() override;
-    void SelectEvent(HANDLE) override;
-    void *Func3() override;
+    void Push() override; // 0x00485610
+    void SelectEvent(HANDLE) override; // 0x00485640
+    void *Func3() override; // 0x00483620
 
     CNetTCPConnector(SOCKET sock); // 0x00484AB0
+    bool ReadFromStream(SOCKET s, u_long addr, u_short port, gpg::PipeStream *strm); // 0x004853D0
+    Moho::CNetTCPConnection *GetConnection(SOCKET s, u_long addr, u_short port); // inline 0x004853F8
 };
 
 
@@ -105,20 +111,19 @@ public:
     char buffer[4098];
 
     ~CNetTCPBuf() override ; // 0x004827C0
-    unsigned int VirtRead(char * buf, unsigned int len) override; // 0x00482A90
-    unsigned int VirtReadNonBlocking(char * buf, unsigned int len) override; // 0x00482AB0
+    size_t VirtRead(char *buf, size_t len) override; // 0x00482A90
+    size_t VirtReadNonBlocking(char * buf, size_t len) override; // 0x00482AB0
     bool VirtAtEnd() override; // 0x00482AD0
-    void VirtWrite(const char *buf, unsigned int len) override; // 0x00482B50
+    void VirtWrite(const char *buf, size_t len) override; // 0x00482B50
     void VirtFlush() override; // 0x00482CE0
     void VirtClose(gpg::Stream::Mode) override; // 0x00482DA0
     u_short GetPort() override; // 0x00482880
     u_long GetPeerAddr() override; // 0x00482930
     u_short GetPeerPort() override; // 0x004829E0
 
-    CNetTCPBuf() = default; // 0x00482770
-    CNetTCPBuf(SOCKET sock); // inline
-    int Read(char *buf, unsigned int len, bool isBlocking); // 0x00482E20
-    void Write(const char *buf, unsigned int len); // inline 0x00482C0A
+    CNetTCPBuf(SOCKET sock); // 0x00482770
+    int Read(char *buf, size_t len, bool isBlocking); // 0x00482E20
+    void Write(const char *buf, size_t len); // inline 0x00482C0A
     BOOL Select(); // 0x00483040        
 };
 
@@ -128,10 +133,10 @@ class CNetTCPServerImpl : public Moho::INetTCPServer
 public:
     SOCKET socket;
 
-    virtual ~CNetTCPServerImpl(); // 0x00483220
-    virtual unsigned short GetLocalPort(); // 0x004832A0
-    virtual Moho::INetTCPSocket *Accept(); // 0x004832D0
-    virtual void CloseSocket(); // 0x00483370
+    ~CNetTCPServerImpl() override; // 0x00483220
+    unsigned short GetLocalPort() override; // 0x004832A0
+    Moho::INetTCPSocket *Accept() override; // 0x004832D0
+    void CloseSocket() override; // 0x00483370
 
     CNetTCPServerImpl(SOCKET sock); // inline
 };

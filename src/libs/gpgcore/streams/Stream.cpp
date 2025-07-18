@@ -1,34 +1,53 @@
 #include "Stream.h"
 
+// 0x00956E40
 gpg::Stream::UnsupportedOperation::UnsupportedOperation()
     : std::logic_error{std::string{"Unsupported stream operation."}}
 {}
 
+// 0x00956F50
 size_t gpg::Stream::VirtTell(gpg::Stream::Mode) {
-    throw gpg::Stream::UnsupportedOperation();
+    throw gpg::Stream::UnsupportedOperation{};
 }
+
+// 0x00956F90
 size_t gpg::Stream::VirtSeek(gpg::Stream::Mode, gpg::Stream::SeekOrigin, size_t) {
-    throw gpg::Stream::UnsupportedOperation();
+    throw gpg::Stream::UnsupportedOperation{};
 }
-unsigned int gpg::Stream::VirtRead(char *, unsigned int) {
-    throw gpg::Stream::UnsupportedOperation();
+
+// 0x00956FB0
+size_t gpg::Stream::VirtRead(char *, size_t) {
+    throw gpg::Stream::UnsupportedOperation{};
 }
-unsigned int gpg::Stream::VirtReadNonBlocking(char *buf, unsigned int len) {
+
+// 0x00956DE0
+size_t gpg::Stream::VirtReadNonBlocking(char *buf, size_t len) {
     return this->VirtRead(buf, len);
 }
+
+// 0x00956FD0
 void gpg::Stream::VirtUnGetByte(int) {
-    throw gpg::Stream::UnsupportedOperation();
+    throw gpg::Stream::UnsupportedOperation{};
 }
+
+// 00956DF0
 bool gpg::Stream::VirtAtEnd() {
     return false;
 }
-void gpg::Stream::VirtWrite(const char *data, unsigned int size) {
-    throw gpg::Stream::UnsupportedOperation();
+
+// 0x00956FF0
+void gpg::Stream::VirtWrite(const char *data, size_t size) {
+    throw gpg::Stream::UnsupportedOperation{};
 }
+
+// 0x00956E00
 void gpg::Stream::VirtFlush() {}
+
+// 0x00956E10
 void gpg::Stream::VirtClose(gpg::Stream::Mode) {}
 
-void gpg::Stream::Write(const char *buf, int size) {
+// 0x0043D130
+void gpg::Stream::Write(const char *buf, size_t size) {
     if (size > this->LeftInWriteBuffer()) {
         this->VirtWrite(buf, size);
     } else {
@@ -36,11 +55,15 @@ void gpg::Stream::Write(const char *buf, int size) {
         this->writeStart += size;
     }
 }
+
+// 0x00955760
 bool gpg::Stream::Close(gpg::Stream::Mode access) {
     this->VirtClose(access);
     return true;
 }
-int gpg::Stream::Read(char *buf, int size) {
+
+// 0x0043D100
+size_t gpg::Stream::Read(char *buf, size_t size) {
     if (size > this->LeftInReadBuffer()) {
         size = this->VirtRead(buf, size);
     } else if (size) {

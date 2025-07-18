@@ -32,4 +32,4 @@ LONGLONG SecondsToCycles(float); // 0x009555B0
 
 };
 
-};
+}

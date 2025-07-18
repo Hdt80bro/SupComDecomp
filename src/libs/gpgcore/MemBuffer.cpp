@@ -1,6 +1,7 @@
 #include "MemBuffer.h"
 
-gpg::MemBuffer<char> gpg::AllocMemBuffer(unsigned int size) {
+// 0x0094E320
+gpg::MemBuffer<char> gpg::AllocMemBuffer(size_t size) {
     char *buff = (char *) malloc(size);
     memset(buff, 0, size);
     boost::shared_ptr<char> ptr{buff, free};

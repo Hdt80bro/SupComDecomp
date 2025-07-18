@@ -1,12 +1,12 @@
-#include "Stream.h"
-#include "gpgcore/Mutex.h"
+#include "boost/thread/mutex.hpp"
 #include "boost/thread/condition.hpp"
+#include "Stream.h"
+#include "DatListItem.h"
 
-struct struct_stream_buffer
+struct struct_stream_buffer :
+    gpg::DatListItem<struct_stream_buffer>
 {
-    void *v0;
-    void *v1;
-    int data[1024];
+    char data[4096];
 };
 
 
@@ -15,13 +15,15 @@ namespace gpg {
 class PipeStream : public gpg::Stream
 {
 public:
-    gpg::Mutex lock;
-    DWORD v11;
+    boost::mutex lock;
+    int v11;
     boost::condition semaphore;
-    struct_stream_buffer *buffer;
-    struct_stream_buffer **pBuffer;
+    gpg::DatListItem<struct_stream_buffer> buf;
 
+    PipeStream(); // 0x009565D0
+    ~PipeStream(); // 0x009569A0
     bool Empty(); // 0x00483470
+    unsigned int GetLength(); // 0x009566C0
 };
 
-};
+}

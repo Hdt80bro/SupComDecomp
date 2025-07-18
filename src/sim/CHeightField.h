@@ -23,18 +23,18 @@ struct struct_iGrid
 
 namespace Moho {
 
-    struct CHeightField
-    {
-        struct_iGrid_data2 grid;
-        std::vector<struct_iGrid> grids;
+struct CHeightField
+{
+    struct_iGrid_data2 grid;
+    std::vector<struct_iGrid> grids;
 
-        inline __int16 GetHeightAt(int x, int z) {
-            return this->grid.data[x + z * this->grid.width];
-        } // 0x00478490
+    inline __int16 GetHeightAt(int x, int z) {
+        return this->grid.data[x + z * this->grid.width];
+    } // 0x00478490
 
-        void InitField(int width, int height); // 0x004783D0
-        Wm3::AxisAlignedBox3f GetTierBox(int x,int z, char a3);
-        Moho::SMinMax<unsigned short> GetTierBoundsUWord(int idx, int x, int y);
-    };
+    void InitField(int width, int height); // 0x004783D0
+    Wm3::AxisAlignedBox3f GetTierBox(int x,int z, char a3); // 0x00475DF0
+    Moho::SMinMax<unsigned short> GetTierBoundsUWord(int idx, int x, int y); // 0x00475BF0
+};
     
 };

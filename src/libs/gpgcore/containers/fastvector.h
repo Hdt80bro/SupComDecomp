@@ -125,6 +125,7 @@ struct fastvector_n : public fastvector<T>
 
 };
 
+/*
 template<>
 struct fastvector_n<char, 64>
 {
@@ -132,5 +133,6 @@ struct fastvector_n<char, 64>
     void Resize(unsigned int newSize, char *); // 0x0047C680
     void GrowInsert(int, char *, char *, char *); // 0x0047C910
 };
+*/
 
-};
+}
