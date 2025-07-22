@@ -1,3 +1,5 @@
+#include <vector>
+#include <map>
 
 namespace Moho {
 

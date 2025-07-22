@@ -4,6 +4,7 @@
 #include "gpgcore/Timer.h"
 #include "gpgcore/General.h"
 #include "core/Win.h"
+#include "App.h"
 
 STICKYKEYS obj_stickykeys; // 0x00F57888
 TOGGLEKEYS obj_togglekeys; // 0x00F57890

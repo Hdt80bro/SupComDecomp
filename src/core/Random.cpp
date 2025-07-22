@@ -1,3 +1,4 @@
+#include "Random.h"
 
 void Moho::CMersenneTwister::Seed(unsigned int seed) {
     this->state[0] = seed;

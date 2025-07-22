@@ -1,3 +1,4 @@
+#include "IntelPosHandle.h"
 
 void Moho::CIntelPosHandle::UpdatePos(Wm3::Vector3f *newPos, int curTick) {
     if (this->isEnabled) {

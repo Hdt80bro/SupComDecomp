@@ -315,6 +315,36 @@ std::string Moho::WIN_GetLastError() {
     }
 }
 
+// 0x004F3A60
+void Moho::WINX_Exit() {
+
+}
+
+// 0x004F3B60
+wxString Moho::WINX_Printf(const char *args...) {
+
+}
+
+// 0x004F3CD0
+void Moho::WINX_PrecreateLogWindow() {
+
+}
+
+// 0x004F3CE0
+void Moho::WINX_InitSplash(gpg::StrArg) {
+
+}
+
+// 0x004F3F30
+void Moho::WINX_ExitSplash() {
+
+}
+
+// 0x004F67E0
+void Moho::WINX_PrecreateLogWindow() {
+
+}
+
 // 0x0041B560
 bool Moho::CFG_GetArgOption(const char *flag, unsigned int a1, std::vector<std::string> *store) {
     if (flag == nullptr) {

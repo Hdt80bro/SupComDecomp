@@ -1,11 +1,16 @@
-#include "..\core\MinMax.h"
 #include <vector>
+#include "core\MinMax.h"
+#include "Wm3AxisAlignedBox3.h"
 
 struct struct_iGrid_data4
 {
     Moho::SMinMax<unsigned short> *data;
     int width;
     int height;
+
+    Moho::SMinMax<unsigned short> Get(int x, int y) {
+        return this->data[x + y * this->width];
+    }
 };
 
 struct struct_iGrid_data2

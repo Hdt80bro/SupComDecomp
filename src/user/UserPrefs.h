@@ -1,10 +1,10 @@
 
 namespace Moho {
 
-class CUserSoundManager
+class IUserPrefs
 {
-
-
+    
 };
+
 
 }

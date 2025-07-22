@@ -182,4 +182,4 @@ int Moho::NET_GetUInt32FromDottedOcted/*sic*/(std::string octet); // 0x00480200
 Moho::INetConnector *NET_MakeTCPConnector(unsigned short); // 0x004849A0
 Moho::INetConnector *NET_MakeUDPConnector(unsigned short, boost::weak_ptr<Moho::INetNATTraversalProvider> *); // 0x0048BBE0
 
-};
+}

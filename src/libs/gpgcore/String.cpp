@@ -6,7 +6,7 @@ std::string whitespaceChars{" \n\t\r"}; // 0x00F32308
 
 
 // 0x009380A0
-int gpg::STR_Utf8ByteOffset(const char *str, int pos) {
+int gpg::STR_Utf8ByteOffset(gpg::StrArg str, int pos) {
     const char *itr = str;
     int i;
     for (i = 0; *itr; ++i) {
@@ -51,7 +51,7 @@ const char *gpg::STR_PreviousUtf8Char(const char *str, const char *start) {
 }
 
 // 0x009387D0
-std::string gpg::STR_Utf8SubString(const char *str, int pos, int len) {
+std::string gpg::STR_Utf8SubString(gpg::StrArg str, int pos, int len) {
     const char *start = nullptr;
     for (int i = 0; ; ++i) {
         if (i == pos) {
@@ -157,7 +157,7 @@ std::string gpg::STR_WideToUtf8(const wchar_t *str) {
 }
 
 // 0x00938720
-std::wstring gpg::STR_Utf8ToWide(const char *str) {
+std::wstring gpg::STR_Utf8ToWide(gpg::StrArg str) {
     std::wstring builder{};
     if (str == nullptr) {
         return builder;
@@ -170,7 +170,7 @@ std::wstring gpg::STR_Utf8ToWide(const char *str) {
 }
 
 // 0x00938CB0
-bool gpg::STR_GetToken(const char *&find, const char *str, std::string &dest) {
+bool gpg::STR_GetToken(IN OUT gpg::StrArg &find, IN const char *str, OUT std::string &dest) {
     int c = *find;
     while (c && strchr(str, c) != 0) {
         c = *++find;
@@ -193,7 +193,7 @@ bool gpg::STR_GetToken(const char *&find, const char *str, std::string &dest) {
 }
 
 // 0x00938F40
-void gpg::STR_GetTokens(const char *find, const char *str, std::vector<std::string> &vec) {
+void gpg::STR_GetTokens(IN OUT gpg::StrArg find, IN const char *str, OUT std::vector<std::string> &vec) {
     std::string token{};
     while (gpg::STR_GetToken(find, str, token)) {
         vec.push_back(token);
@@ -244,31 +244,31 @@ int gpg::STR_GetNextWordStartIndex(std::string &str, int pos) {
 }
 
 // 0x00938190
-bool gpg::STR_EndsWith(const char *str, const char *end) {
+bool gpg::STR_EndsWith(gpg::StrArg str, gpg::StrArg end) {
     unsigned int strLen = strlen(str);
     unsigned int endLen = strlen(end);
     return strLen > endLen && ! strcmp(&str[strLen - endLen], end);
 }
 
 // 0x00938210
-bool gpg::STR_StartsWith(char *str, char *start) {
+bool gpg::STR_StartsWith(gpg::StrArg str, gpg::StrArg start) {
   return strncmp(str, start, strlen(start)) == 0;
 }
 
 // 0x00938250
-bool gpg::STR_EndsWithNoCase(const char *str, const char *end) {
+bool gpg::STR_EndsWithNoCase(gpg::StrArg str, gpg::StrArg end) {
     unsigned int strLen = strlen(str);
     unsigned int endLen = strlen(end);
     return strLen > endLen && ! stricmp(&str[strLen - endLen], end);
 }
 
 // 0x009382B0
-bool gpg::STR_StartsWithNoCase(const char *str, const char *start) {
+bool gpg::STR_StartsWithNoCase(gpg::StrArg str, gpg::StrArg start) {
   return strnicmp(str, start, strlen(start)) == 0;
 }
 
 // 0x009382F0
-bool gpg::STR_IsIdent(const char *str) {
+bool gpg::STR_IsIdent(gpg::StrArg str) {
     char c = *str++;
     if (c == '\0' || (c < 'A' || c > 'Z') && (c < 'a' || c > 'z') && c != '_') {
         return false;
@@ -284,7 +284,7 @@ bool gpg::STR_IsIdent(const char *str) {
 }
 
 // 0x00938B40
-int gpg::STR_Replace(std::string &str, const char *what, const char *with, unsigned int unk) {
+int gpg::STR_Replace(std::string &str, gpg::StrArg what, gpg::StrArg with, unsigned int unk) {
     int n = 0;
     if (unk) {
         unsigned int searchPos = 0;
@@ -299,7 +299,7 @@ int gpg::STR_Replace(std::string &str, const char *what, const char *with, unsig
 }
 
 // 0x00938150
-int gpg::STR_ParseUInt32(const char *str) {
+int gpg::STR_ParseUInt32(gpg::StrArg str) {
     if (str == nullptr) {
         return 0;
     }
@@ -310,7 +310,7 @@ int gpg::STR_ParseUInt32(const char *str) {
 }
 
 // 0x009380F0
-int gpg::STR_Xtoi(const char *str) {
+int gpg::STR_Xtoi(gpg::StrArg str) {
     int res = 0;
     if (str != nullptr) {
         for (char c = *str; c != NULL; c = *++str) {
@@ -335,7 +335,7 @@ std::string gpg::STR_GetWhitespaceCharacters() {
 }
 
 // 0x00938BF0
-std::string gpg::STR_Chop(const char *str, char chr) {
+std::string gpg::STR_Chop(gpg::StrArg str, char chr) {
     if (str && *str) {
         int size = strlen(str);
         if (! chr || str[size - 1] == chr) {
@@ -348,7 +348,7 @@ std::string gpg::STR_Chop(const char *str, char chr) {
 }
 
 // 0x00938A80
-std::string gpg::STR_ToLower(const char *str) {
+std::string gpg::STR_ToLower(gpg::StrArg str) {
     std::string builder{};
     builder.reserve(strlen(str));
     for (char c = *str; c != NULL; c = *++str) {
@@ -361,7 +361,7 @@ std::string gpg::STR_ToLower(const char *str) {
 }
 
 // 0x009389C0
-std::string gpg::STR_ToUpper(const char *str) {
+std::string gpg::STR_ToUpper(gpg::StrArg str) {
     std::string builder{};
     builder.reserve(strlen(str));
     for (char c = *str; c != NULL; c = *++str) {
@@ -374,7 +374,7 @@ std::string gpg::STR_ToUpper(const char *str) {
 }
 
 // 0x009388C0
-std::string gpg::STR_TrimWhitespace(const char *str) {
+std::string gpg::STR_TrimWhitespace(gpg::StrArg str) {
     std::string builder{};
     if (str != nullptr) {
         while (*str == ' ' || *str != '\t' || *str != '\r' && *str != '\n') {

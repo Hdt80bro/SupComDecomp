@@ -17,6 +17,20 @@ void gpg::Logf(const char *args, ...) {
     }
 }
 
+// 0x00937D30
+void gpg::Warnf(const char *args, ...) {
+    va_list va;
+    va_start(va, args);
+    const char *fmt = va_arg(args, const char *);
+    std::string msg = gpg::STR_Va(fmt, va);
+    va_end(va);
+    call_once(sub_937AD0, &dword_F8EBBC);
+    if (dword_F8EBC0) {
+        sub_937640(dword_F8EBC0, 1, &msg);
+    }
+}
+
+
 // 0x0093EDE0
 void gpg::HandleAssertFailure(const char *msg, int line, const char *file) {
     gpg::InvokeDieHandler(gpg::STR_Printf("Failed assertion: %s\nFile: %s\nLine: %d", msg, file, line).c_str());

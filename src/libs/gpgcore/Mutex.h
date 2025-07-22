@@ -1,12 +1,7 @@
-#include <Windows.h>
+#include <boost/thread.hpp>
 
 namespace gpg {
 
-// likely an alias for `boost::mutex` 
-struct Mutex
-{
-    LPCRITICAL_SECTION m_mutex;
-    bool m_critical_section;
-};
+using Mutex = boost::mutex;
 
 }

@@ -36,6 +36,13 @@ void WIN_OkBox(const char *, const char *); // 0x004F2800
 bool WIN_YesNoBox(const char *, const char *); // 0x004F2900
 std::string WIN_GetLastError(); // 0x004F2A00
 
+void WINX_Exit(); // 0x004F3A60
+wxString WINX_Printf(const char *args...); // 0x004F3B60
+void WINX_PrecreateLogWindow(); // 0x004F3CD0
+void WINX_InitSplash(gpg::StrArg); // 0x004F3CE0
+void WINX_ExitSplash(); // 0x004F3F30
+void WINX_PrecreateLogWindow(); // 0x004F67E0
+
 bool CFG_GetArgOption(const char *flag, unsigned int a1, std::vector<std::string> *ebx0); // 0x0041B560
 std::string CFG_GetArgs(); // 0x0041B690
 

@@ -1,9 +1,9 @@
 
 namespace Moho {
 
-    class Unit
-    {
-        
-    };
-
+class Unit
+{
+    
 };
+
+}

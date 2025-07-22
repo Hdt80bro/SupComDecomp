@@ -1,4 +1,4 @@
-#include "CIntelPosHandle.h"
+#include "IntelPosHandle.h"
 
 namespace Moho {
 

@@ -144,4 +144,4 @@ public:
 Moho::INetTCPSocket *NET_TCPConnect(u_long addr, u_short port); // 0x004830A0
 Moho::INetTCPServer *NET_CreateTCPServer(u_long addr, u_short port); // 0x00483390
 
-};
+}

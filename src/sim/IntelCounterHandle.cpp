@@ -1,4 +1,4 @@
-
+#include "IntelCounterHandle.h"
 
 void Moho::CIntelCounterHandle::SubViz() {
     if (this->enabled && this->radius != 0.0) {

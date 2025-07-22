@@ -1,4 +1,4 @@
-#include "CSimResources.h"
+#include "SimResources.h"
 
 
 inline gpg::Rect2i PointToLocation(Wm3::Vector3f *pos, Wm3::Vector2i *size) {

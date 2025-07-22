@@ -1,5 +1,9 @@
 #include <string>
+#include <vector>
+#include <map>
 #include "LuaPlus.h"
+#include "UserSoundManager.h"
+#include "UserPrefs.h"
 
 namespace Moho {
 

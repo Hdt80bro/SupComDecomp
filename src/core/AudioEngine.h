@@ -8,9 +8,9 @@ struct AudioEngineImpl
 
 namespace Moho {
 
-    struct AudioEngine
-    {
-        AudioEngineImpl* engine;
-    };
-
+struct AudioEngine
+{
+    AudioEngineImpl* engine;
 };
+
+}

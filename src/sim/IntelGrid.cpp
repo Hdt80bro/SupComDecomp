@@ -1,4 +1,4 @@
-#include "CIntelGrid.h"
+#include "IntelGrid.h"
 
 // 0x00506E20
 Moho::GridPos(Wm3::Vector3f *wldPos, int gridSize) {

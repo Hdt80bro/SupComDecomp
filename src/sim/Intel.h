@@ -1,3 +1,5 @@
+#include "IntelPosHandle.h"
+#include "IntelCounterHandle.h"
 
 namespace Moho {
 
