@@ -1,3 +1,7 @@
+#include <vector>
+#include "Wm3Vector3.h"
+#include "sim/IntelUpdate.h"
+#include "sim/STIMap.h"
 
 namespace Moho {
 

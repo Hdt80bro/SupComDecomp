@@ -1,5 +1,5 @@
-#include "IntelPosHandle.h"
-#include "IntelCounterHandle.h"
+#include "sim/IntelPosHandle.h"
+#include "sim/IntelCounterHandle.h"
 
 namespace Moho {
 

@@ -3,6 +3,20 @@
 
 namespace Moho {
 
+enum ETaskState
+{
+    TASKSTATE_Preparing = 0x0,
+    TASKSTATE_Waiting = 0x1,
+    TASKSTATE_Starting = 0x2,
+    TASKSTATE_Processing = 0x3,
+    TASKSTATE_Complete = 0x4,
+    TASKSTATE_5 = 0x5,
+    TASKSTATE_6 = 0x6,
+    TASKSTATE_7 = 0x7,
+    TASKSTATE_8 = 0x8,
+};
+
+
 class CTaskThread;
 
 class CTask

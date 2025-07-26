@@ -13,12 +13,15 @@ struct Timer
 {
     LONGLONG time;
 
-    Timer(); // 0x009556F0 & 0x009556D0
-
+    Timer();      // 0x009556F0 or 0x009556D0
+    void Reset(); // 0x009556D0 or 0x009556F0
     LONGLONG ElapsedCyclesAndReset(); // 0x00955710
     LONGLONG ElapsedCycles(); // 0x00955700
     float ElapsedMicroseconds(); // 0x00485A40
     float ElapsedSeconds(); // 0x004A3560
+    float ElapsedMilliSeconds() {
+        return gpg::time::CyclesToMilliseconds(this->ElapsedCycles());
+    } // inline & implied
 };
 
 LONGLONG GetTime(); // 0x00955400

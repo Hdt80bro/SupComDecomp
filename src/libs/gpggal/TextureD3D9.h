@@ -1,8 +1,7 @@
 #include "TextureContext.h"
 #include "d3d9helper.h"
 
-namespace gpg {
-namespace gal {
+namespace gpg::gal {
 
 class TextureD3D9
 {
@@ -12,5 +11,4 @@ class TextureD3D9
     int level;
 };
 
-}
 }

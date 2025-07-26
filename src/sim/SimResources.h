@@ -1,4 +1,6 @@
 #include <vector>
+#include "Wm3Vector3.h"
+#include "gpgcore/containers/Rect.h"
 
 namespace Moho {
 

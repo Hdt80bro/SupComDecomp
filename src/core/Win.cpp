@@ -56,7 +56,7 @@ void Moho::WIN_CrashDialogDieHandler(const char *msg) {
 }
 
 // 0x004F20B0
-void Moho::WIN_AppExecute(CScApp *app) {
+void Moho::WIN_AppExecute(Moho::IWinApp *app) {
     if (app == nullptr) {
         return;
     }
@@ -382,7 +382,7 @@ int func_Dispatch(Moho::CTaskThread *thrd) {
     if (0 < --thrd->val1) {
         return 0;
     }
-    while (2) {
+    while (true) {
         Moho::CTask *task = thrd->task;
         if (task == nullptr) {
             return -1;
@@ -507,8 +507,8 @@ bool func_CorrectPlatformVersion() {
 
 // 0x004F2050
 LRESULT func_WindowHook(int code, WPARAM wParam, _DWORD *lParam) {
-    if (! code
-        && supcomapp->Func2()
+    if (code == 0
+        && supcomapp->HasFrame()
         && (wParam == 0x100 || wParam == 0x101)
         && (*lParam == '[' || *lParam == '\\')
     ) {
@@ -516,14 +516,4 @@ LRESULT func_WindowHook(int code, WPARAM wParam, _DWORD *lParam) {
     } else {
         return CallNextHookEx(windowHook, code, wParam, (LPARAM)lParam);
     }
-}
-
-// 0x008D4410
-bool func_CheckMediaCenter() {
-    WCHAR filename[260];
-    return Moho::CFG_GetArgOption(0, 0, "/mediacenter")
-        && GetSystemMetrics(SM_MEDIACENTER)
-        && ExpandEnvironmentStringsW(L"%SystemRoot%\\ehome\\ehshell.exe", filename, sizeof(filename))
-        && GetFileAttributesW(filename) != -1
-        && (int)ShellExecuteW(0, L"open", filename, 0, 0, true) > 32;
 }

@@ -3,9 +3,9 @@ namespace Moho {
 
 struct CMessageDispatcher
 {
-    _DWORD preConnection;
-    _DWORD v2;
-    _DWORD data[256];
+    int preConnection;
+    int v2;
+    int data[256];
 };
 
 }

@@ -1,13 +1,16 @@
+#include "boost/shared_ptr.hpp"
+#include "Wm3Vector3.h"
+#include "sim/IntelGrid.h"
 
 namespace Moho {
 
-    class CIntelPosHandle
+class CIntelPosHandle
 {
     Wm3::Vector3f lastPos;
     unsigned int radius;
     int lastTickUpdated;
     bool isEnabled;
-    boost::shared_ptr<CIntelGrid> grid;
+    boost::shared_ptr<Moho::CIntelGrid> grid;
 
     void UpdatePos(int curTick, Wm3::Vector3f *newPos); // 0x0076F1E0
     

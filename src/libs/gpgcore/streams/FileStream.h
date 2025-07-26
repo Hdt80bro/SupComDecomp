@@ -22,7 +22,7 @@ public:
         IOError(int id); // 0x00955890
     };
 
-    ~FileStream() override; // 0x00955870
+    ~FileStream() noexcept override; // 0x00955870
     size_t VirtTell(gpg::Stream::Mode mode) override; // 0x00955CE0
     size_t VirtSeek(gpg::Stream::Mode mode, gpg::Stream::SeekOrigin orig, size_t pos) override; // 0x00955DF0
     size_t VirtRead(char *buf, size_t len) override; // 0x00955F80

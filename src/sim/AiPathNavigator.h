@@ -1,5 +1,26 @@
+#include <vector>
+#include "Wm3Vector3.h"
+#include "gpgcore/containers/Rect.h"
+#include "sim/AiPathFinder.h"
 
 namespace Moho {
+
+enum ESearchType
+{
+};
+
+struct HPathCell
+{
+    int v0;
+};
+
+struct SNavGoal
+{
+    gpg::Rect2i pos1;
+    gpg::Rect2i pos2;
+    Moho::ELayer layer;
+};
+
 
 struct NavPath
 {
@@ -9,9 +30,9 @@ struct NavPath
 class CAiPathNavigator
 {
 public:
-    _DWORD v2;
-    _DWORD v3;
-    _DWORD state;
+    DWORD v2;
+    DWORD v3;
+    DWORD state;
     Moho::CAiPathFinder *pathFinder;
     Moho::NavPath v6;
     Moho::HPathCell mCurrentPos;
@@ -21,23 +42,23 @@ public:
     Moho::ELayer layer;
     Moho::Sim *sim;
     int v24;
-    _DWORD PSFC;
-    _DWORD v26;
-    _DWORD NFDS;
+    DWORD PSFC;
+    DWORD v26;
+    DWORD NFDS;
     float v28;
     int v29;
     int v30;
-    _DWORD v31;
-    Moho::WeakPtr_Unit v32;
+    DWORD v31;
+    Moho::WeakPtr<Moho::Unit> v32;
     Wm3::Vector3f v34;
-    _BYTE isInFormation;
-    _BYTE v37b;
-    _BYTE v37c;
-    _BYTE v37d;
-    _BYTE v38a;
-    _BYTE v38b;
-    _BYTE v38c;
-    _BYTE v38d;
+    bool isInFormation;
+    char v37b;
+    char v37c;
+    char v37d;
+    char v38a;
+    char v38b;
+    char v38c;
+    char v38d;
     Moho::ESearchType v39;
     int v40;
     int entityIdM7;

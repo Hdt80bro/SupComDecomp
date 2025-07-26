@@ -13,7 +13,7 @@ public:
     bool v272a;
     bool closed;
 
-    ~ZLibOutputFilterStream(); // 0x00957340
+    ~ZLibOutputFilterStream() override; // 0x00957340
     void VirtWrite(const char *data, size_t size) override; // 0x00957760
     void VirtFlush() override; // 0x00957810
     void VirtClose(gpg::Stream::Mode mode) override; // 0x009578B0

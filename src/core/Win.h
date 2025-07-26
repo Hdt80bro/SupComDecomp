@@ -1,10 +1,15 @@
-#include <Windows.h>
 #include <string>
-#include "wx/window.h"
-#include "Task.h"
+#include <Windows.h>
+//#include "wx/frame.h"
+//#include "wx/string.h"
+//#include "wx/window.h"
+#include "gpgcore/String.h"
+#include "gpgcore/Timer.h"
+#include "core/App.h"
+#include "core/Task.h"
 
-static WSupComFrame *mainWindow; // 0x010A63B8
-static CScApp *supcomapp; // 0x010A63BC
+static wxFrame *mainWindow; // 0x010A63B8
+static Moho::IWinApp *supcomapp; // 0x010A63BC
 static HHOOK windowHook; // 0x010A63C0
 static gpg::time::Timer wakeupTimer; // 0x010A9B78
 static float wakeupTimerDur; // 0x010A9B84
@@ -52,6 +57,4 @@ int func_Dispatch(Moho::CTaskThread *); // 0x004091F0
 void func_UserFrame(Moho::CTaskStage *); // 0x00409AC0
 float func_ProbeWakeTimer(); // 0x004F1540
 bool func_CorrectPlatformVersion(); // 0x004F2000
-LRESULT func_WindowHook(int code, WPARAM wParam, _DWORD *lParam); // 0x004F2050
-
-bool func_CheckMediaCenter(); // 0x008D4410
+LRESULT func_WindowHook(int code, WPARAM wParam, DWORD *lParam); // 0x004F2050

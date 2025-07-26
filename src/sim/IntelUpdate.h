@@ -1,3 +1,4 @@
+#include "Wm3Vector3.h"
 
 namespace Moho {
 

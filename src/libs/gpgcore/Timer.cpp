@@ -13,10 +13,15 @@ inline void initPerformanceCounters() {
     }
 }
 
-// 0x009556F0 & 0x009556D0
+// 0x009556F0 or 0x009556D0
 gpg::time::Timer::Timer() :
     time{gpg::time::GetTime()}
 {}
+
+// 0x009556D0 or 0x009556F0
+void gpg::time::Timer::Reset() {
+    this->time = gpg::time::GetTime();
+}
 
 // 0x00955710
 LONGLONG gpg::time::Timer::ElapsedCyclesAndReset() {

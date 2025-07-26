@@ -1,8 +1,7 @@
 #include <string>
 #include "gpgcore/MemBuffer.h"
 
-namespace gpg {
-namespace gal {
+namespace gpg::gal {
 
 class TextureContext
 {
@@ -19,5 +18,4 @@ class TextureContext
     int v20;
 };
 
-}
 }

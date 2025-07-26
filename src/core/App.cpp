@@ -11,7 +11,15 @@ bool Moho::IWinApp::Func0() {
 bool Moho::IWinApp::AppInitCommonServices() {
     Moho::THREAD_InitInvoke();
     gpg::EnableLogHistory(100);
-    // ...
+    std::vector<std::string> vec{};
+    if (Moho::CFG_GetArgOption("/log", 1, &vec)) {
+        // ... setup log
+    }
+    gpg::REF_RegisterAllTypes();
+    // ... setup `path`
+    if (! Moho::DISK_SetupDataAndSearchPaths(std::string{"SupComDataPath.lua"}, path)) {
+        gpg::Die("Failed to setup initial search path.");
+    }
 }
 
 // 0x008CD470
@@ -25,24 +33,3 @@ Moho::IWinApp::IWinApp(const char *title, const char *subtitle) :
     subtitle{subtitle},
     exitValue{0}
 {}
-
-
-// 0x008CEDE0
-bool CScApp::Main() {
-
-}
-
-// 0x008D1470
-int CScApp::OnNoMoreEvents() {
-
-}
-
-// 0x008D0F20
-void CScApp::ScreenSaver() {
-    
-}
-
-// 0x008CE1D0
-bool CScApp::HasFrame() {
-    
-}

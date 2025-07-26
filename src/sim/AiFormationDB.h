@@ -1,3 +1,4 @@
+#include "gpgcore/containers/fastvector.h"
 
 namespace Moho {
 

@@ -1,12 +1,13 @@
 #include <memory>
 #include "boost/filesystem/path.hpp"
+#include "boost/thread/once.hpp"
 #include "gpgcore/String.h"
 #include "gpgcore/streams/Stream.h"
 #include "gpgcore/MemBuffer.h"
 
-static int call_once_filewaitset; // 0x010A6370
+static boost::once_flag once_filewaitset; // 0x010A6370
 static Moho::FWaitHandleSet *pfwaithandleset; // 0x010A6374
-static int call_once_InitDiskWatch; // 0x010A6378
+static boost::once_flag once_InitDiskWatch; // 0x010A6378
 static Moho::CDiskWatch *cdiskwatch; // 0x010A637C
 
 static Moho::FWaitHandleSet fwaithandleset; // 0x01103B30

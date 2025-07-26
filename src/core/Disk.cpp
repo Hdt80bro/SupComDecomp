@@ -3,9 +3,9 @@
 
 
 
-int call_once_filewaitset; // 0x010A6370
+boost::once_flag once_filewaitset; // 0x010A6370
 Moho::FWaitHandleSet *pfwaithandleset; // 0x010A6374
-int call_once_InitDiskWatch; // 0x010A6378
+boost::once_flag once_InitDiskWatch; // 0x010A6378
 Moho::CDiskWatch *cdiskwatch; // 0x010A637C
 
 Moho::FWaitHandleSet fwaithandleset; // 0x01103B30
@@ -13,7 +13,7 @@ Moho::FWaitHandleSet fwaithandleset; // 0x01103B30
 
 inline void func_CheckDiskWatch() {
     if (cdiskwatch == nullptr) {
-        call_once(func_InitDiskWatch, &call_once_InitDiskWatch);
+        call_once(func_InitDiskWatch, &once_InitDiskWatch);
     }
 }
 
@@ -78,7 +78,7 @@ void __cdecl Moho::DISK_ResetWatch() {
     if (cdiskwatch != nullptr) {
         delete(cdiskwatch);
     }
-    call_once_InitDiskWatch = 0;
+    once_InitDiskWatch = 0;
     cdiskwatch = nullptr;
 }
 

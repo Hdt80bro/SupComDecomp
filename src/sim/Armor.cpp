@@ -1,5 +1,5 @@
 #include "Armor.h"
-#include "Src.h"
+#include "core/Scr.h"
 #include "gpgcore/General.h"
 
 std::list<std::string> Moho::ARMOR_GetArmorDefinations(LuaPlus::LuaState *L, gpg::StrArg arm) {

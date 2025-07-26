@@ -1,7 +1,9 @@
 #include "LuaPlus.h"
 #include "boost/shared_ptr.hpp"
 #include "gpgcore/containers/fastvector.h"
-#include "CHeightField.h"
+#include "gpgcore/containers/Array2D.h"
+#include "gpgcore/containers/Rect.h"
+#include "sim/HeightField.h"
 
 namespace Moho {
 
