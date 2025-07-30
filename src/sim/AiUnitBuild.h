@@ -1,9 +1,11 @@
-#inlude <vector>
+#include <vector>
 
 namespace Moho {
 
+// 0x00E1B6AC
 class IAiBuilder
 {
+    virtual ~IAiBuilder() = 0;
     virtual bool GetBool1() = 0;
     virtual void SetBool1(bool val) = 0;
     virtual void IssueRallyPoint() = 0;
@@ -28,6 +30,7 @@ class IAiBuilder
     virtual Moho::RUnitBlueprint* GetFarthestBuilding(Moho::SOCellPos *dest) = 0;
 };
 
+// 0x00E1B73C
 class CAiBuilderImpl : public Moho::IAiBuilder
 {
 public:
@@ -39,6 +42,7 @@ public:
     std::map<uint, Moho::RUnitBlueprint> v6;
     std::vector<Moho::WeakPtr<Moho::CUnitCommand>> commands;
     
+    ~CAiBuilderImpl() override = default; // 0x0059FB50
     bool GetBool1(); // 0x0059FAA0
     void SetBool1(bool val); // 0x0059FA90
     void IssueRallyPoint(); // 0x0059EEF0

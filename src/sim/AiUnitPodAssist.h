@@ -1,6 +1,7 @@
 
 namespace Moho {
 
+// 0x00E207FC
 class CUnitPodAssist : public Moho::CCommandTask
 {
 public:

@@ -1,4 +1,4 @@
-#include "TDatListItem.h"
+#include "core/TDatListItem.h"
 
 namespace Moho {
 
@@ -8,6 +8,7 @@ struct STaskEventLinkage : Moho::TDatListItem<Moho::STaskEventLinkage>
     Moho::WeakPtr<Moho::CTaskThread> thread;
 };
 
+// 0x00E00150
 class CTaskEvent
 {
 public:

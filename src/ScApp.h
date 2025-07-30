@@ -2,6 +2,7 @@
 #include "gpgcore/Timer.h"
 #include "core/App.h"
 
+// 0x00E4F434
 class WSupComFrame : public wxFrame
 {
 public:
@@ -31,7 +32,7 @@ struct struct_RollingFrameRates
     float median(); // 0x008D4B20
 };
 
-
+// 0x00E4F6C0
 class CScApp : public Moho::IWinApp
 {
 public:
@@ -51,3 +52,6 @@ public:
     void Destroy() override; // 0x008D0F20
     bool HasFrame() override; // 0x008CE1D0
 };
+
+bool func_CreateAppFrame(CScApp *app, std::string *title, BOOL maximized, wxPoint *pos, gpg::gal::DeviceContext *context); // 0x008CF8C0
+int func_CreateDevice(CsApp *app); // 0x008D0370

@@ -1,11 +1,13 @@
 #include "Win.h"
 
 
-WSupComFrame *mainWindow; // 0x010A63B8
-CScApp *supcomapp; // 0x010A63BC
+wxFrame *mainWindow; // 0x010A63B8
+Moho::IWinApp *supcomapp; // 0x010A63BC
 HHOOK windowHook; // 0x010A63C0
 gpg::time::Timer wakeupTimer; // 0x010A9B78
 float wakeupTimerDur; // 0x010A9B84
+wxSplashScreen *splash_screen_ptr; // 0x010A9BE4
+wxPNGHandler *png_Handler; // 0x010C6D48
 
 
 // 0x004F1190
@@ -60,7 +62,7 @@ void Moho::WIN_AppExecute(Moho::IWinApp *app) {
     if (app == nullptr) {
         return;
     }
-    supcomapp = this;
+    supcomapp = app;
     windowHook = SetWindowsHookExW(
         WH_KEYBOARD_LL,
         func_WindowHook,
@@ -101,7 +103,7 @@ void Moho::WIN_AppExecute(Moho::IWinApp *app) {
                         break;
                     }
 
-                    wxTheApp->Dispatch1();
+                    wxTheApp->Dispatch();
                     success = true;
                 }
                 if (success) {
@@ -139,7 +141,7 @@ void Moho::WIN_AppExecute(Moho::IWinApp *app) {
                 do {
                     bool pend = false;
                     if (wxTheApp->Pending()) {
-                        wxTheApp->Dispatch1();
+                        wxTheApp->Dispatch();
                         pend = true;
                         cont = true;
                     }
@@ -265,7 +267,7 @@ bool Moho::WIN_CopyToClipboard(const wchar_t *str) {
 }
 
 // 0x004F2800
-void __cdecl Moho::WIN_OkBox(const char *caption, const char *text) {
+void Moho::WIN_OkBox(const char *caption, const char *text) {
     HWND handle;
     if (mainWindow != nullptr) {
         handle = mainWindow->GetHandle();
@@ -274,8 +276,8 @@ void __cdecl Moho::WIN_OkBox(const char *caption, const char *text) {
     }
     MessageBoxW(
         handle,
-        gpg::STR_Utf8ToWide(text).ctr(),
-        gpg::STR_Utf8ToWide(caption),
+        gpg::STR_Utf8ToWide(text).c_str(),
+        gpg::STR_Utf8ToWide(caption).c_str(),
         MB_YESNO
     );
 }
@@ -290,8 +292,8 @@ bool Moho::WIN_YesNoBox(const char *caption, const char *text) {
     }
     return MessageBoxW(
         handle,
-        gpg::STR_Utf8ToWide(text).ctr(),
-        gpg::STR_Utf8ToWide(caption),
+        gpg::STR_Utf8ToWide(text).c_str(),
+        gpg::STR_Utf8ToWide(caption).c_str(),
         MB_TOPMOST|MB_YESNO
     ) == IDYES;
 }
@@ -317,51 +319,74 @@ std::string Moho::WIN_GetLastError() {
 
 // 0x004F3A60
 void Moho::WINX_Exit() {
-
+    // clean up managed frames and windows
 }
 
 // 0x004F3B60
-wxString Moho::WINX_Printf(const char *args...) {
-
-}
-
-// 0x004F3CD0
-void Moho::WINX_PrecreateLogWindow() {
-
+wxString Moho::WINX_Printf(const char *fmt...) {
+    va_list args;
+    va_start(args, fmt);
+    std::string str = gpg::STR_Utf8ToWide(gpg::STR_Va(fmt, args));
+    return wxString{str.c_str()};
 }
 
 // 0x004F3CE0
-void Moho::WINX_InitSplash(gpg::StrArg) {
-
+void Moho::WINX_InitSplash(gpg::StrArg filename) {
+    if (png_Handler == nullptr) {
+        png_Handler = new wxPNGHandler{};
+        wxImage::AddHandler(png_handler);
+    }
+    Moho::WINX_ExitSplash();
+    wxBitmap bm{};
+    if (bm.LoadFile(wxString{filename}) {
+        wxSize size{1024, 768};
+        tagRECT rect;
+        if (GetWindowRect(0, &rect)) {
+            size.x = min(1600, rect.right - rect.left);
+            size.y = min(1200, rect.top - rect.bottom);
+        }
+        auto splash = new wxSplashScreen{
+            wxBitmap{bm.ConvertToImage().Rescale(size.x, size.y)},
+            2, nullptr, nullptr, -1,
+            &wxDefaultPosition, &size,
+            wxSIMPLE_BORDER|wxFRAME_NO_TASKBAR
+        };
+        if (splash_screen_ptr != nullptr) {
+            delete(splash_screen_ptr);
+        }
+        splash_screen_ptr = splash;
+    }
 }
 
 // 0x004F3F30
 void Moho::WINX_ExitSplash() {
-
+    if (splash_screen_ptr != nullptr) {
+        delete(splash_screen_ptr);
+        splash_screen_ptr = nullptr;
+    }
 }
-
-// 0x004F67E0
+// 0x004F3CD0 -> 0x004F67E0
 void Moho::WINX_PrecreateLogWindow() {
 
 }
 
 // 0x0041B560
-bool Moho::CFG_GetArgOption(const char *flag, unsigned int a1, std::vector<std::string> *store) {
-    if (flag == nullptr) {
+bool Moho::CFG_GetArgOption(const char *opt, unsigned int args, std::vector<std::string> *store) {
+    if (opt == nullptr) {
         return false;
     }
-    if (_argc - args <= 1) {
+    if (__argc - args <= 1) {
         return false;
     }
     int pos = 1;
-    while (stricmp(_argv[pos], flag) != 0) {
-        if (++pos >= _argc - args) {
+    while (stricmp(__argv[pos], opt) != 0) {
+        if (++pos >= __argc - args) {
             return false;
         }
     }
     if (store != nullptr && args != 0) {
         do {
-            store->push_back(std::string{_argv[++pos]});
+            store->push_back(std::string{__argv[++pos]});
             --args;
         } while (args);
     }
@@ -371,8 +396,8 @@ bool Moho::CFG_GetArgOption(const char *flag, unsigned int a1, std::vector<std::
 // 0x0041B690
 std::string Moho::CFG_GetArgs() {
     std::string builder{""};
-    for (int i = 1; i < _argc; ++i) {
-        builder.append{gpg::STR_Printf("%s ", _argv[i]);
+    for (int i = 1; i < __argc; ++i) {
+        builder.append(gpg::STR_Printf("%s ", __argv[i]));
     }
     return gpg::STR_Chop(builder.c_str(), '\0');
 }

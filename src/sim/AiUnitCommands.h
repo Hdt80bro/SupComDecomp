@@ -1,9 +1,10 @@
 
 namespace Moho {
 
+// 0x00E2E8C4
 class CUnitCommand :
     public Moho::CScriptObject,
-    public Moho::BroadCaster
+    public Moho::Broadcaster<Moho::ECommandEvent>
 {
     int v2;
     Moho::Sim *sim;
@@ -24,7 +25,7 @@ class CUnitCommand :
     LuaPlus::LuaObject args;
     int v80;
 
-    AddUnit(std::vector<Moho::WeakPtr<Moho::CUnitCommand>> *queue, Moho::Unit *unit, int index);
-}
+    void AddUnit(std::vector<Moho::WeakPtr<Moho::CUnitCommand>> *queue, Moho::Unit *unit, int index);
+};
 
 }

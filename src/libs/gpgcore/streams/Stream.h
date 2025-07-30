@@ -3,10 +3,12 @@
 
 namespace gpg {
 
+// 0x00D49658
 class Stream
 {
 public:
 
+    // 0x00D49684
     class UnsupportedOperation : public std::logic_error
     {
     public:

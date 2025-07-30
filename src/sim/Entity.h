@@ -3,6 +3,7 @@
 #include "boost/shared_ptr.hpp"
 #include "LuaPlus.h"
 #include "Wm3AxisAlignedBox3.h"
+#include "Wm3Quaternion.h"
 #include "Wm3Vector3.h"
 #include "core/ScriptObject.h"
 #include "core/SndParams.h"
@@ -79,7 +80,7 @@ struct EntityAttributes
 struct SSTIEntityVariableData
 {
     boost::shared_ptr<Moho::RScmResource> scmResource;
-    DWORD mesh;
+    int mesh;
     Wm3::Vector3f scale;
     float health;
     float maxHealth;
@@ -90,19 +91,19 @@ struct SSTIEntityVariableData
     Moho::VTransform lastTransform;
     float curImpactSomething;
     float fractionComplete;
-    DWORD attachmentParent;
-    DWORD dword68;
-    DWORD dword6C;
-    DWORD dword70;
-    DWORD dword74;
-    DWORD v7;
-    DWORD v8;
-    QWORD qword80;
-    QWORD qword88;
+    int attachmentParent;
+    int v1;
+    int v2;
+    int v3;
+    int v4;
+    int v5;
+    int v6;
+    long v7;
+    long v8;
     Moho::CSndParams *ambientSound;
     Moho::CSndParams *rumbleSound;
     bool notVisibility;
-    DWORD visibility;
+    int visibility;
     Moho::ELayer layer;
     bool usingAltFp;
     boost::shared_ptr<Moho::CD3DBatchTexture> underlayTexture;
@@ -112,8 +113,8 @@ struct SSTIEntityVariableData
 
 
 class Entity :
-    public Moho::CScriptObject,
-    public Moho::CTask
+    public Moho::CScriptObject, // 0x00E274F4
+    public Moho::CTask          // 0x00E27590
 {
 public:
     Moho::EEntityType type;

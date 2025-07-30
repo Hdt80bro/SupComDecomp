@@ -1,8 +1,9 @@
-#include "gpgcore/streams/PipeStream.h"
 #include "zlib.h"
+#include "gpgcore/streams/PipeStream.h"
 
 namespace gpg {
 
+// 0x00D496F0
 class ZLibOutputFilterStream : public gpg::Stream
 {
 public:

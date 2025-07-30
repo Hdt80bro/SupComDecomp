@@ -21,6 +21,7 @@ enum EStatType
     STAT_TYPE_STRING = 0x3,
 };
 
+// 0x00E00300
 class StatItem
 {
     int *dword4;

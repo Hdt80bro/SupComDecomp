@@ -1,7 +1,8 @@
-#include "NetConnector.h"
-#include "TDatListItem.h"
 #include "gpgcore/streams/PipeStream.h"
 #include "gpgcore/Timer.h"
+#include "core/NetConnector.h"
+#include "core/TDatListItem.h"
+
 
 struct struct_TCPConnLL
 {
@@ -14,6 +15,7 @@ namespace Moho {
 
 class CNetTCPConnector;
 
+// 0x00E049F8
 class CNetTCPConnection :
     public Moho::INetConnection,
     public Moho::TDatListItem<Moho::CNetTCPConnection>
@@ -56,7 +58,7 @@ public:
     void Pull(Moho::TDatListItem<Moho::SPartialConnection> *); // 0x00483A60
 };
 
-
+// 0x00E049C0
 class CNetTCPConnector :
     public Moho::INetConnector,
     public Moho::INetNATTraversalHandler
@@ -101,7 +103,7 @@ struct SPartialConnection : Moho::TDatListItem<Moho::SPartialConnection>
     void Pull(); // 0x00484770
 };
 
-
+// 0x00E04530
 class CNetTCPBuf : public Moho::INetTCPSocket
 {
 public:
@@ -127,7 +129,7 @@ public:
     BOOL Select(); // 0x00483040        
 };
 
-
+// 0x00E04568
 class CNetTCPServerImpl : public Moho::INetTCPServer
 {
 public:

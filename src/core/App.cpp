@@ -1,6 +1,6 @@
 #include "App.h"
-#include "core/Thread.h"
 #include "gpgcore/utils/LogHistory.h"
+#include "core/Thread.h"
 
 // 0x008CD460
 bool Moho::IWinApp::Func0() {

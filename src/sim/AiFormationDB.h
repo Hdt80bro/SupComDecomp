@@ -2,8 +2,14 @@
 
 namespace Moho {
 
-struct CAiFormationDBImpl
+// 0x00E1B45C
+class IAiFormationDB
+{};
+
+// 0x00E1B52C
+class CAiFormationDBImpl : public Moho::IAiFormationDB
 {
+public:
     Moho::Sim *sim;
     gpg::fastvector_n<Moho::CAiFormationInstance, 10> formInstances;
 };

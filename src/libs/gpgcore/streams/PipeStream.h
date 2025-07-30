@@ -12,6 +12,7 @@ struct struct_stream_buffer :
 
 namespace gpg {
 
+// 0x00D495F0
 class PipeStream : public gpg::Stream
 {
 public:

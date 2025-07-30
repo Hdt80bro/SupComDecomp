@@ -4,6 +4,7 @@
 
 namespace Moho {
 
+// 0x00E361C4
 class CIntelPosHandle
 {
     Wm3::Vector3f lastPos;

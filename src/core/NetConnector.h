@@ -1,45 +1,15 @@
 #include <string>
 #include <winsock.h>
-#include "gpgcore/streams/Stream.h"
 #include "boost/weak_ptr.hpp"
 #include "gpgcore/containers/fastvector.h"
-#include "Message.h"
+#include "gpgcore/streams/Stream.h"
+#include "core/Message.h"
 
 
 struct struct_DataSpan
 {
     char *start;
     char *end;
-};
-
-struct struct_Datagram
-{
-    gpg::fastvector_n<char, 64> buf;
-    int pos;
-
-    void SetSize(int size) {
-        this->buf[1] = LOBYTE(size);
-        this->buf[2] = HIBYTE(size);
-    } // inline e.g. 0x0047BE62
-    unsigned short GetSize() {
-        // return *(unsigned short *)(&this->buf[1]);
-        return MAKEWORD(this->buf[1], this->buf[2]);
-    } // inline e.g. 0x0047BF4C
-    bool HasReadLength() {
-        return this-pos >= 3;
-    } // inline e.g. 0x0047BEE5
-    char GetType() {
-        return this->buf[0];
-    } // inline e.g. 0x007BFB97
-    void SetType(char type) {
-        this->buf[0] = type;
-    } // inline e.g. 0x004834E9
-
-    struct_Datagram(int size, char type); // 0x00483490
-    int GetMessageSize(); // 0x0047BE90
-    bool ReadMessage(gpg::Stream *stream); // 0x0047BD40
-    bool Read(gpg::Stream *stream); // 0x0047BEE0
-    unsigned int Append(char *ptr, int size); // 0x0047BDE0
 };
 
 namespace Moho {
@@ -53,6 +23,7 @@ enum ENetProtocol
     NETPROTO_UDP = 0x2,
 };
 
+// 0x00E0499C
 class INetConnection : public Moho::CMessageDispatcher
 {
 public:
@@ -68,6 +39,7 @@ public:
     virtual void ScheduleDestroy() = 0;
 };
 
+// 0x00E03CB0
 class INetConnector
 {
 public:
@@ -86,6 +58,7 @@ public:
     virtual void *Func3() = 0;
 };
 
+// 0x00E03CE8
 class CNetNullConnector : public Moho::INetConnector
 {
 public:
@@ -103,22 +76,25 @@ public:
     void *Func3() override; // 0x0047EBC0
 };
 
+// 0x00E03ED0
 class INetDatagramSocket
 {
 public:
     virtual ~INetDatagramSocket() = default; // 0x0047EF40
-    virtual void SendDefault(struct_Datagram *, u_short) = 0;
-    virtual void Send(struct_Datagram *, u_long addr, u_short port) = 0;
+    virtual void SendDefault(Moho::CMessage *, u_short) = 0;
+    virtual void Send(Moho::CMessage *, u_long addr, u_short port) = 0;
     virtual void Pull() = 0;
     virtual HANDLE CreateEvent() = 0;
 };
 
+// 0x00E3EC88
 class INetDatagramHandler
 {
 public:
-    virtual void Pull(struct_Datagram *buf, Moho::INetDatagramSocket *, u_long, u_short) = 0;
+    virtual void Pull(Moho::CMessage *buf, Moho::INetDatagramSocket *, u_long, u_short) = 0;
 };
 
+// 0x00E03EE8
 class CNetDatagramSocketImpl : public Moho::INetDatagramSocket
 {
 public:
@@ -127,14 +103,15 @@ public:
     HANDLE event;
 
     ~CNetDatagramSocketImpl() override;
-    void SendDefault(struct_Datagram *, u_short) override; // 0x0047F0D0
-    void Send(struct_Datagram *, u_long addr, u_short port) override; // 0x0047F0F0
+    void SendDefault(Moho::CMessage *, u_short) override; // 0x0047F0D0
+    void Send(Moho::CMessage *, u_long addr, u_short port) override; // 0x0047F0F0
     void Pull() override; // 0x0047F190
     HANDLE CreateEvent() override; // 0x0047F330
     
     CNetDatagramSocketImpl(Moho::INetDatagramHandler *handler, SOCKET sock); // inline 0x0047F44E
 };
 
+// 0x00E044E4
 class INetTCPSocket : public gpg::Stream
 {
 public:
@@ -147,6 +124,7 @@ public:
     INetTCPSocket() = default; // 0x004827E0
 };
 
+// 0x00E0451C
 class INetTCPServer
 {
 public:
@@ -158,11 +136,13 @@ public:
     INetTCPServer() = default; // 0x00482740
 };
 
+// 0x00E3D740
 class INetNATTraversalProvider
 {
 
 };
 
+// 0x00E060C8
 class INetNATTraversalHandler
 {
 public:

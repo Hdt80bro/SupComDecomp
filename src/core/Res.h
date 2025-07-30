@@ -1,8 +1,8 @@
 #include <string>
 #include <map>
 #include "boost/shared_ptr.hpp"
-#include "gpgcore/reflection/RType.h"
 #include "gpgcore/containers/fastvector.h"
+#include "gpgcore/reflection/RType.h"
 #include "gpgcore/String.h"
 
 
@@ -11,6 +11,7 @@ static std::map<std::string, gpg::RType *> *pPrefetchTypeMap; // 0x010A6390
 
 namespace Moho {
 
+// 0x00E3F468
 class CResourceWatcher
 {
     int gap;

@@ -1,19 +1,21 @@
-#include <vector>
 #include <string>
+#include <vector>
 //#include "wx/frame.h"
 #include "LuaPlus.h"
-#include "gpgcore/String.h"
 #include "gpgcore/reflection/RRef.h"
 #include "gpgcore/streams/Stream.h"
 #include "gpgcore/MemBuffer.h"
+#include "gpgcore/String.h"
 
 namespace Moho {
 
+// 0x00E0863C
 class ScrDebugWindow : public wxFrame
 {
     // ...
 };
 
+// 0x00E01720
 class CScrLuaObjectFactory
 {
 public:
@@ -34,7 +36,7 @@ class CScrLuaMetatableFactory : public Moho::CScrLuaObjectFactory
     }
 };
 
-
+// 0x00E00E8C
 class CScrLuaBinder
 {
 public:
@@ -48,10 +50,12 @@ public:
     virtual void Run(LuaPlus::LuaState *); // 0x004CD3A0
 };
 
+// 0x00E0A6BC
 class CScrLuaInitForm : public Moho::CScrLuaBinder
 {
 };
 
+// 0x00E072A8
 class CScrLuaClassBinder : public Moho::CScrLuaInitForm
 {
 };
@@ -64,6 +68,7 @@ struct CScrLuaInitFormSet
     Moho::CScrLuaInitFormSet *nextSet;
 };
 
+// 0x00E076B8
 class ScrBreakpoint
 {
 public:
@@ -74,6 +79,7 @@ public:
     virtual ~ScrBreakpoint() = default; // 0x004B0130
 };
 
+// 0x00E0767C
 class ScrActivation
 {
 public:
@@ -84,6 +90,7 @@ public:
     virtual ~ScrActivation() = default; // 0x004AFF60
 };
 
+// 0x00E07E58
 class ScrWatch
 {
     std::string file;

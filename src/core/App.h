@@ -3,6 +3,7 @@
 
 namespace Moho {
 
+// 0x00E4F408
 class IWinApp {
 public:
     std::string title;

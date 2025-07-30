@@ -1,6 +1,7 @@
 #include <vector>
 #include <string>
 #include "gpgcore/containers/fastvector.h"
+#include "user/UserUnit.h"
 
 enum enum_CamTargetType
 {
@@ -31,7 +32,7 @@ struct GeomCamera3
     gpg::gal::Matrix inverseProjection;
     gpg::gal::Matrix inverseView;
     gpg::gal::Matrix inverseViewProjection;
-    DWORD alignment;
+    int alignment;
     Moho::CGeomSolid3 solid1;
     Moho::CGeomSolid3 solid2;
     float lodScale;
@@ -39,8 +40,8 @@ struct GeomCamera3
     int v160;
 };
 
-
-class RCamCamera : public Moho::Broadcaster
+// 0x00E3C544
+class RCamCamera : public Moho::Broadcaster<Moho::SCameraTracking>
 {
 };
 
@@ -66,8 +67,8 @@ enum ECamTimeSource
 
 
 class CameraImpl :
-    public Moho::RCamCamera,
-    public Moho::CScriptEvent
+    public Moho::RCamCamera, // 0x00E3C474
+    public Moho::CScriptEvent // 0x00E3C528 0x00E3C530
 {
 public:
     std::string name;
@@ -77,7 +78,6 @@ public:
     bool isOrtho;
     bool isRotated;
     bool revertRotation;
-    BYTE bytesd;
     float farFOV;
     float farPitch;
     float v191;
@@ -93,10 +93,10 @@ public:
     enum_CamTargetType targetType;
     Wm3::Vector3f targetLocation;
     Wm3::AxisAlignedBox3f targetBox;
-    DWORD list1;
-    DWORD targetEntities;
-    DWORD v216;
-    DWORD v217;
+    int list1;
+    int targetEntities;
+    int v216;
+    int v217;
     float targetTimeLeft;
     bool targetTime;
     Moho::ECamTimeSource timeSource;
@@ -126,19 +126,19 @@ public:
     Moho::SCamShakeParams camShakeParams;
     float totalTime;
     float v255;
-    BYTE canShake;
-    BYTE v256b;
-    BYTE v256c;
-    BYTE v256d;
+    bool canShake;
+    char v256b;
+    char v256c;
+    char v256d;
     enum_CameraAccType accType;
     float updateFrame;
     float v259;
-    DWORD v260;
+    int v260;
     gpg::fastvector_n<Moho::UserUnit, 80> soundEntitiesInFrustrum;
     gpg::fastvector_n<Moho::UserUnit, 80> allUnitsInFrustrum;
     gpg::fastvector_n<Moho::UserUnit, 80> armyUnitsInFrustum;
     float maxZoomMult;
-    DWORD v514;
+    int v514;
 };
 
 struct RCamManager

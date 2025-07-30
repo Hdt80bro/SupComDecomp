@@ -2,6 +2,7 @@
 
 namespace Moho {
 
+// 0x00E1B368
 class CCommandTask : public Moho::CTask
 {
     int v1;

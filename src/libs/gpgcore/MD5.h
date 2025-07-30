@@ -1,5 +1,5 @@
-#include <string>
 #include <bit>
+#include <string>
 
 namespace gpg {
 

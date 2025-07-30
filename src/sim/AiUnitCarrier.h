@@ -8,14 +8,16 @@ struct SNavGoal
     Moho::ELayer layer;
 };
 
+// 0x00E20044
 class CUnitCarrierRetrieve : public Moho::CCommandTask
 {
 public:
     int v0;
     int v1;
-    Moho::EntitySetTemplate_Unit v2;
+    Moho::EntitySetTemplate<Moho::Unit> v2;
 };
 
+// 0x00E20090
 class CUnitCarrierLand : public Moho::CCommandTask
 {
 public:
@@ -28,6 +30,7 @@ public:
     Wm3::Vector3f v11;
 };
 
+// 0x00E200DC
 class CUnitCarrierLaunch : public Moho::CCommandTask
 {
 public:

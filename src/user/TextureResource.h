@@ -4,6 +4,7 @@
 
 namespace Moho {
 
+// 0x00E0276C
 class RD3DTextureResource :
     public gpg::DatListItem<Moho::RD3DTextureResource>
 {

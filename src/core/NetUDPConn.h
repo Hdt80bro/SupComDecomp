@@ -1,9 +1,12 @@
-#include "NetConnector.h"
+#include "core/NetConnector.h"
 
 namespace Moho {
 
-class CNetUDPConnector : Moho::INetConnector, Moho::INetNATTraversalHandler
+class CNetUDPConnector :
+    public Moho::INetConnector, // 0x00E060D4
+    public Moho::INetNATTraversalHandler // 0x00E0610C
 {
+public:
     struct_shared_lock lock;
     SOCKET socket;
     HANDLE eventObject;
@@ -33,8 +36,10 @@ class CNetUDPConnector : Moho::INetConnector, Moho::INetNATTraversalHandler
     gpg::PipeStream stream;
 };
 
-class CNetUDPConnection : Moho::INetConnection
+// 0x00E06118
+class CNetUDPConnection : public Moho::INetConnection
 {
+public:
     Moho::CNetUDPConnector *connector;
     DWORD Remote;
     unsigned __int16 RemoteAddr;

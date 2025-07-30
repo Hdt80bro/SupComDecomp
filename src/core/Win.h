@@ -1,4 +1,5 @@
 #include <string>
+#include <vector>
 #include <Windows.h>
 //#include "wx/frame.h"
 //#include "wx/string.h"
@@ -13,6 +14,8 @@ static Moho::IWinApp *supcomapp; // 0x010A63BC
 static HHOOK windowHook; // 0x010A63C0
 static gpg::time::Timer wakeupTimer; // 0x010A9B78
 static float wakeupTimerDur; // 0x010A9B84
+static wxSplashScreen *splash_screen_ptr; // 0x010A9BE4
+static wxPNGHandler *png_Handler; // 0x010C6D48
 static Moho::CWaitHandleSet cwaithandleset; // 0x01103AE0
 static Moho::FWaitHandleSet fwaithandleset; // 0x01103B30
 static Moho::CTaskStage beforeEventsStage; // 0x011043CC
@@ -20,8 +23,27 @@ static Moho::CTaskStage beforeWaitStage; // 0x011043B4
 
 namespace Moho {
 
+// 0x00E0C51C
+class WWinManagedDialog : public wxDialog
+{
+    
+};
+
+// 0x00E0C764
+class WWinManagedFrame : public wxFrame
+{
+    
+};
+
+// 0x00E0CA14
+class WWinLogWindow : public Moho::WWinManagedDialog
+{
+
+};
+
 class IWinApp;
 class CWaitHandleSet;
+class FWaitHandleSet;
 class CTaskStage;
 
 void WIN_ShowCrashDialog(const char *, const char *, _EXCEPTION_POINTERS *, int); // 0x004F1190
@@ -43,12 +65,11 @@ std::string WIN_GetLastError(); // 0x004F2A00
 
 void WINX_Exit(); // 0x004F3A60
 wxString WINX_Printf(const char *args...); // 0x004F3B60
-void WINX_PrecreateLogWindow(); // 0x004F3CD0
 void WINX_InitSplash(gpg::StrArg); // 0x004F3CE0
 void WINX_ExitSplash(); // 0x004F3F30
-void WINX_PrecreateLogWindow(); // 0x004F67E0
+void WINX_PrecreateLogWindow(); // 0x004F3CD0 -> 0x004F67E0
 
-bool CFG_GetArgOption(const char *flag, unsigned int a1, std::vector<std::string> *ebx0); // 0x0041B560
+bool CFG_GetArgOption(const char *opt, unsigned int arg, std::vector<std::string> *store); // 0x0041B560
 std::string CFG_GetArgs(); // 0x0041B690
 
 }

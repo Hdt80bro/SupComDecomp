@@ -115,7 +115,7 @@ void func_SetSystemParameters(bool force) {
 // 0x008D4410
 bool func_CheckMediaCenter() {
     WCHAR filename[260];
-    return Moho::CFG_GetArgOption(0, 0, "/mediacenter")
+    return Moho::CFG_GetArgOption("/mediacenter", 0, nullptr)
         && GetSystemMetrics(SM_MEDIACENTER)
         && ExpandEnvironmentStringsW(L"%SystemRoot%\\ehome\\ehshell.exe", filename, sizeof(filename))
         && GetFileAttributesW(filename) != -1

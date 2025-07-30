@@ -1,7 +1,27 @@
+#include <map>
+#include <vector>
+#include "boost/shared_ptr.hpp"
+#include "wm3Vector3.h"
+#include "sim/Blip.h"
+#include "sim/IntelGrid.h"
+#include "sim/InfluenceMap.h"
 
 namespace Moho {
 
-class CAiReconDBImpl
+struct SReconKey
+{
+    Moho::WeakPtr<Moho::Entity> ent;
+    int id;
+};
+
+// 0x00E1D7C4
+class IAiReconDB
+{
+
+};
+
+// 0x00E1D8D4
+class CAiReconDBImpl : public Moho::IAiReconDB
 {
     std::map<Moho::SReconKey, Moho::ReconBlip> blipMap;
     std::vector<Moho::ReconBlip> blips;

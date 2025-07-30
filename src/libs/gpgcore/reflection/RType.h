@@ -5,6 +5,7 @@
 
 namespace gpg {
 
+// 0x00D41694
 class RType : public gpg::RObject
 {
 public:
@@ -27,6 +28,16 @@ public:
     int MovRef;
     int Dtr;
     bool v24;
+
+
+    virtual const char *GetName() = 0;
+    virtual std::string GetLexical(const gpg::RRef &) const;
+    virtual bool SetLexical(const gpg::RRef &, const char *) const;
+    virtual const gpg::RIndexed *IsIndexed() const;
+    virtual const gpg::RIndexed *IsPointer() const;
+    virtual const gpg::REnumType *IsEnumType() const;
+    virtual void Init();
+    virtual void Finish();
 };
 
 }

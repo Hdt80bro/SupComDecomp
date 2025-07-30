@@ -1,3 +1,5 @@
+#include "gpgcore/General.h"
+
 namespace gpg {
 
 struct Array2D
@@ -16,5 +18,14 @@ struct Array2D
         return &this->data[x + y * this->mSizeX];
     }
 };
+
+struct BitArray2D
+{
+    int *ptr;
+    int size;
+    int width;
+    int height;
+};
+
 
 }

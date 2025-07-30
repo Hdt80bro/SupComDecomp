@@ -27,12 +27,13 @@ struct NavPath
     std::vector<Moho::HPathCell> path;
 };
 
+// 0x00E1C66C
 class CAiPathNavigator
 {
 public:
-    DWORD v2;
-    DWORD v3;
-    DWORD state;
+    int v2;
+    int v3;
+    int state;
     Moho::CAiPathFinder *pathFinder;
     Moho::NavPath v6;
     Moho::HPathCell mCurrentPos;
@@ -42,13 +43,13 @@ public:
     Moho::ELayer layer;
     Moho::Sim *sim;
     int v24;
-    DWORD PSFC;
-    DWORD v26;
-    DWORD NFDS;
+    int PSFC;
+    int v26;
+    int NFDS;
     float v28;
     int v29;
     int v30;
-    DWORD v31;
+    int v31;
     Moho::WeakPtr<Moho::Unit> v32;
     Wm3::Vector3f v34;
     bool isInFormation;

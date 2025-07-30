@@ -1,9 +1,9 @@
 #include <memory>
 #include "boost/filesystem/path.hpp"
 #include "boost/thread/once.hpp"
-#include "gpgcore/String.h"
 #include "gpgcore/streams/Stream.h"
 #include "gpgcore/MemBuffer.h"
+#include "gpgcore/String.h"
 
 static boost::once_flag once_filewaitset; // 0x010A6370
 static Moho::FWaitHandleSet *pfwaithandleset; // 0x010A6374

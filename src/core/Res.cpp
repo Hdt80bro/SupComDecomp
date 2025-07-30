@@ -1,5 +1,5 @@
 #include "Res.h"
-#include "File.h"
+#include "core/File.h"
 
 std::map<std::string, gpg::RType *> *pPrefetchTypeMap; // 0x010A6390
 

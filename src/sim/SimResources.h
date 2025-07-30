@@ -20,7 +20,7 @@ struct ResourceDeposit
     bool Intersects(Moho::CGeomSolid3 *solid, Moho::CHeightField *field); // 0x00546170
 };
 
-
+// 0x00E17054
 class IResources
 {
 public:
@@ -38,6 +38,7 @@ public:
     virtual bool AreaHasDeposit(Moho::EDepositType type, gpg::Rect2f *area) = 0;
 };
 
+// 0x00E17180
 class CSimResources : public Moho::IResources
 {
 public:

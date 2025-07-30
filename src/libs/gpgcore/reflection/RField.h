@@ -3,7 +3,7 @@ namespace gpg {
 
 class RType;
 
-class RField {
+struct RField {
     const char *name;
     gpg::RType *type;
     int offset;

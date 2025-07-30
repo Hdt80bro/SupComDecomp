@@ -10,11 +10,6 @@ namespace gpg {
 
 using die_handler_t = void (*)(const char *);
 
-}
-
-static gpg::die_handler_t die_handler; // 0x00F8EBDC
-
-namespace gpg {
 
 void Logf(const char *args, ...); // 0x00937CB0
 void Warnf(const char *args, ...); // 0x00937D30
@@ -24,3 +19,5 @@ void InvokeDieHandler(const char *); // 0x00938FF0
 void Die(const char *args, ...); // 0x00939000
 
 }
+
+static gpg::die_handler_t die_handler; // 0x00F8EBDC

@@ -1,5 +1,5 @@
-#include "TDatListItem.h"
 #include "boost/function.hpp"
+#include "core/TDatListItem.h"
 
 namespace Moho {
 
@@ -19,6 +19,7 @@ enum ETaskState
 
 class CTaskThread;
 
+// 0x00E0031C
 class CTask
 {
 public:

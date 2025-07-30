@@ -1,6 +1,6 @@
 #include "Plat.h"
 #include <Windows.h>
-#include "Win.h"
+#include "core/Win.h"
 
 std::vector<std::wstring> error_report_filenames; // 0x010A87A8
 std::wstring error_report_output_dir; // 0x00F59358
@@ -366,7 +366,7 @@ bool Moho::PLAT_SetRegistryValue(const char *a1, char *lpData, DWORD cbData, DWO
 
 // 0x004A2B30
 LONG TopLevelExceptionFilter(_EXCEPTION_POINTERS *ExceptionInfo) {
-    if (! Moho::CFG_GetArgOption(0, 0, "/bugreport") && Moho::CFG_GetArgOption(0, 0, "/nobugreport")) {
+    if (! Moho::CFG_GetArgOption("/bugreport", 0, nullptr) && Moho::CFG_GetArgOption("/nobugreport", 0, nullptr)) {
         unsigned int ExceptionCode = ExceptionInfo->ExceptionRecord->ExceptionCode;
         if (ExceptionCode != 0x80000003) {
             std::string msg = gpg::STR_Printf(

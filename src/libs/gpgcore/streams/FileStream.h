@@ -7,6 +7,7 @@ static int dwMoveMethod[];// 0x00D4953C
 
 namespace gpg {
 
+// 0x00D4947C
 class FileStream : public gpg::Stream
 {
 public:

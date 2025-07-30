@@ -1,5 +1,12 @@
 #include "ScApp.h"
+#include <string>
+#include <vector>
+#include "boost/filesystem/path.hpp"
+#include "gpgcore/String.h"
 #include "gpggal/Device.h"
+#include "core/Disk.h"
+#include "core/Win.h"
+#include "user/User.h"
 
 // 0x008D4B20
 float struct_RollingFrameRates::median() {
@@ -15,7 +22,6 @@ float struct_RollingFrameRates::median() {
 // 0x008CEDE0
 bool CScApp::Main() {
     func_SetSSE2(Moho::CFG_GetArgOption("/sse2", 0, nullptr));
-    v54 = v53;
     if (Moho::CFG_GetArgOption("/splash", 0, nullptr)) {
         boost::filesystem::path dir = Moho::DISK_GetLaunchDir() / "splash.png";
         Moho::WINX_InitSplash(dir.string());
@@ -66,7 +72,7 @@ bool CScApp::Main() {
         }
         desc = desc + "\n" + Moho::Loc(Moho::USER_GetLuaState(), "<LOC Engine0019>Please ensure system has current video drivers.");
         std::string title = Moho::Loc(Moho::USER_GetLuaState(), "<LOC Engine0013>Unable to start.");
-        MessageBoxW(0, gpg::STR_Utf8ToWide(title.c_str()), gpg::STR_Utf8ToWide(cap.c_str()), 0x10);
+        MessageBoxW(0, gpg::STR_Utf8ToWide(title.c_str()), gpg::STR_Utf8ToWide(desc.c_str()), 0x10);
         return false;
     }
     if (Moho::CFG_GetArgOption("/loadrulesandexit", 0, nullptr)) {

@@ -7,9 +7,11 @@ struct DatListItem
     DatListItem<T> *prev;
     DatListItem<T> *next;
 
-    DatListItem() {
-        this->prev = this;
-        this->next = this;
+    DatListItem() :
+        prev{this},
+        next{this}
+    {
+        this->Reset(); // usually
     } // inline
     ~DatListItem() {
         this->Reset();

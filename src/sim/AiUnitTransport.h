@@ -1,5 +1,6 @@
 #include <vector>
 #include "Wm3Vector3.h"
+#include "core/TDatListItem.h"
 
 namespace Moho {
 
@@ -21,7 +22,7 @@ struct SAttachPoint
 struct STransportPickUpInfo
 {
     Moho::SCoordsVec2 v0;
-    Wm3::Quaternion ori;
+    Wm3::Quaternionf ori;
     Wm3::Vector3f pos;
     int v1;
     Moho::EntitySetTemplate<Moho::Unit> units;
@@ -29,10 +30,18 @@ struct STransportPickUpInfo
     int v67;
 };
 
-class CAiTransportImpl
+// 0x00E1F0AC
+class IAiTransport
 {
-    int v1;
-    int v2;
+
+};
+
+// 0x00E1F3CC
+class CAiTransportImpl :
+    public Moho::IAiTransport,
+    public Moho::TDatListItem<Moho::CAiTransportImpl>
+{
+public:
     Moho::Unit *unit;
     Moho::WeakPtr<Moho::Unit> transportUnit;
     bool stagingPlatform;

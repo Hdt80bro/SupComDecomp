@@ -1,5 +1,5 @@
-#include <stdexcept>
 #include "String.h"
+#include <stdexcept>
 
 
 std::string whitespaceChars{" \n\t\r"}; // 0x00F32308

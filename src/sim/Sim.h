@@ -13,8 +13,16 @@ using CSeqNo = int;
 using EntIdUniverse = int;
 using EntityCategory = Moho::BVSet<Moho::EntId, Moho::EntIdUniverse>;
 
+// 0x00E34714
 class Sim
 {
+public:
+    static Moho::Sim sInstance;
+
+    static Moho::Sim * Create(boost::shared_ptr<Moho::LaunchInfoBase> const &);
+
+public:
+
 
     virtual void SetCommandSource(); // 0x00748650
     virtual void CommandSourceTerminated(); // 0x007486B0
@@ -41,6 +49,12 @@ class Sim
     virtual void AdvanceBeat(int); // 0x00749F40
     virtual void EndGame(); // 0x0074B100
 
+    Sim(Moho::LaunchInfoBase *info); // 0x007434D0
+    void Setup(Moho::LaunchInfoBase *info); // 0x00744060
+    void CreateArmies(const std::vector<Moho::ArmyLaunchInfo> &, const std::vector<LuaPlus::LuaObject> &, const LuaPlus::LuaObject &); // 0x00746310
+    void  PostInitialize(const LuaPlus::LuaObject &); // 0x007464D0
+    bool CheatsEnabled(); // 0x00747180
+    bool OkayToMessWith(Moho::SimArmy *); // 0x00747360
 };
 
 }

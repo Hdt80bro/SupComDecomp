@@ -1,6 +1,6 @@
 #include <vector>
-#include "core\MinMax.h"
 #include "Wm3AxisAlignedBox3.h"
+#include "core\MinMax.h"
 
 struct struct_iGrid_data4
 {

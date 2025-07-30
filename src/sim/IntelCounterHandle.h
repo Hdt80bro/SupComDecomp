@@ -9,6 +9,7 @@ enum EIntelCounter
     INTELCOUNTER_CloakField = 0x8,
 };
 
+// 0x00E361D4
 class CIntelCounterHandle : public Moho::CIntelPosHandle
 {
 public:
