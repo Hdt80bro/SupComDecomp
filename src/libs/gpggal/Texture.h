@@ -7,16 +7,16 @@ namespace gpg::gal {
 class TextureContext
 {
 public:
-    int source;
-    std::string location;
-    gpg::MemBuffer<char> data;
-    int type;
-    int usage;
-    int format;
-    int mipmapLevels;
+    int mSource;
+    std::string mLocation;
+    gpg::MemBuffer<char> mData;
+    int mType;
+    int mUsage;
+    int mFormat;
+    int mMipmapLevels;
     int v17;
-    int width;
-    int height;
+    int mWidth;
+    int mHeight;
     int v20;
 
     virtual ~TextureContext() = default; // 0x008E7AE0

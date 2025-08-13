@@ -1,7 +1,7 @@
-#include <vector>
-#include <string>
-#include "gpgcore/containers/fastvector.h"
 #include "user/UserUnit.h"
+#include "gpgcore/containers/fastvector.h"
+#include <string>
+#include <vector>
 
 enum enum_CamTargetType
 {
@@ -19,24 +19,22 @@ enum enum_CameraAccType
     CAMACCTYPE_SlowInOut = 0x2,
 };
 
-
-
 namespace Moho {
 
 struct GeomCamera3
 {
-    Moho::VTransform tranform;
-    gpg::gal::Matrix projection;
-    gpg::gal::Matrix view;
-    gpg::gal::Matrix viewProjection;
-    gpg::gal::Matrix inverseProjection;
-    gpg::gal::Matrix inverseView;
-    gpg::gal::Matrix inverseViewProjection;
+    Moho::VTransform mTranform;
+    gpg::gal::Matrix mProjection;
+    gpg::gal::Matrix mView;
+    gpg::gal::Matrix mViewProjection;
+    gpg::gal::Matrix mInverseProjection;
+    gpg::gal::Matrix mInverseView;
+    gpg::gal::Matrix mInverseViewProjection;
     int alignment;
-    Moho::CGeomSolid3 solid1;
-    Moho::CGeomSolid3 solid2;
-    float lodScale;
-    Moho::VMatrix4 viewport;
+    Moho::CGeomSolid3 mSolid1;
+    Moho::CGeomSolid3 mSolid2;
+    float mLODScale;
+    Moho::VMatrix4 mViewport;
     int v160;
 };
 
@@ -45,7 +43,7 @@ class RCamCamera : public Moho::Broadcaster<Moho::SCameraTracking>
 {
 };
 
-static Moho::RCamManager camManager; // 0x010C79D4
+static Moho::RCamManager sCamManager; // 0x010C79D4
 
 struct SCamShakeParams
 {
@@ -55,7 +53,7 @@ struct SCamShakeParams
     float v4;
     float v5;
     float v6;
-    float minTime;
+    float mMinTime;
 };
 
 enum ECamTimeSource
@@ -71,49 +69,49 @@ class CameraImpl :
     public Moho::CScriptEvent // 0x00E3C528 0x00E3C530
 {
 public:
-    std::string name;
-    Moho::STIMap *stiMap;
-    Moho::GeomCamera3 cam;
+    std::string mName;
+    Moho::STIMap *mMap;
+    Moho::GeomCamera3 mCam;
     float v187;
-    bool isOrtho;
-    bool isRotated;
-    bool revertRotation;
-    float farFOV;
-    float farPitch;
+    bool mIsOrtho;
+    bool mIsRotated;
+    bool mRevertRotation;
+    float mFarFOV;
+    float mFarPitch;
     float v191;
-    float heading;
-    float headingZoom;
-    float targetZoom;
-    float nearZoom;
-    float zoom;
-    Wm3::Vector3f offset;
-    Wm3::Vector2f pivot;
-    float headingRate;
-    float zoomRate;
-    enum_CamTargetType targetType;
-    Wm3::Vector3f targetLocation;
-    Wm3::AxisAlignedBox3f targetBox;
+    float mHeading;
+    float mHeadingZoom;
+    float mTargetZoom;
+    float mNearZoom;
+    float mZoom;
+    Wm3::Vector3f mOffset;
+    Wm3::Vector2f mPivot;
+    float mHeadingRate;
+    float mZoomRate;
+    enum_CamTargetType mTargetType;
+    Wm3::Vector3f mTargetLocation;
+    Wm3::AxisAlignedBox3f mTargetBox;
     int list1;
-    int targetEntities;
+    int mTargetEntities;
     int v216;
     int v217;
-    float targetTimeLeft;
-    bool targetTime;
-    Moho::ECamTimeSource timeSource;
-    Moho::SystemTimeSource *systemTimeSource;
-    Moho::GameTimeSource *gameTimeSource;
-    float lastFrameTime;
-    bool enableEaseInOut;
+    float mTargetTimeLeft;
+    bool mTargetTime;
+    Moho::ECamTimeSource mTimeSource;
+    Moho::SystemTimeSource *mSystemTimeSource;
+    Moho::GameTimeSource *mGameTimeSource;
+    float mLastFrameTime;
+    bool mEnableEaseInOut;
     bool v224b;
     bool v224c;
     bool v224d;
     float v225;
-    Wm3::Vector3f timedMoveOffset;
-    float timedMoveZoom;
+    Wm3::Vector3f mTimedMoveOffset;
+    float mTimedMoveZoom;
     float v230;
     float v231;
-    float time;
-    float timedMovePitch;
+    float mTime;
+    float mTimedMovePitch;
     float v234;
     Wm3::Vector3f v235;
     Wm3::Vector3f v238;
@@ -123,21 +121,21 @@ public:
     float v244;
     float v245;
     float v246;
-    Moho::SCamShakeParams camShakeParams;
-    float totalTime;
+    Moho::SCamShakeParams mCamShakeParams;
+    float mTotalTime;
     float v255;
-    bool canShake;
+    bool mCanShake;
     char v256b;
     char v256c;
     char v256d;
-    enum_CameraAccType accType;
-    float updateFrame;
+    enum_CameraAccType mAccType;
+    float mUpdateFrame;
     float v259;
     int v260;
-    gpg::fastvector_n<Moho::UserUnit, 80> soundEntitiesInFrustrum;
-    gpg::fastvector_n<Moho::UserUnit, 80> allUnitsInFrustrum;
-    gpg::fastvector_n<Moho::UserUnit, 80> armyUnitsInFrustum;
-    float maxZoomMult;
+    gpg::fastvector_n<Moho::UserUnit, 80> mSoundEntitiesInFrustrum;
+    gpg::fastvector_n<Moho::UserUnit, 80> mAllUnitsInFrustrum;
+    gpg::fastvector_n<Moho::UserUnit, 80> mArmyUnitsInFrustum;
+    float mMaxZoomMult;
     int v514;
 };
 

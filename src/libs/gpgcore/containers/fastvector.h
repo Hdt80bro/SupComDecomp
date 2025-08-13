@@ -4,47 +4,47 @@ namespace gpg {
 template<class T>
 struct fastvector
 {
-    T *start;
-    T *end;
-    T *capacity;
+    T *mStart;
+    T *mEnd;
+    T *mCapacity;
 
     fastvector() {
-        this->start = &this->capacity;
-        this->end = &this->capacity;
-        this->capacity = &this->capacity;
+        this->mStart = &this->mCapacity;
+        this->mEnd = &this->mCapacity;
+        this->mCapacity = &this->mCapacity;
     }
     ~fastvector() {
-        delete[](this->start);
+        delete[](this->mStart);
     }
 
     size_t Size() const {
-        return (this->end - this->start) / sizeof(T);
+        return (this->mEnd - this->mStart) / sizeof(T);
     }
     size_t Capacity() const {
-        return (this-capacity - this->start) / sizeof(T);
+        return (this->mCapacity - this->mStart) / sizeof(T);
     }
 
     T &operator[](int idx) {
-        return &this->start[idx];
+        return &this->mStart[idx];
     }
 };
 
 template<class T, int N>
 struct fastvector_n : public fastvector<T>
 {
-    T *originalVec;
-    T inlineVec[N];
+    T *mOriginalVec;
+    T mInlineVec[N];
 
     fastvector_n() {
-        this->start = &this->inlineVec[0];
-        this->end = &this->inlineVec[0];
-        this->capacity = &this->inelineVec[N];
-        this->originalVec = &this->inlineVec;
+        this->mStart = &this->mInlineVec[0];
+        this->mEnd = &this->mInlineVec[0];
+        this->mCapacity = &this->mInlineVec[N];
+        this->mOriginalVec = &this->mInlineVec;
     }
     ~fastvector_n() {
-        if (this->start != this->originalVec) {
-            delete[](this->start);
-            this->start = this->originalVec;
+        if (this->mStart != this->mOriginalVec) {
+            delete[](this->mStart);
+            this->mStart = this->mOriginalVec;
         }
     }
 
@@ -59,16 +59,16 @@ struct fastvector_n : public fastvector<T>
             if (newSize > this->Capacity()) {
                 this->GrowInsert(newSize, this->start, this->start, this->start);
             }
-            T *newEnd = &this->start[newSize];
-            while (this->end != newEnd) {
-                T *cur = this->end;
-                this->end = cur + 1;
-                if (cur) {
+            T *newEnd = &this->mStart[newSize];
+            while (this->mEnd != newEnd) {
+                T *cur = this->mEnd;
+                this->mEnd = cur + 1;
+                if (cur != nullptr) {
                     *cur = *fill;
                 }
             }
         } else {
-            T *newEnd = &this->start[newSize];
+            T *newEnd = &this->mStart[newSize];
             if (this->end != newEnd) {
                 this->end = newEnd;
             }
@@ -79,9 +79,9 @@ struct fastvector_n : public fastvector<T>
         size_t insSize = insEnd - insStart;
         size_t newSize = insSize + this->Size();
         if (newSize <= this->Capacity()) {
-            if (&pos[insSize] <= this->end) {
-                int offset = &this->end[insSize] - pos;
-                this->end = (T *)memcpy(this->end, this->end, &this->end[insSize]);
+            if (&pos[insSize] <= this->mEnd) {
+                int offset = &this->mEnd[insSize] - pos;
+                this->mEnd = (T *)memcpy(this->mEnd, this->mEnd, &this->mEnd[insSize]);
                 if (offset > 0) { 
                     memmove_s(&end[-offset], offset, pos, offset); // ?
                 }
@@ -89,10 +89,10 @@ struct fastvector_n : public fastvector<T>
                     memmove_s(pos, insSize, insStart, insSize);
                 }
             } else {
-                T *oldEnd = this->end;
+                T *oldEnd = this->mEnd;
                 int oldOffset = oldEnd - pos;
-                this->end = (T *)memcpy(oldEnd, insEnd, &insStart[oldEnd - pos]);
-                this->end = (T *)memcpy(this->end, oldEnd, pos);
+                this->mEnd = (T *) memcpy(oldEnd, insEnd, &insStart[oldEnd - pos]);
+                this->mEnd = (T *) memcpy(this->mEnd, oldEnd, pos);
                 if (oldOffset > 0) {
                     memmove_s(&oldEnd[-oldOffset], oldOffset, insStart, oldOffset);
                 }
@@ -108,19 +108,19 @@ struct fastvector_n : public fastvector<T>
 
     void GrowInsert(int size, T *pos, T *start, T *end) {
         T *newArr = new T[size];
-        T *beginSplice = memcpy(newArr, pos, this->start);
+        T *beginSplice = memcpy(newArr, pos, this->mStart);
         T *endSplice = memcpy(beginSplice, end, start);
-        T *newEnd = (T *)memcpy(endSplice, this->end, pos);
-        for (T *i = this->start; i != this->end; ++i) // ?
+        T *newEnd = (T *)memcpy(endSplice, this->mEnd, pos);
+        for (T *i = this->mStart; i != this->mEnd; ++i) // ?
             ;
-        if (this->start == this->originalVec) {
-            *this->originalVec = this->capacity; // ?
+        if (this->mStart == this->mOriginalVec) {
+            *this->mOriginalVec = this->mCapacity; // ?
         } else {
-            delete[](this->start);
+            delete[](this->mStart);
         }
-        this->start = newArr;
-        this->end = newEnd;
-        this->capacity = &newArr[size];
+        this->mStart = newArr;
+        this->mEnd = newEnd;
+        this->mCapacity = &newArr[size];
     }
 
 };

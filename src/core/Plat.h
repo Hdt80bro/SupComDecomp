@@ -5,23 +5,23 @@
 static std::vector<std::wstring> error_report_filenames; // 0x010A87A8
 static std::wstring error_report_output_dir; // 0x00F59358
 
-static bool plat_guard; // 0x010A6382
-static bool symbol_handler_init; // 0x010A6383
-static boost::mutex *mutex_sym_handlerp; // 0x010A6388
-static int call_once_InitSymHandlerMutex; // 0x010A638C
+static bool sPlatGuard; // 0x010A6382
+static bool sSymbolHandlerInit; // 0x010A6383
+static boost::mutex *sPMutexSymHandler; // 0x010A6388
+static boost::once_flag once_InitSymHandlerMutex; // 0x010A638C
 
-static MiniDmpSender bugsplat_sender; // 0x010A87B8
+static MiniDmpSender sBugSplatSender; // 0x010A87B8
 
 namespace Moho {
 
 struct SPlatSymbolInfo
 {
-    size_t addr;
-    std::string symbol;
-    size_t symDis;
-    std::string filename;
-    size_t lineNum;
-    size_t lineDis;
+    size_t mAddr;
+    std::string mSymbol;
+    size_t mSymDis;
+    std::string mFilename;
+    size_t mLineNum;
+    size_t mLineDis;
 };
 
 

@@ -1,5 +1,5 @@
 #include "boost/shared_ptr.hpp"
-#include "TextureResource.h"
+#include "user/TextureResource.h"
 
 namespace Moho {
 
@@ -16,8 +16,7 @@ public:
 };
 
 // 0x00E419D4
-class TerrainCommon :
-    public Moho::IRenTerrain
+class TerrainCommon : public Moho::IRenTerrain
 {
 public:
     boost::shared_ptr<Moho::RD3DTextureResource> decalMask;

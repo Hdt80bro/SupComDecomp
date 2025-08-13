@@ -3,33 +3,33 @@
 #include "core/Disk.h"
 #include "core/Exception.h"
 
-int cur_thread_id; // 0x010A63A0
-Moho::ScrDebugWindow *srcDebugWindow; // 0x010A63A4
-std::vector<std::string> hookDirs; // 0x010A91D0
+int sCurThreadId; // 0x010A63A0
+Moho::ScrDebugWindow *sSrcDebugWindow; // 0x010A63A4
+std::vector<std::string> sHookDirs; // 0x010A91D0
 
 
 // 0x004CCE70
 LuaPlus::LuaObject Moho::CScrLuaObjectFactory::Get(LuaPlus::LuaState *state) {
-    LuaPlus::LuaObject fac_objs = state->GetGlobal("__factory_objects");
-    if (fac_objs.IsNil()) {
-        fac_objs.AssignNewTable(state, 0, 0);
+    LuaPlus::LuaObject facObjs = state->GetGlobal("__factory_objects");
+    if (facObjs.IsNil()) {
+        facObjs.AssignNewTable(state, 0, 0);
         LuaPlus::LuaObject globals = state->GetGlobals();
-        globals.SetObject("__factory_objects", &fac_objs);
+        globals.SetObject("__factory_objects", &facObjs);
     }
-    LuaPlus::LuaObject dest = fac_objs.GetByIndex(this->index);
+    LuaPlus::LuaObject dest = facObjs.GetByIndex(this->mIndex);
     if (dest.IsNil()) {
         dest = this->Create(state);
-        fac_objs.SetObject(this->index, dest);
+        facObjs.SetObject(this->mIndex, dest);
     }
     return dest;
 }
 
 // 0x004CD3A0
 void Moho::CScrLuaBinder::Run(LuaPlus::LuaState *state) {
-    if (this->factory != nullptr) {
-        this->factory->Get(state).Register(this->methodName, this->func, 0);
+    if (this->mFactory != nullptr) {
+        this->mFactory->Get(state).Register(this->mMethodName, this->mFunc, 0);
     } else {
-        state->GetGlobals().Register(this->methodName, this->func, 0);
+        state->GetGlobals().Register(this->mMethodName, this->mFunc, 0);
     }
 }
 
@@ -70,19 +70,19 @@ LuaPlus::LuaObject Moho::SCR_EncodeColor(LuaPlus::LuaState *state, Moho::color_t
 
 // 0x004B4800
 void Moho::SCR_CreateDebugWindow() {
-    if (srcDebugWindow == nullptr) {
-        cur_thread_id = GetCurrentThreadId();
+    if (sSrcDebugWindow == nullptr) {
+        sCurThreadId = GetCurrentThreadId();
         Moho::SCR_LoadBreakpoints();
-        srcDebugWindow = new Moho::ScrDebugWindow{};
-        srcDebugWindow->Show(true);
+        sSrcDebugWindow = new Moho::ScrDebugWindow{};
+        sSrcDebugWindow->Show(true);
     }
 }
 
 // 0x0x004B4890
 void Moho::SCR_DestroyDebugWindow() {
-    if (srcDebugWindow != nullptr) {
-        srcDebugWindow->Destroy();
-        srcDebugWindow = nullptr;
+    if (sSrcDebugWindow != nullptr) {
+        sSrcDebugWindow->Destroy();
+        sSrcDebugWindow = nullptr;
         {
             boost::mutex::scoped_lock{preferences_lock};
             Moho::SCR_SaveBreakpoints();
@@ -107,7 +107,7 @@ void Moho::SCR_DestroyDebugWindow() {
 
 // 0x004B49B0
 void Moho::SCR_HookState(LuaPlus::LuaState *state) {
-    if (srcDebugWindow != nullptr) {
+    if (sSrcDebugWindow != nullptr) {
         state->SetHook(func_DebugLuaHook, LUA_MASKLINE, 0);
     }
 }

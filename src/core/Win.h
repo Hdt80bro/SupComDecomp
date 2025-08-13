@@ -1,47 +1,32 @@
-#include <string>
-#include <vector>
-#include <Windows.h>
+
+#include "core/WinApp.h"
+#include "core/WinManaged.h"
+
+#include "core/Task.h"
+#include "gpgcore/String.h"
+#include "gpgcore/Timer.h"
 //#include "wx/frame.h"
 //#include "wx/string.h"
 //#include "wx/window.h"
-#include "gpgcore/String.h"
-#include "gpgcore/Timer.h"
-#include "core/App.h"
-#include "core/Task.h"
+#include <Windows.h>
+#include <string>
+#include <vector>
 
-static wxFrame *mainWindow; // 0x010A63B8
-static Moho::IWinApp *supcomapp; // 0x010A63BC
-static HHOOK windowHook; // 0x010A63C0
-static gpg::time::Timer wakeupTimer; // 0x010A9B78
-static float wakeupTimerDur; // 0x010A9B84
-static wxSplashScreen *splash_screen_ptr; // 0x010A9BE4
-static wxPNGHandler *png_Handler; // 0x010C6D48
-static Moho::CWaitHandleSet cwaithandleset; // 0x01103AE0
-static Moho::FWaitHandleSet fwaithandleset; // 0x01103B30
-static Moho::CTaskStage beforeEventsStage; // 0x011043CC
-static Moho::CTaskStage beforeWaitStage; // 0x011043B4
+
+static wxFrame *sMainWindow; // 0x010A63B8
+static Moho::IWinApp *sSupComApp; // 0x010A63BC
+static HHOOK sWindowHook; // 0x010A63C0
+static gpg::time::Timer sWakeupTimer; // 0x010A9B78
+static float sWakeupTimerDur; // 0x010A9B84
+static wxSplashScreen *sSplashScreenPtr; // 0x010A9BE4
+static wxPNGHandler *sPngHandler; // 0x010C6D48
+static Moho::CWaitHandleSet sCWaitHandleSet; // 0x01103AE0
+static Moho::FWaitHandleSet sFWaitHandleSet; // 0x01103B30
+static Moho::CTaskStage sBeforeEventsStage; // 0x011043CC
+static Moho::CTaskStage sBeforeWaitStage; // 0x011043B4
 
 namespace Moho {
 
-// 0x00E0C51C
-class WWinManagedDialog : public wxDialog
-{
-    
-};
-
-// 0x00E0C764
-class WWinManagedFrame : public wxFrame
-{
-    
-};
-
-// 0x00E0CA14
-class WWinLogWindow : public Moho::WWinManagedDialog
-{
-
-};
-
-class IWinApp;
 class CWaitHandleSet;
 class FWaitHandleSet;
 class CTaskStage;
@@ -77,5 +62,5 @@ std::string CFG_GetArgs(); // 0x0041B690
 int func_Dispatch(Moho::CTaskThread *); // 0x004091F0
 void func_UserFrame(Moho::CTaskStage *); // 0x00409AC0
 float func_ProbeWakeTimer(); // 0x004F1540
-bool func_CorrectPlatformVersion(); // 0x004F2000
+bool func_HasCorrectPlatform(); // 0x004F2000
 LRESULT func_WindowHook(int code, WPARAM wParam, DWORD *lParam); // 0x004F2050

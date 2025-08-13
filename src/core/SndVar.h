@@ -4,9 +4,9 @@ namespace Moho {
 
 struct CSndVar
 {
-    short state;
-    bool resolved;
-    std::string name;
+    short mState;
+    bool mResolved;
+    std::string mName;
 };
 
 }

@@ -7,9 +7,9 @@ namespace gpg::gal {
 class CubeRenderTargetD3D9 : public gpg::gal::CubeRenderTarget
 {
 public:
-    gpg::gal::CubeRenderTargetContext context;
+    gpg::gal::CubeRenderTargetContext mContext;
     int v4;
-    IDirect3DSurface9 *faces[6];
+    IDirect3DSurface9 *mFaces[6];
 
     ~CubeRenderTargetD3D9() override = default; // 0x00941430
 };

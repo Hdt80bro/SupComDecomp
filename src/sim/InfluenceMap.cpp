@@ -8,12 +8,12 @@ float Moho::CInfluenceMap::GetThreatRect(
     Moho::EThreatType threatType,
     int army)
 {
-    Moho::STIMap *mapData = this->army->GetSim(this->army)->mapData;
-    gpg::Rect2i border {
-        mapData->playableRect.x0 / this->gridSize,
-        mapData->playableRect.z0 / this->gridSize,
-        mapData->playableRect.x1 / this->gridSize,
-        mapData->playableRect.z1 / this->gridSize
+    Moho::STIMap *mapData = this->mArmy->GetSim()->mMapData;
+    gpg::Rect2i border{
+        mapData->mPlayableRect.x0 / this->mGridSize,
+        mapData->mPlayableRect.z0 / this->mGridSize,
+        mapData->mPlayableRect.x1 / this->mGridSize,
+        mapData->mPlayableRect.z1 / this->mGridSize
     };
     int maxZ = z + radius;
     if (z - radius > z + radius) {
@@ -21,11 +21,11 @@ float Moho::CInfluenceMap::GetThreatRect(
     }
     float totalThreat = 0.0;
     for (int curZ = z - radius; curZ <= maxZ; ++curZ) {
-        if (curZ >= 0 && curZ < this->height && (!onMap || curZ >= border.z0 && curZ <= border.z1)) {
+        if (curZ >= 0 && curZ < this->mHeight && (!onMap || curZ >= border.z0 && curZ <= border.z1)) {
             int maxX = x + radius;
             for (int curX = x - radius; curX <= maxX; ++curX) {
-                if (curX >= 0 && curX < this->width && (!onMap || curX >= border.x0 && curX <= border.x1)) {
-                    totalThreat += this->mapEntries.start[curX + curZ * this->width]->GetThreat(threatType, army);
+                if (curX >= 0 && curX < this->mWidth && (!onMap || curX >= border.x0 && curX <= border.x1)) {
+                    totalThreat += this->mMapEntries.start[curX + curZ * this->mWidth]->GetThreat(threatType, army);
                 }
             }
         }

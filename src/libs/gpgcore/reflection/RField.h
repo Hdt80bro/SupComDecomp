@@ -4,11 +4,11 @@ namespace gpg {
 class RType;
 
 struct RField {
-    const char *name;
-    gpg::RType *type;
-    int offset;
+    const char *mName;
+    gpg::RType *mType;
+    int mOffset;
     int v4;
-    int desc;
+    int mDesc;
 };
 
 }

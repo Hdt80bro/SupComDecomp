@@ -2,7 +2,7 @@
 #include <vector>
 #include <Windows.h>
 
-static std::string whitespaceChars; // 0x00F32308
+static std::string sWhitespaceChars; // 0x00F32308
 
 namespace gpg {
 

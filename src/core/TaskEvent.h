@@ -5,7 +5,7 @@ namespace Moho {
 struct STaskEventLinkage : Moho::TDatListItem<Moho::STaskEventLinkage>
 {
     int v1;
-    Moho::WeakPtr<Moho::CTaskThread> thread;
+    Moho::WeakPtr<Moho::CTaskThread> mThread;
 };
 
 // 0x00E00150

@@ -34,68 +34,68 @@ void *Moho::CNetNullConnector::Func3() {
 
 
 Moho::CNetDatagramSocketImpl::~CNetDatagramSocketImpl() {
-    closesocket(this->socket);
-    if (this->event ) {
-        WSACloseEvent(this->event);
+    closesocket(this->mSocket);
+    if (this->mEvent) {
+        WSACloseEvent(this->mEvent);
     }
 }
-void Moho::CNetDatagramSocketImpl::SendDefault(struct_Datagram *dat, u_short port) {
+void Moho::CNetDatagramSocketImpl::SendDefault(Moho::CMessage *dat, u_short port) {
     this->Send(dat, -1, port);
 }
-void Moho::CNetDatagramSocketImpl::Send(struct_Datagram *dat, u_long addr, u_short port) {
+void Moho::CNetDatagramSocketImpl::Send(Moho::CMessage *dat, u_long addr, u_short port) {
     sockaddr_in to;
     ZeroMemory(&to, sizeof(to));
     to.sin_family = AF_INET;
     to.sin_port = htons(port);
     to.sin_addr.S_un.S_addr = htonl(addr);
-    int res = sendto(this->socket, dat->buf.start, dat->buf.Size(), 0, (SOCKADDR *) &to, sizeof(to));
+    int res = sendto(this->mSocket, dat->mBuf.mStart, dat->mBuf.Size(), 0, (SOCKADDR *) &to, sizeof(to));
     if (res == SOCKET_ERROR) {
         gpg::Logf("CNetDatagramSocketImpl::Send: send() failed: %s", Moho::NET_GetWinsockErrorString());
-    } else if (res < dat->buf.Size()) {
-        gpg::Logf("CNetDatagramSocketImpl::Send: msg truncated, only %d of %d bytes sent.", res, dat->buf.Size());
+    } else if (res < dat->mBuf.Size()) {
+        gpg::Logf("CNetDatagramSocketImpl::Send: msg truncated, only %d of %d bytes sent.", res, dat->mBuf.Size());
     }
 }
 void Moho::CNetDatagramSocketImpl::Pull() {
-    if (this->event) {
-        WSAResetEvent(this->event);
+    if (this->mEvent) {
+        WSAResetEvent(this->mEvent);
     }
     char buf[2048];
     while (true) {
         sockaddr_in from;
         ZeroMemory(&from, sizeof(from));
         int fromlen = sizeof(from);
-        int res = recvfrom(this->socket, buf, sizeof(buf), 0, (SOCKADDR *) &from, &fromlen);
+        int res = recvfrom(this->mSocket, buf, sizeof(buf), 0, (SOCKADDR *) &from, &fromlen);
         if (res == SOCKET_ERROR) {
             break;
         }
 
-        struct_Datagram dat{sizeof(buf), 0};
-        memcpy(dat.start, buf, res);
+        Moho::CMessage dat{sizeof(buf), 0};
+        memcpy(dat.mBuf.mStart, buf, res);
         u_short port = ntohs(from.sin_port);
         u_long addr = ntohl(from.sin_addr.S_un.S_addr);
-        this->datagramHandler->Pull(&dat, this, addr, port);
+        this->mDatagramHandler->Pull(&dat, this, addr, port);
     }
     if (WSAGetLastError() != WSAEWOULDBLOCK) {
         gpg::Logf("CNetBroadcastSocketImpl::Pull: recv() failed: %s", Moho::NET_GetWinsockErrorString());
     }
 }
 HANDLE Moho::CNetDatagramSocketImpl::CreateEvent() {
-    if (! this->event) {
-        this->event = WSACreateEvent();
-        WSAEventSelect(this->socket, this->event, FD_READ);
+    if (! this->mEvent) {
+        this->mEvent = WSACreateEvent();
+        WSAEventSelect(this->mSocket, this->mEvent, FD_READ);
     }
-    return this->event;
+    return this->mEvent;
 }
 
 Moho::CNetDatagramSocketImpl::CNetDatagramSocketImpl(Moho::INetDatagramHandler *handler, SOCKET sock) :
     Moho::INetDatagramSocket{},
-    datagramHandler{handler},
-    socket{sock},
-    event{nullptr}
+    mDatagramHandler{handler},
+    mSocket{sock},
+    mEvent{0}
 {}
 
 
-Moho::INetConnector *Moho::NET_MakeConnector(unsigned short host, Moho::ENetProtocol prot, boost::weak_ptr<Moho::INetNATTraversalProvider> *prov) {
+Moho::INetConnector *Moho::NET_MakeConnector(u_short host, Moho::ENetProtocol prot, boost::weak_ptr<Moho::INetNATTraversalProvider> *prov) {
     switch (prot) {
         case NETPROTO_TCP: return Moho::NET_MakeTCPConnector(host);
         case NETPROTO_UDP: return Moho::NET_MakeUDPConnector(host, prov);
@@ -104,16 +104,16 @@ Moho::INetConnector *Moho::NET_MakeConnector(unsigned short host, Moho::ENetProt
 }
 
 bool Moho::NET_Init() {
-    static bool winsock_initialized = false;
-    if (! winsock_initialized) {
+    static bool sWinsockInitialized = false;
+    if (! sWinsockInitialized) {
         WSAData WSAData;
         if (WSAStartup(MAKEWORD(1, 1), &WSAData)) {
             gpg::Logf("Net_Init(): WSAStartup failed: %s", Moho::NET_GetWinsockErrorString());
         } else {
-            winsock_initialized = 1;
+            sWinsockInitialized = 1;
         }
     }
-    return winsock_initialized;
+    return sWinsockInitialized;
 }
 
 std::string Moho::NET_GetProtocolName(Moho::ENetProtocol netproto) {
@@ -229,57 +229,57 @@ bool Moho::NET_GetAddrInfo(const char *str, unsigned short unk, bool isTCP, unsi
 
 const char *Moho::NET_GetWinsockErrorString() {
     switch (WSAGetLastError()) {
-        case 0:     return "NOERROR";
-        case 10004: return "WSAEINTR";
-        case 10009: return "WSAEBADF";
-        case 10013: return "WSAEACCES";
-        case 10014: return "WSAEFAULT";
-        case 10022: return "WSAEINVAL";
-        case 10024: return "WSAEMFILE";
-        case 10035: return "WSAEWOULDBLOCK";
-        case 10036: return "WSAEINPROGRESS";
-        case 10037: return "WSAEALREADY";
-        case 10038: return "WSAENOTSOCK";
-        case 10039: return "WSAEDESTADDRREQ";
-        case 10040: return "WSAEMSGSIZE";
-        case 10041: return "WSAEPROTOTYPE";
-        case 10042: return "WSAENOPROTOOPT";
-        case 10043: return "WSAEPROTONOSUPPORT";
-        case 10044: return "WSAESOCKTNOSUPPORT";
-        case 10045: return "WSAEOPNOTSUPP";
-        case 10046: return "WSAEPFNOSUPPORT";
-        case 10047: return "WSAEAFNOSUPPORT";
-        case 10048: return "WSAEADDRINUSE";
-        case 10049: return "WSAEADDRNOTAVAIL";
-        case 10050: return "WSAENETDOWN";
-        case 10051: return "WSAENETUNREACH";
-        case 10052: return "WSAENETRESET";
-        case 10053: return "WSAECONNABORTED";
-        case 10054: return "WSAECONNRESET";
-        case 10055: return "WSAENOBUFS";
-        case 10056: return "WSAEISCONN";
-        case 10057: return "WSAENOTCONN";
-        case 10058: return "WSAESHUTDOWN";
-        case 10059: return "WSAETOOMANYREFS";
-        case 10060: return "WSAETIMEDOUT";
-        case 10061: return "WSAECONNREFUSED";
-        case 10062: return "WSAELOOP";
-        case 10063: return "WSAENAMETOOLONG";
-        case 10064: return "WSAEHOSTDOWN";
-        case 10065: return "WSAEHOSTUNREACH";
-        case 10066: return "WSAENOTEMPTY";
-        case 10067: return "WSAEPROCLIM";
-        case 10068: return "WSAEUSERS";
-        case 10069: return "WSAEDQUOT";
-        case 10070: return "WSAESTALE";
-        case 10071: return "WSAEREMOTE";
-        case 10091: return "WSASYSNOTREADY";
-        case 10092: return "WSAVERNOTSUPPORTED";
-        case 10093: return "WSANOTINITIALISED";
-        case 10101: return "WSAEDISCON";
-        case 11001: return "WSAHOST_NOT_FOUND";
-        case 11002: return "WSATRY_AGAIN";
-        case 11003: return "WSANO_RECOVERY";
+        case NOERROR:     return "NOERROR";
+        case WSAEINTR: return "WSAEINTR";
+        case WSAEBADF: return "WSAEBADF";
+        case WSAEACCES: return "WSAEACCES";
+        case WSAEFAULT: return "WSAEFAULT";
+        case WSAEINVAL: return "WSAEINVAL";
+        case WSAEMFILE: return "WSAEMFILE";
+        case WSAEWOULDBLOCK: return "WSAEWOULDBLOCK";
+        case WSAEINPROGRESS: return "WSAEINPROGRESS";
+        case WSAEALREADY: return "WSAEALREADY";
+        case WSAENOTSOCK: return "WSAENOTSOCK";
+        case WSAEDESTADDRREQ: return "WSAEDESTADDRREQ";
+        case WSAEMSGSIZE: return "WSAEMSGSIZE";
+        case WSAEPROTOTYPE: return "WSAEPROTOTYPE";
+        case WSAENOPROTOOPT: return "WSAENOPROTOOPT";
+        case WSAEPROTONOSUPPORT: return "WSAEPROTONOSUPPORT";
+        case WSAESOCKTNOSUPPORT: return "WSAESOCKTNOSUPPORT";
+        case WSAEOPNOTSUPP: return "WSAEOPNOTSUPP";
+        case WSAEPFNOSUPPORT: return "WSAEPFNOSUPPORT";
+        case WSAEAFNOSUPPORT: return "WSAEAFNOSUPPORT";
+        case WSAEADDRINUSE: return "WSAEADDRINUSE";
+        case WSAEADDRNOTAVAIL: return "WSAEADDRNOTAVAIL";
+        case WSAENETDOWN: return "WSAENETDOWN";
+        case WSAENETUNREACH: return "WSAENETUNREACH";
+        case WSAENETRESET: return "WSAENETRESET";
+        case WSAECONNABORTED: return "WSAECONNABORTED";
+        case WSAECONNRESET: return "WSAECONNRESET";
+        case WSAENOBUFS: return "WSAENOBUFS";
+        case WSAEISCONN: return "WSAEISCONN";
+        case WSAENOTCONN: return "WSAENOTCONN";
+        case WSAESHUTDOWN: return "WSAESHUTDOWN";
+        case WSAETOOMANYREFS: return "WSAETOOMANYREFS";
+        case WSAETIMEDOUT: return "WSAETIMEDOUT";
+        case WSAECONNREFUSED: return "WSAECONNREFUSED";
+        case WSAELOOP: return "WSAELOOP";
+        case WSAENAMETOOLONG: return "WSAENAMETOOLONG";
+        case WSAEHOSTDOWN: return "WSAEHOSTDOWN";
+        case WSAEHOSTUNREACH: return "WSAEHOSTUNREACH";
+        case WSAENOTEMPTY: return "WSAENOTEMPTY";
+        case WSAEPROCLIM: return "WSAEPROCLIM";
+        case WSAEUSERS: return "WSAEUSERS";
+        case WSAEDQUOT: return "WSAEDQUOT";
+        case WSAESTALE: return "WSAESTALE";
+        case WSAEREMOTE: return "WSAEREMOTE";
+        case WSASYSNOTREADY: return "WSASYSNOTREADY";
+        case WSAVERNOTSUPPORTED: return "WSAVERNOTSUPPORTED";
+        case WSANOTINITIALISED: return "WSANOTINITIALISED";
+        case WSAEDISCON: return "WSAEDISCON";
+        case WSAHOST_NOT_FOUND: return "WSAHOST_NOT_FOUND";
+        case WSATRY_AGAIN: return "WSATRY_AGAIN";
+        case WSANO_RECOVERY: return "WSANO_RECOVERY";
         default:    return "UNKNOWN";
     }
 }

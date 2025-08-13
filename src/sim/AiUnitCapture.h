@@ -7,12 +7,12 @@ class CUnitCaptureTask :
     public Moho::Listener<Moho::ECommandEvent> // 0x00E1FF1C
 {
 public:
-    Moho::WeakPtr<Moho::Entity> target;
-    bool hasStarted;
-    int capProgress;
-    int capTime;
-    Moho::CEconRequest *consumptionData;
-    Moho::SEconValue rate;
+    Moho::WeakPtr<Moho::Entity> mTarget;
+    bool mHasStarted;
+    int mCapProgress;
+    int mCapTime;
+    Moho::CEconRequest *mConsumptionData;
+    Moho::SEconValue mRate;
     int v12;
 };
 

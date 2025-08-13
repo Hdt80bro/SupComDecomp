@@ -1,4 +1,5 @@
 #include "Win.h"
+#include <sstream>
 
 
 wxFrame *mainWindow; // 0x010A63B8
@@ -10,13 +11,21 @@ wxSplashScreen *splash_screen_ptr; // 0x010A9BE4
 wxPNGHandler *png_Handler; // 0x010C6D48
 
 
+inline HANDLE func_GetMainWindowHandle() {
+    if (Moho::WIN_GetMainWindow() != nullptr) {
+        return Moho::WIN_GetMainWindow()->GetHandle();
+    } else {
+        return 0;
+    }
+}
+
 // 0x004F1190
 void Moho::WIN_ShowCrashDialog(const char *arg0, const char *a4, _EXCEPTION_POINTERS *a2, int ecx0) {
-    std::ostringstream strm{2, 1};
+    std::stringstream strm{};
     strm << a4 << "\n\n";
-    WCHAR Filename[512];
-    if (GetModuleFileNameW(0, Filename, sizeof(Filename)) != nullptr) {
-        strm << "Program : " << = gpg::STR_WideToUtf8(Filename) << "\n";
+    WCHAR filename[512];
+    if (GetModuleFileNameW(0, filename, sizeof(filename)) != nullptr) {
+        strm << "Program : " << gpg::STR_WideToUtf8(filename) << "\n";
     } else {
         strm << "Program : <unknown>\n";
     }
@@ -52,7 +61,7 @@ void Moho::WIN_ShowCrashDialog(const char *arg0, const char *a4, _EXCEPTION_POIN
 // 0x004F1500
 void Moho::WIN_CrashDialogDieHandler(const char *msg) {
     while (true) {
-        Moho::WIN_ShowCrashDialog(2, 0, (HMODULE)"Fatal Error", msg);
+        Moho::WIN_ShowCrashDialog("Fatal Error", msg, nullptr, 2);
         __debugbreak();
     }
 }
@@ -62,8 +71,8 @@ void Moho::WIN_AppExecute(Moho::IWinApp *app) {
     if (app == nullptr) {
         return;
     }
-    supcomapp = app;
-    windowHook = SetWindowsHookExW(
+    sSupComApp = app;
+    sWindowHook = SetWindowsHookExW(
         WH_KEYBOARD_LL,
         func_WindowHook,
         GetModuleHandleW(nullptr),
@@ -76,82 +85,65 @@ void Moho::WIN_AppExecute(Moho::IWinApp *app) {
         &phModule
     );
     wxEntry(phModule, 0, 0, 0, 0);
-    if (func_CorrectPlatformVersion()) {
+    if (func_HasCorrectPlatform()) {
         Moho::THREAD_SetAffinity(1);
         InitCommonControls();
         CoInitialize(0);
         Moho::PLAT_Init();
         Moho::PLAT_CatchStructuredExceptions();
-        wakeupTimer = gpg::time::Timer{};
-        if (! app->Main()) {
-            TerminateProcess(GetCurrentProcess(), 1u);
+        sWakeupTimer = gpg::time::Timer{};
+        if (! app->AppInit()) {
+            TerminateProcess(GetCurrentProcess(), 1);
         }
-        wxTheApp->m_exitOnFrameDelete = true;
-        wxTheApp->m_keepGoing = true;
-        _controlfp(0x20000, 0x30000);
-        bool success = true;
-        bool acceptNewEvent = true;
-        while (true) {
-            while (success) {
-                while (true) {
-                    while (acceptNewEvent) {
-                        SleepEx(0, true);
-                        func_UserFrame(Moho::WIN_GetBeforeEventsStage());
-                        acceptNewEvent = false;
-                    }
-                    if (! wxTheApp->Pending()) {
-                        break;
-                    }
+        _controlfp(_PC_24, _MCW_PC);
 
+        //wxTheApp->OnRun();
+        wxTheApp->SetExitOnFrameDelete(true);
+
+        //wxTheApp->MainLoop();
+        wxTheApp->m_keepGoing = true;
+        while (true) {
+            SleepEx(0, true);
+            func_UserFrame(Moho::WIN_GetBeforeEventsStage());
+            bool success = true;
+            while (success) {
+                if (wxTheApp->Pending()) {
                     wxTheApp->Dispatch();
                     success = true;
-                }
-                if (success) {
+                } else if (success) {
                     success = wxTheApp->ProcessIdle();
                 }
             }
             if (! wxTheApp->m_keepGoing) {
                 break;
             }
-
-            app->OnNoMoreEvents();
-            success = true;
-            acceptNewEvent = true;
+            // wxTheApp->DoMessage();
+            app->Main();
             func_UserFrame(Moho::WIN_GetBeforeWaitStage());
             float waitTime = wakeupTimerDur - func_ProbeWakeTimer();
-            if (waitTime >= 0.0) {
-                if (waitTime <= 4294967300.0) {
-                    waitTime = (int) waitTime;
-                } else {
-                    waitTime = NAN;
-                }
-            } else {
+            if (waitTime < 0.0) {
                 waitTime = 0.0;
+            } else if (waitTime > 4294967300.0) {
+                waitTime = NAN;
+            } else {
+                waitTime = (int) waitTime;
             }
-            wakeupTimer = pInf;
-            Moho::WIN_GetWaitHandleSet().MsgWaitEx(waitTime);
+            sWakeupTimer = INFINITY;
+            Moho::WIN_GetWaitHandleSet()->MsgWaitEx(waitTime);
+            //~DoMessage
         }
-        app->Func1();
+        //~MainLoop
+        //~OnRun
+
+        app->Destroy();
         Moho::WINX_Exit();
         Moho::PLAT_Exit();
         if (wxTheApp != nullptr) {
-            bool cont = true;
-            do {
-                bool pend;
-                do {
-                    bool pend = false;
-                    if (wxTheApp->Pending()) {
-                        wxTheApp->Dispatch();
-                        pend = true;
-                        cont = true;
-                    }
-                } while (pend);
-            } while (cont && cont = wxTheApp->ProcessIdle());
-            wxTheApp->OnExit();
+            wxTheApp->MainLoop();
             wxApp::CleanUp();
         }
-        if (windowHook != NULL) {
-            UnhookWindowsHookEx(windowHook);
+        if (sWindowHook != NULL) {
+            UnhookWindowsHookEx(sWindowHook);
         }
         Moho::RES_Exit();
     } else {
@@ -162,7 +154,7 @@ void Moho::WIN_AppExecute(Moho::IWinApp *app) {
         };
         Moho::WIN_OkBox(title.c_str(), body.c_str());
     }
-    supcomapp = nullptr;
+    sSupComApp = nullptr;
 }
 
 // 0x004F2400, 0x004F2B40
@@ -172,25 +164,25 @@ void Moho::WIN_AppRequestExit(){
 
 // 0x004F2410
 Moho::IWinApp *Moho::WIN_GetCurrentApp() {
-    return supcomapp;
+    return sSupComApp;
 }
 
 // 0x004F2420
 Moho::CWaitHandleSet *Moho::WIN_GetWaitHandleSet() {
-    static Moho::CWaitHandleSet cwaithandleset{}; // 0x01103AE0
-    return &cwaithandleset;
+    static Moho::CWaitHandleSet sCWaitHandleSet{}; // 0x01103AE0
+    return &sCWaitHandleSet;
 }
 
 // 0x004F2480
 Moho::CTaskStage *Moho::WIN_GetBeforeEventsStage() {
-    static Moho::CTaskStage beforeEventsStage{}; // 0x011043CC
-  return &beforeEventsStage;
+    static Moho::CTaskStage sBeforeEventsStage{}; // 0x011043CC
+    return &sBeforeEventsStage;
 }
 
 // 0x004F24F0
 Moho::CTaskStage *Moho::WIN_GetBeforeWaitStage() {
-    static Moho::CTaskStage beforeWaitStage; // 0x011043B4
-    return &beforeWaitStage;
+    static Moho::CTaskStage sBeforeWaitStage; // 0x011043B4
+    return &sBeforeWaitStage;
 }
 
 // 0x004F2560
@@ -199,39 +191,34 @@ void Moho::WIN_SetWakeupTimer(float time) {
         time = 0.0;
     } else {
         time += func_ProbeWakeTimer();
-        if (time >= wakeupTimerDur) {
+        if (time >= sWakeupTimerDur) {
             return;
         }
     }
-    wakeupTimerDur = time;
+    sWakeupTimerDur = time;
 }
 
 // 0x004F25B0
 wxWindow *Moho::WIN_GetMainWindow() {
-    return mainWindow;
+    return sMainWindow;
 }
 
 // 0x004F25C0
 void Moho::WIN_SetMainWindow(wxWindow *wind) {
-    mainWindow = wind;
+    sMainWindow = wind;
 }
 
 // 0x004F25D0
 std::string Moho::WIN_GetClipboardText() {
     std::string ret;
-    HWND handle;
-    if (mainWindow != nullptr) {
-        handle = mainWindow->GetHandle();
-    } else {
-        handle = 0;
-    }
+    HWND handle = func_GetMainWindowHandle();
     if (IsClipboardFormatAvailable(CF_UNICODETEXT) && OpenClipboard(handle)) {
-        HANDLE ClipboardData = GetClipboardData(CF_UNICODETEXT);
-        if (ClipboardData) {
-            auto dat = (const wchar_t *) GlobalLock(ClipboardData);
+        HANDLE clipboardData = GetClipboardData(CF_UNICODETEXT);
+        if (clipboardData) {
+            auto dat = (const wchar_t *) GlobalLock(clipboardData);
             if (dat != nullptr) {
                 ret = gpg::STR_WideToUtf8(dat);
-                GlobalUnlock(ClipboardData);
+                GlobalUnlock(clipboardData);
             }
         }
         CloseClipboard();
@@ -242,18 +229,14 @@ std::string Moho::WIN_GetClipboardText() {
 // 0x004F2730
 bool Moho::WIN_CopyToClipboard(const wchar_t *str) {
     size_t len = wcslen(str);
-    HGLOBAL globStr = GlobalAlloc(0x2042u, 2 * (len + 1));
+    HGLOBAL globStr = GlobalAlloc(GMEM_DDESHARE|GHND, 2 * (len + 1));
     bool succ = false;
     if (globStr != nullptr) {
         wchar_t *locked = (wchar_t *)GlobalLock(globStr);
         memcpy(locked, str, 2 * len);
         locked[len] = '\0';
         GlobalUnlock(globStr);
-        HWND hndl = 0;
-        if (mainWindow != nullptr) {
-            hndl = mainWindow->GetHandle();
-        }
-        if (OpenClipboard(hndl)) {
+        if (OpenClipboard(func_GetMainWindowHandle())) {
             if (EmptyClipboard()) {
                 succ = SetClipboardData(CF_UNICODETEXT, globStr);
             }
@@ -268,51 +251,35 @@ bool Moho::WIN_CopyToClipboard(const wchar_t *str) {
 
 // 0x004F2800
 void Moho::WIN_OkBox(const char *caption, const char *text) {
-    HWND handle;
-    if (mainWindow != nullptr) {
-        handle = mainWindow->GetHandle();
-    } else {
-        handle = 0;
-    }
-    MessageBoxW(
-        handle,
-        gpg::STR_Utf8ToWide(text).c_str(),
-        gpg::STR_Utf8ToWide(caption).c_str(),
-        MB_YESNO
-    );
+    HWND handle = func_GetMainWindowHandle();
+    std::string wideText = gpg::STR_Utf8ToWide(text);
+    std::string wideCaption = gpg::STR_Utf8ToWide(caption);
+    MessageBoxW(handle, wideText.c_str(), wideCaption.c_str(), MB_YESNO);
 }
 
 // 0x004F2900
 bool Moho::WIN_YesNoBox(const char *caption, const char *text) {
-    HWND handle;
-    if (mainWindow != nullptr) {
-        handle = mainWindow->GetHandle();
-    } else {
-        handle = 0;
-    }
-    return MessageBoxW(
-        handle,
-        gpg::STR_Utf8ToWide(text).c_str(),
-        gpg::STR_Utf8ToWide(caption).c_str(),
-        MB_TOPMOST|MB_YESNO
-    ) == IDYES;
+    HWND handle = func_GetMainWindowHandle();
+    std::string wideText = gpg::STR_Utf8ToWide(text);
+    std::string wideCaption = gpg::STR_Utf8ToWide(caption);
+    return MessageBoxW(handle, wideText.c_str(), wideCaption.c_str(), MB_TOPMOST|MB_YESNO) == IDYES;
 }
 
 // 0x004F2A00
 std::string Moho::WIN_GetLastError() {
-    int LastError = GetLastError();
-    LPWSTR Buffer;
+    int lastError = GetLastError();
+    LPWSTR buffer;
     int res = FormatMessageW(
         FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_ALLOCATE_BUFFER,
-        0, LastError,
+        0, lastError,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPWSTR) &Buffer, 0, 0
+        (LPWSTR) &buffer, 0, 0
     );
     if (res <= 0) {
-        return gpg::STR_Printf("Unknown error 0x%08x", LastError);
+        return gpg::STR_Printf("Unknown error 0x%08x", lastError);
     } else {
-        std::string ret = gpg::STR_WideToUtf8(Buffer);
-        LocalFree(Buffer);
+        std::string ret = gpg::STR_WideToUtf8(buffer);
+        LocalFree(buffer);
         return ret;
     }
 }
@@ -332,13 +299,13 @@ wxString Moho::WINX_Printf(const char *fmt...) {
 
 // 0x004F3CE0
 void Moho::WINX_InitSplash(gpg::StrArg filename) {
-    if (png_Handler == nullptr) {
-        png_Handler = new wxPNGHandler{};
-        wxImage::AddHandler(png_handler);
+    if (sPngHandler == nullptr) {
+        sPngHandler = new wxPNGHandler{};
+        wxImage::AddHandler(sPngHandler);
     }
     Moho::WINX_ExitSplash();
     wxBitmap bm{};
-    if (bm.LoadFile(wxString{filename}) {
+    if (bm.LoadFile(wxString{filename})) {
         wxSize size{1024, 768};
         tagRECT rect;
         if (GetWindowRect(0, &rect)) {
@@ -351,18 +318,18 @@ void Moho::WINX_InitSplash(gpg::StrArg filename) {
             &wxDefaultPosition, &size,
             wxSIMPLE_BORDER|wxFRAME_NO_TASKBAR
         };
-        if (splash_screen_ptr != nullptr) {
-            delete(splash_screen_ptr);
+        if (sSplashScreenPtr != nullptr) {
+            delete(sSplashScreenPtr);
         }
-        splash_screen_ptr = splash;
+        sSplashScreenPtr = splash;
     }
 }
 
 // 0x004F3F30
 void Moho::WINX_ExitSplash() {
-    if (splash_screen_ptr != nullptr) {
-        delete(splash_screen_ptr);
-        splash_screen_ptr = nullptr;
+    if (sSplashScreenPtr != nullptr) {
+        delete(sSplashScreenPtr);
+        sSplashScreenPtr = nullptr;
     }
 }
 // 0x004F3CD0 -> 0x004F67E0
@@ -408,15 +375,15 @@ int func_Dispatch(Moho::CTaskThread *thrd) {
         return 0;
     }
     while (true) {
-        Moho::CTask *task = thrd->task;
+        Moho::CTask *task = thrd->mTask;
         if (task == nullptr) {
             return -1;
         }
         bool v10 = false;
-        task->destroyed = &v10;
+        task->mDestroyed = &v10;
         int res = task->Dispatch();
         if (! v10) {
-            task->destroyed = nullptr;
+            task->mDestroyed = nullptr;
         }
         switch (res) {
             case -4:
@@ -429,19 +396,19 @@ int func_Dispatch(Moho::CTaskThread *thrd) {
                 return 0;
             case -1: {
                 Moho::CTask **i;
-                for (i = &thrd->task; *i != task; i = &(*i)->subtask)
+                for (i = &thrd->mTask; *i != task; i = &(*i)->mSubtask)
                     {}
-                *i = task->subtask;
-                task->subtask = nullptr;
-                task->taskThread = nullptr;
-                if (task->isOwning) {
+                *i = task->mSubtask;
+                task->mSubtask = nullptr;
+                task->mTaskThread = nullptr;
+                if (task->mIsOwning) {
                     delete(task);
                 }
                 break;
             }
             case 0: {
                 thrd->val1 = 0;
-                if (thrd->staged) {
+                if (thrd->mStaged) {
                     return 0;
                 }
                 break;
@@ -457,18 +424,18 @@ int func_Dispatch(Moho::CTaskThread *thrd) {
 }
 
 void func_UserFrame(Moho::CTaskStage *stage) {
-    Moho::TDatListItem_CTaskThread *v2; // ecx
-    Moho::TDatListItem_CTaskThread *next; // esi
+    Moho::TDatListItem<Moho::CTaskThread> *v2; // ecx
+    Moho::TDatListItem<Moho::CTaskThread> *next; // esi
     int v4; // eax
-    Moho::TDatListItem_CTaskThread *v5; // edi
-    Moho::TDatListItem_CTaskThread *prev; // eax
-    Moho::TDatListItem_CTaskThread v7; // [esp+8h] [ebp-18h] BYREF
+    Moho::TDatListItem<Moho::CTaskThread> *v5; // edi
+    Moho::TDatListItem<Moho::CTaskThread> *prev; // eax
+    Moho::TDatListItem<Moho::CTaskThread> v7; // [esp+8h] [ebp-18h] BYREF
     int v8; // [esp+1Ch] [ebp-4h]
 
     v2 = &v7;
     Moho::TDatListItem<Moho::CTaskThread> v7;
-    next = stage->threads.next;
-    if (next != &stage->threads) {
+    next = stage->mThreads.mNext;
+    if (next != &stage->mThreads) {
         do {
             next->prev->next = next->next;
             next->next->prev = next->prev;
@@ -484,19 +451,18 @@ void func_UserFrame(Moho::CTaskStage *stage) {
                 next->next->prev = next->prev;
                 next->prev = next;
                 next->next = next;
-                next->prev = stage->threads.prev;
-                next->next = &stage->threads;
+                next->prev = stage->mThreads.prev;
+                next->next = &stage->mThreads;
                 stage->threads.prev = next;
                 next->prev->next = next;
             } else if (v4 == -1) {
                 delete(next)
             }
-            next = stage->threads.next;
-        }
-        while ( next != (Moho::TDatListItem_CTaskThread *)stage );
+            next = stage->mThreads.next;
+        } while (next != &stage->mThreads);
         v2 = v7.next;
     }
-    v5 = stage->threads.next;
+    v5 = stage->mThreads.next;
     if (v2 == &v7) {
         v7.prev->next = v2;
         v7.next->prev = v7.prev;
@@ -514,31 +480,27 @@ void func_UserFrame(Moho::CTaskStage *stage) {
 // 0x004F1540
 float func_ProbeWakeTimer() {
     return gpg::time::CyclesToMilliseconds(
-        wakeupTimer.ElapsedCyclesAndReset()
+        sWakeupTimer.ElapsedCyclesAndReset()
     );
 }
 
 // 0x004F2000
-bool func_CorrectPlatformVersion() {
-    _OSVERSIONINFOW VersionInformation;
-    ZeroMemory(&VersionInformation, sizeof(VersionInformation));
-    VersionInformation.dwOSVersionInfoSize = sizeof(VersionInformation);
-    if (GetVersionExW(&VersionInformation)) {
-        return VersionInformation.dwPlatformId != 1;
-    } else {
-        return true;
-    }
+bool func_HasCorrectPlatform() {
+    _OSVERSIONINFOW info;
+    ZeroMemory(&info, sizeof(info));
+    info.dwOSVersionInfoSize = sizeof(info);
+    return ! (GetVersionExW(&info) && info.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS);
 }
 
 // 0x004F2050
-LRESULT func_WindowHook(int code, WPARAM wParam, _DWORD *lParam) {
+LRESULT func_WindowHook(int code, WPARAM wParam, DWORD *lParam) {
     if (code == 0
-        && supcomapp->HasFrame()
+        && Moho::WIN_GetCurrentApp()->HasFrame()
         && (wParam == 0x100 || wParam == 0x101)
         && (*lParam == '[' || *lParam == '\\')
     ) {
         return 1;
     } else {
-        return CallNextHookEx(windowHook, code, wParam, (LPARAM)lParam);
+        return CallNextHookEx(sWindowHook, code, wParam, (LPARAM)lParam);
     }
 }

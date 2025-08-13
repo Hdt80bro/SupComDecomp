@@ -1,15 +1,16 @@
-#include <string>
-#include <winsock.h>
-#include "boost/weak_ptr.hpp"
+#include "core/Message.h"
+#include "core/MessageDispatcher.h"
 #include "gpgcore/containers/fastvector.h"
 #include "gpgcore/streams/Stream.h"
-#include "core/Message.h"
+#include "boost/weak_ptr.hpp"
+#include <winsock.h>
+#include <string>
 
 
 struct struct_DataSpan
 {
-    char *start;
-    char *end;
+    char *mStart;
+    char *mEnd;
 };
 
 namespace Moho {
@@ -98,9 +99,9 @@ public:
 class CNetDatagramSocketImpl : public Moho::INetDatagramSocket
 {
 public:
-    Moho::INetDatagramHandler *datagramHandler;
-    SOCKET socket;
-    HANDLE event;
+    Moho::INetDatagramHandler *mDatagramHandler;
+    SOCKET mSocket;
+    HANDLE mEvent;
 
     ~CNetDatagramSocketImpl() override;
     void SendDefault(Moho::CMessage *, u_short) override; // 0x0047F0D0
@@ -115,7 +116,7 @@ public:
 class INetTCPSocket : public gpg::Stream
 {
 public:
-    SOCKET socket;
+    SOCKET mSocket;
 
     virtual u_short GetPort() = 0;
     virtual u_long GetPeerAddr() = 0;

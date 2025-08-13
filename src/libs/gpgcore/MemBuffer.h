@@ -5,56 +5,56 @@ namespace gpg {
 template<class T>
 struct MemBuffer
 {
-    boost::shared_ptr<T> data;
-    T *begin;
-    T *end;
+    boost::shared_ptr<T> mData;
+    T *mBegin;
+    T *mEnd;
 
     MemBuffer() :
-        data{},
-        begin{nullptr},
-        end{nullptr}
+        mData{},
+        mBegin{nullptr},
+        mEnd{nullptr}
     {}
     MemBuffer(const MemBuffer<T> &cpy) :
-        data{cpy.data},
-        begin{cpy.begin},
-        end{cpy.end}
+        mData{cpy.data},
+        mBegin{cpy.begin},
+        mEnd{cpy.end}
     {}
     MemBuffer(boost::shared_ptr<T> ptr, T *begin, T *end) :
-        data{ptr},
-        begin{begin},
-        end{end}
+        mData{ptr},
+        mBegin{begin},
+        mEnd{end}
     {}
     MemBuffer(boost::shared_ptr<T> ptr, unsigned int len) :
-        data{ptr},
-        begin{ptr.data()},
-        end{ptr.data() + len}
+        mData{ptr},
+        mBegin{ptr.data()},
+        mEnd{ptr.data() + len}
     {}
 
     T *GetPtr(unsigned int start, unsigned int len) {
-        T *begin = &this->begin[start];
-        if (&begin[len] > this->end) {
+        T *begin = &this->mBegin[start];
+        if (&begin[len] > this->mEnd) {
             throw std::range_error{std::string{"Out of bound access in MemBuffer<>::GetPtr()"}};
         }
         return begin;
     }
     gpg::MemBuffer<T> SubBuffer(unsigned int start, unsigned int len) {
-        return gpg::MemBuffer<T>{this->data, this->GetPtr(start, end), this->GetPtr(start + end, 0)};
+        return gpg::MemBuffer<T>{this->mData, this->GetPtr(start, end), this->GetPtr(start + end, 0)};
     }
     void Reset() {
-        this->data.release();
-        this->begin = nullptr;
-        this->end = nullptr;
+        this->mData.release();
+        this->mBegin = nullptr;
+        this->mEnd = nullptr;
     }
     unsigned int Size() {
-        return (this->end - this->begin) / sizeof(T);
+        return (this->mEnd - this->mBegin) / sizeof(T);
     }
     gpg::MemBuffer<T> &operator=(gpg::MemBuffer<T> const &that) {
-        this->data = that.data;
-        this->begin = that.data;
-        this->end = that.end;
+        this->mData = that.mData;
+        this->mBegin = that.mBegin;
+        this->mEnd = that.mEnd;
     }
     T *operator T *() {
-        return this->begin;
+        return *this->mBegin;
     }
 };
 

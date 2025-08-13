@@ -2,11 +2,11 @@
 
 // 0x0040E9F0
 unsigned int Moho::CMersenneTwister::IRand() {
-    if (this->k >= 624) {
+    if (this->mPos >= 624) {
         this->ShuffleState();
     }
-    unsigned int x = this->state[this->k];
-    ++this->k;
+    unsigned int x = this->mState[this->mPos];
+    ++this->mPos;
     unsigned int a = x >> 11;
     unsigned int b = a ^ x;
     unsigned int c = (b & 0xFF3A58AD) << 7;
@@ -16,25 +16,26 @@ unsigned int Moho::CMersenneTwister::IRand() {
 
 // 0x0040EB60
 void Moho::CMersenneTwister::Seed(unsigned int seed) {
-    this->state[0] = seed;
+    this->mState[0] = seed;
     for (int k = 1; k < 624; ++k) {
         seed = k + 0x6C078965 * (seed ^ (seed >> 30));
-        this->state[k] = seed;
+        this->mState[k] = seed;
     }
-    this->k = 624;
+    this->mPos = 624;
     this->ShuffleState();
 }
 
 // 0x0040EBB0
 void Moho::CMersenneTwister::ShuffleState() {
     static unsigned int mersenne_twist_coef[] = {0, 0x9908B0DF}; // 0x00F5C994
+    // the two loops have been combined with modulo for brevity
     // MT19937
     for (int i = 0 ; i < 623; ++i) {
-        int x = this->state[i] ^ (this->state[i] ^ this->state[i + 1]) & 0x7FFFFFFF;
-        this->state[i] = this->state[(i + 397) % 624] ^ mersenne_twist_coef[x & 1] ^ (x >> 1);
+        int x = this->mState[i] ^ (this->mState[i] ^ this->mState[i + 1]) & 0x7FFFFFFF;
+        this->mState[i] = this->mState[(i + 397) % 624] ^ mersenne_twist_coef[x & 1] ^ (x >> 1);
     }
-    this->state[623] = ((this->state[623] ^ (this->state[623] ^ this->state[0]) & 0x7FFFFFFF) >> 1) ^ this->state[396] ^ mersenne_twist_coef[this->state[0] & 1];
-    this->k = 0;
+    this->mState[623] = ((this->mState[623] ^ (this->mState[623] ^ this->mState[0]) & 0x7FFFFFFF) >> 1) ^ this->state[396] ^ mersenne_twist_coef[this->mState[0] & 1];
+    this->mPos = 0;
 }
 
 // 0x0040EC60
@@ -49,9 +50,9 @@ float Moho::CRandomStream::FRand() {
 
 // 0x0040EEC0
 float Moho::CRandomStream::FRandGaussian() {
-    if (this->hasMarsagliaPair) {
-        this->hasMarsagliaPair = false;
-        return this->marsagliaPair;
+    if (this->mHasMarsagliaPair) {
+        this->mHasMarsagliaPair = false;
+        return this->mMarsagliaPair;
     } else {
         float x, y, s;
         do {
@@ -60,8 +61,8 @@ float Moho::CRandomStream::FRandGaussian() {
             s = x*x + y*y;
         } while (s >= 1.0);
         s = sqrtf(-2.0 * log(s) / s);
-        this->hasMarsagliaPair = true;
-        this->marsagliaPair = y * s;
+        this->mHasMarsagliaPair = true;
+        this->mMarsagliaPair = y * s;
         return x * s;
     }
 }

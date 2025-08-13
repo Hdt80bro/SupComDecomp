@@ -4,8 +4,8 @@ namespace Moho {
 
 struct CMersenneTwister
 {
-    unsigned int state[624];
-    int k;
+    unsigned int mState[624];
+    int mPos;
 
     unsigned int IRand(); // 0x0040E9F0
     void Seed(unsigned int); // 0x0040EB60
@@ -15,8 +15,8 @@ struct CMersenneTwister
 
 struct CRandomStream : Moho::CMersenneTwister
 {
-    float marsagliaPair;
-    bool hasMarsagliaPair;
+    float mMarsagliaPair;
+    bool mHasMarsagliaPair;
 
     float FRand(); // 0x0040EA70
     float FRandGaussian(); // 0x0040EEC0

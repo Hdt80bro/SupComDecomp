@@ -7,12 +7,12 @@ namespace gpg {
 class ZLibOutputFilterStream : public gpg::Stream
 {
 public:
-    gpg::PipeStream *pipeStream;
-    int operation;
+    gpg::PipeStream *mPipeStream;
+    int mOperation;
     z_stream mZStream;
-    char buf[1024];
+    char mBuf[1024];
     bool v272a;
-    bool closed;
+    bool mClosed;
 
     ~ZLibOutputFilterStream() override; // 0x00957340
     void VirtWrite(const char *data, size_t size) override; // 0x00957760

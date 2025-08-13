@@ -5,8 +5,8 @@ namespace gpg::gal {
 class StateCache
 {
 public:
-    int key;
-    int value;
+    int mKey;
+    int mValue;
     int v1;
 };
 
@@ -14,13 +14,13 @@ public:
 class StateManagerD3D9
 {
 public:
-    volatile LONG uses;
-    IDirect3DDevice9 *device;
-    gpg::gal::StateCache renderStateCache;
-    gpg::gal::StateCache samplerStateCache[16];
-    gpg::gal::StateCache textureStageStateCache[8];
-    IDirect3DVertexShader9 *vertexShader;
-    IDirect3DPixelShader9 *pixelShader;
+    volatile LONG mUses;
+    IDirect3DDevice9 *mDevice;
+    gpg::gal::StateCache mRenderStateCache;
+    gpg::gal::StateCache mSamplerStateCache[16];
+    gpg::gal::StateCache mTextureStageStateCache[8];
+    IDirect3DVertexShader9 *mVertexShader;
+    IDirect3DPixelShader9 *mPixelShader;
     int fvf;
 };
 

@@ -6,12 +6,12 @@ namespace gpg::gal {
 class DrawIndexedContext
 {
 public:
-    D3DPRIMITIVETYPE primType;
-    int minVertIndex;
-    int numVertices;
-    int primCount;
-    int startIndex;
-    int baseVertIndex;
+    D3DPRIMITIVETYPE mPrimType;
+    int mMinVertIndex;
+    int mNumVertices;
+    int mPrimCount;
+    int mStartIndex;
+    int mBaseVertIndex;
 
     virtual ~DrawIndexedContext() = default; // 0x0093F160
 };

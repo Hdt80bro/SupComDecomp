@@ -16,20 +16,21 @@ namespace gpg::gal {
 class DeviceContext
 {
 public:
-    int deviceType;
+    int mDeviceType;
     bool v16;
-    UINT adapter;
-    bool vsync;
-    bool hwBasedInstancing;
-    bool supportsFloat16;
-    int vertexShaderProfile;
-    int pixelShaderProfile;
-    int maxPrimitiveCount;
-    int maxVertexCount;
-    std::vector<gpg::gal::Head> heads;
+    UINT mAdapter;
+    bool mVSync;
+    bool mHWBasedInstancing;
+    bool mSupportsFloat16;
+    int mVertexShaderProfile;
+    int mPixelShaderProfile;
+    int mMaxPrimitiveCount;
+    int mMaxVertexCount;
+    std::vector<gpg::gal::Head> mHeads;
 
     virtual ~DeviceContext() = default; // 0x00430570
 
+    int GetHeadCount(); // 0x008E66E0
     gpg::gal::Head *GetHead(unsigned int idx); // 0x008E69C0
 };
 
@@ -38,10 +39,11 @@ public:
 class Device
 {
 public:
-    static bool IsRead();
+    static bool IsReady(); // 0x008E6720
+    static gpg::gal::Device *GetInstance(); // 0x008E6730
 
 public:
-    gpg::gal::OutputContext outputContext;
+    gpg::gal::OutputContext mOutputContext;
 
     virtual ~Device() = 0;
     virtual std::vector<std::string> *GetLog() = 0;
@@ -51,7 +53,7 @@ public:
     virtual void GetModesForAdapter(std::vector<struct_AdapterMode> *modes, int adpter) = 0;
     virtual void GetHead1() = 0;
     virtual void GetHead2() = 0;
-    virtual void GetPipelineState(boost::shared_ptr<gpg::gal::PipelineState *) = 0;
+    virtual void GetPipelineState(boost::shared_ptr<gpg::gal::PipelineState> *) = 0;
     virtual void CreateEffect() = 0;
     virtual boost::shared_ptr<gpg::gal::Texture> CreateTexture(gpg::gal::TextureContext *) = 0;
     virtual void CreateVolumeTexture() = 0;
@@ -98,4 +100,4 @@ public:
 }
 
 
-static gpg::gal::Device *deviceD3D; // 0x00F8E284
+static gpg::gal::Device *sDeviceD3D; // 0x00F8E284

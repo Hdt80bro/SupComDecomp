@@ -1,11 +1,11 @@
-#include <string>
-#include <vector>
-//#include "wx/frame.h"
-#include "LuaPlus.h"
 #include "gpgcore/reflection/RRef.h"
 #include "gpgcore/streams/Stream.h"
 #include "gpgcore/MemBuffer.h"
 #include "gpgcore/String.h"
+//#include "wx/frame.h"
+#include "LuaPlus.h"
+#include <string>
+#include <vector>
 
 namespace Moho {
 
@@ -19,7 +19,7 @@ class ScrDebugWindow : public wxFrame
 class CScrLuaObjectFactory
 {
 public:
-    int index;
+    int mIndex;
 
     virtual LuaPlus::LuaObject Create(LuaPlus::LuaState *) = 0;
 
@@ -40,12 +40,12 @@ class CScrLuaMetatableFactory : public Moho::CScrLuaObjectFactory
 class CScrLuaBinder
 {
 public:
-    const char *methodName;
-    const char *className;
-    const char *help;
-    Moho::CScrLuaBinder *previousDef;
-    lua_CFunction func;
-    Moho::CScrLuaObjectFactory *factory;
+    const char *mMethodName;
+    const char *mClassName;
+    const char *mHelp;
+    Moho::CScrLuaBinder *mPreviousDef;
+    lua_CFunction mGunc;
+    Moho::CScrLuaObjectFactory *mFactory;
 
     virtual void Run(LuaPlus::LuaState *); // 0x004CD3A0
 };
@@ -62,10 +62,10 @@ class CScrLuaClassBinder : public Moho::CScrLuaInitForm
 
 struct CScrLuaInitFormSet
 {
-    const char *name;
-    Moho::CScrLuaInitForm *forms;
-    bool registered;
-    Moho::CScrLuaInitFormSet *nextSet;
+    const char *mName;
+    Moho::CScrLuaInitForm *mForms;
+    bool mRegistered;
+    Moho::CScrLuaInitFormSet *mNextSet;
 };
 
 // 0x00E076B8
@@ -73,7 +73,7 @@ class ScrBreakpoint
 {
 public:
     int v1;
-    std::string name;
+    std::string mName;
     int v2;
 
     virtual ~ScrBreakpoint() = default; // 0x004B0130
@@ -83,9 +83,9 @@ public:
 class ScrActivation
 {
 public:
-    std::string file;
-    std::string name;
-    int line;
+    std::string mFile;
+    std::string mName;
+    int mLine;
 
     virtual ~ScrActivation() = default; // 0x004AFF60
 };
@@ -93,8 +93,8 @@ public:
 // 0x00E07E58
 class ScrWatch
 {
-    std::string file;
-    LuaPlus::LuaObject obj;
+    std::string mFile;
+    LuaPlus::LuaObject mObj;
 
     virtual ~ScrWatch() = default; // 0x004B9070
 };
@@ -151,18 +151,18 @@ std::string SCR_Traceback(LuaPlus::LuaState *, gpg::StrArg); // 0x004D33A0
 
 }
 
-static int cur_thread_id; // 0x010A63A0
-static Moho::ScrDebugWindow *srcDebugWindow; // 0x010A63A4
-static std::vector<std::string> hookDirs; // 0x010A91D0
+static int sCurThreadId; // 0x010A63A0
+static Moho::ScrDebugWindow *sSrcDebugWindow; // 0x010A63A4
+static std::vector<std::string> sHookDirs; // 0x010A91D0
 
 struct struct_LuaFileLoaderDat
 {
-    gpg::MemBuffer<const char> buf;
-    bool done;
+    gpg::MemBuffer<const char> mBuf;
+    bool mDone;
 
     struct_LuaFileLoaderDat(gpg::MemBuffer<const char> &buf) :
-        buf{buf},
-        done{false}
+        mBuf{buf},
+        mDone{false}
     {} // inline e.g. 0x004CE0E2
 };
 

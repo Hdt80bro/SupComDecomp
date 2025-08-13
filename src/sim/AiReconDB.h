@@ -23,23 +23,23 @@ class IAiReconDB
 // 0x00E1D8D4
 class CAiReconDBImpl : public Moho::IAiReconDB
 {
-    std::map<Moho::SReconKey, Moho::ReconBlip> blipMap;
-    std::vector<Moho::ReconBlip> blips;
+    std::map<Moho::SReconKey, Moho::ReconBlip> mBlipMap;
+    std::vector<Moho::ReconBlip> mBlips;
     std::vector<Moho::ReconBlip> v7;
-    Moho::CArmyImpl *army;
-    Moho::STIMap *mapdata;
-    Moho::Sim *sim;
-    Moho::CInfluenceMap *imap;
-    boost::shared_ptr<Moho::CIntelGrid> m_visionGrid;
-    boost::shared_ptr<Moho::CIntelGrid> m_waterGrid;
-    boost::shared_ptr<Moho::CIntelGrid> m_radarGrid;
-    boost::shared_ptr<Moho::CIntelGrid> m_sonarGrid;
-    boost::shared_ptr<Moho::CIntelGrid> m_omniGrid;
-    boost::shared_ptr<Moho::CIntelGrid> m_rsiGrid;
-    boost::shared_ptr<Moho::CIntelGrid> m_sciGrid;
-    boost::shared_ptr<Moho::CIntelGrid> m_vciGrid;
+    Moho::IArmy *mArmy;
+    Moho::STIMap *mMapData;
+    Moho::Sim *mSim;
+    Moho::CInfluenceMap *mIMap;
+    boost::shared_ptr<Moho::CIntelGrid> mVisionGrid;
+    boost::shared_ptr<Moho::CIntelGrid> mWaterGrid;
+    boost::shared_ptr<Moho::CIntelGrid> mRadarGrid;
+    boost::shared_ptr<Moho::CIntelGrid> mSonarGrid;
+    boost::shared_ptr<Moho::CIntelGrid> mOmniGrid;
+    boost::shared_ptr<Moho::CIntelGrid> mRCIGrid;
+    boost::shared_ptr<Moho::CIntelGrid> mSCIGrid;
+    boost::shared_ptr<Moho::CIntelGrid> mVCIGrid;
     Moho::EntityCategory v31;
-    bool fogOfWar;
+    bool mFogOfWar;
     int v42;
 
     virtual void ReconTick(int); // 0x005C0C40

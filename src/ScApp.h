@@ -1,6 +1,7 @@
-//#include "wx/frame.h"
+#include "core/WinApp.h"
 #include "gpgcore/Timer.h"
-#include "core/App.h"
+#include "gpggal/Device.h"
+#include "wx/frame.h"
 
 // 0x00E4F434
 class WSupComFrame : public wxFrame
@@ -18,16 +19,17 @@ public:
 
 struct struct_RollingFrameRates
 {
-    float vals[10];
-    int start;
-    int end;
+    float mVals[10];
+    int mStart;
+    int mEnd;
 
     void roll(float in) {
-        if ((this->end + 1) % 10 == this->start) {
-            this->start = (this->start + 1) % 10;
+        int nextEnd = (this->mEnd + 1) % 10;
+        if (nextEnd == this->mStart) {
+            this->mStart = (this->mStart + 1) % 10;
         }
-        this->vals[this->start] = in;
-        this->end = (this->end + 1) % 10;
+        this->mVals[this->mStart] = in;
+        this->mEnd = nextEnd;
     } // inline
     float median(); // 0x008D4B20
 };
@@ -37,21 +39,24 @@ class CScApp : public Moho::IWinApp
 {
 public:
     int v16;
-    int usingScreensaver;
-    bool initialized;
-    bool isMinimized;
-    WSupComFrame *supcomFrame;
-    WSupComFrame *frame;
+    int mUsingScreensaver;
+    bool mInitialized;
+    bool mIsMinimized;
+    WSupComFrame *mFram1;
+    WSupComFrame *mFrame2;
     bool v21;
-    gpg::time::Timer curTime;
-    struct_RollingFrameRates framerates;
+    gpg::time::Timer mCurTime;
+    struct_RollingFrameRates mFrameRates;
 
     ~CScApp() override = default; // 0x008D1CB0
-    bool Main() override; // 0x008CEDE0
-    int OnNoMoreEvents() override; // 0x008D1470
+    bool AppInit() override; // 0x008CEDE0
+    int Main() override; // 0x008D1470
     void Destroy() override; // 0x008D0F20
     bool HasFrame() override; // 0x008CE1D0
+
+    CScApp() = default;
+    bool CreateAppFrame(std::string *title, BOOL maximized, wxPoint *pos, gpg::gal::DeviceContext *context); // 0x008CF8C0
+    int CreateDevice(); // 0x008D0370
 };
 
-bool func_CreateAppFrame(CScApp *app, std::string *title, BOOL maximized, wxPoint *pos, gpg::gal::DeviceContext *context); // 0x008CF8C0
-int func_CreateDevice(CsApp *app); // 0x008D0370
+void func_InitializeSession(); // 0x008CE3D0

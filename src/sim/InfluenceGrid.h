@@ -5,29 +5,29 @@ namespace Moho {
 
 struct SThreat
 {
-    float overallInfluence;
-    float influenceStructuresNotMex;
-    float influenceStructures;
-    float navalInfluence;
-    float airInfluence;
-    float landInfluence;
-    float experimentalInfluence;
-    float commanderInfluence;
-    float artilleryInfluence;
-    float antiAirInfluence;
-    float antiSurfaceInfluence;
-    float antiSubInfluence;
-    float economyInfluence;
-    float unknownInfluence;
+    float mOverallInfluence;
+    float mInfluenceStructuresNotMex;
+    float mInfluenceStructures;
+    float mNavalInfluence;
+    float mAirInfluence;
+    float mLandInfluence;
+    float mExperimentalInfluence;
+    float mCommanderInfluence;
+    float mArtilleryInfluence;
+    float mAntiAirInfluence;
+    float mAntiSurfaceInfluence;
+    float mAntiSubInfluence;
+    float mEconomyInfluence;
+    float mUnknownInfluence;
 };
 
 struct InfluenceMapEntry
 {
-    Moho::EntId id;
-    Moho::Sim *sim;
-    Wm3::Vector3f pos;
-    Moho::RUnitBlueprint *bp;
-    Moho::ELayer layer;
+    Moho::EntId mId;
+    Moho::Sim *mSim;
+    Wm3::Vector3f mPos;
+    Moho::RUnitBlueprint *mBlueprint;
+    Moho::ELayer mLayer;
     bool v7;
     float v8;
     float v9;
@@ -37,10 +37,10 @@ struct InfluenceMapEntry
 
 struct InfluenceGrid
 {
-    std::map<unsigned int, Moho::InfluenceMapEntry> entries;
-    std::vector<Moho::SThreat> threats;
-    Moho::SThreat threat;
-    Moho::SThreat decay;
+    std::map<unsigned int, Moho::InfluenceMapEntry> mEntries;
+    std::vector<Moho::SThreat> mThreats;
+    Moho::SThreat mThreat;
+    Moho::SThreat mDecay;
 };
 
 }

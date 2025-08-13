@@ -1,8 +1,9 @@
-#include "LuaPlus.h"
-#include "Wm3Vector3.h"
 #include "gpgcore/String.h"
 #include "gpgcore/MD5.h"
 #include "gpgcore/containers/fastvector.h"
+#include "LuaPlus.h"
+#include "Wm3Vector3.h"
+#include "boost/shared_ptr.hpp"
 
 namespace Moho {
 
@@ -52,7 +53,7 @@ public:
     Sim(Moho::LaunchInfoBase *info); // 0x007434D0
     void Setup(Moho::LaunchInfoBase *info); // 0x00744060
     void CreateArmies(const std::vector<Moho::ArmyLaunchInfo> &, const std::vector<LuaPlus::LuaObject> &, const LuaPlus::LuaObject &); // 0x00746310
-    void  PostInitialize(const LuaPlus::LuaObject &); // 0x007464D0
+    void PostInitialize(const LuaPlus::LuaObject &); // 0x007464D0
     bool CheatsEnabled(); // 0x00747180
     bool OkayToMessWith(Moho::SimArmy *); // 0x00747360
 };

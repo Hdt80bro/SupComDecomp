@@ -1,8 +1,8 @@
-#include <string>
-#include "xact3.h"
 #include "core/ScriptEvent.h"
 #include "core/SndParams.h"
 #include "core/TDatListItem.h"
+#include "xact3.h"
+#include <string>
 
 
 namespace Moho {
@@ -13,8 +13,9 @@ class HSound :
     public Moho::CScriptEvent,
     public Moho::TDatListItem<Moho::HSound>
 {
-    IXACT3Cue *ixactCue;
-    Moho::CSndParams *params;
+public:
+    IXACT3Cue *mXactCue;
+    Moho::CSndParams *mParams;
     bool v5;
 };
 

@@ -16,13 +16,13 @@ class CUnitAttackTargetTask : public Moho::CAttackTargetTask
 {
 public:
     Moho::CUnitCommand *v28;
-    Moho::CAiFormationInstance *formation;
-    Moho::UnitWeapon *weapon;
-    Moho::CAiTarget target;
+    Moho::CAiFormationInstance *mFormation;
+    Moho::UnitWeapon *mWeapon;
+    Moho::CAiTarget mTarget;
     Wm3::Vector3f v39;
     bool v42a;
     bool v42b;
-    bool isGrounded;
+    bool mIsGrounded;
     bool v42d;
 };
 

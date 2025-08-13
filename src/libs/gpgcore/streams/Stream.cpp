@@ -30,7 +30,7 @@ void gpg::Stream::VirtUnGetByte(int) {
     throw gpg::Stream::UnsupportedOperation{};
 }
 
-// 00956DF0
+// 0x00956DF0
 bool gpg::Stream::VirtAtEnd() {
     return false;
 }
@@ -51,8 +51,8 @@ void gpg::Stream::Write(const char *buf, size_t size) {
     if (size > this->LeftInWriteBuffer()) {
         this->VirtWrite(buf, size);
     } else {
-        memcpy(this->writeStart, buf, size);
-        this->writeStart += size;
+        memcpy(this->mWriteStart, buf, size);
+        this->mWriteStart += size;
     }
 }
 
@@ -67,8 +67,8 @@ size_t gpg::Stream::Read(char *buf, size_t size) {
     if (size > this->LeftInReadBuffer()) {
         size = this->VirtRead(buf, size);
     } else if (size) {
-        memcpy(buf, this->readHead, size);
-        this->readHead += size;
+        memcpy(buf, this->mReadHead, size);
+        this->mReadHead += size;
     }
     return size;
 }

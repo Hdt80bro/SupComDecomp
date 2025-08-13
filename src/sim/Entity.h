@@ -5,11 +5,11 @@
 #include "Wm3AxisAlignedBox3.h"
 #include "Wm3Quaternion.h"
 #include "Wm3Vector3.h"
+#include "core/Intel.h"
 #include "core/ScriptObject.h"
 #include "core/SndParams.h"
 #include "core/Task.h"
 #include "sim/ColPrimitive.h"
-#include "sim/Intel.h"
 #include "sim/PhysBody.h"
 #include "sim/Sim.h"
 
@@ -52,46 +52,46 @@ struct SEntAttachInfo
     int v1;
     float v2;
     float v3;
-    Wm3::Quaternionf parentOrientation;
-    Wm3::Vector3f parentOffset;
+    Wm3::Quaternionf mParentOrientation;
+    Wm3::Vector3f mParentOffset;
 };
 
 
 struct SSTIEntityConstantData
 {
-    Moho::EntId id;
-    Moho::REntityBlueprint *bp;
-    int tickCreated;
+    Moho::EntId mId;
+    Moho::REntityBlueprint *mBlueprint;
+    int mTickCreated;
 };
 
 struct EntityAttributes
 {
-    int vision;
-    int waterVision;
-    int radar;
-    int sonar;
-    int omni;
-    int radarStealth;
-    int sonarStealth;
-    int cloak;
+    int mVision;
+    int mWaterVision;
+    int mRadar;
+    int mSonar;
+    int mOmni;
+    int mRadarStealth;
+    int mSonarStealth;
+    int mCloak;
 };
 
 
 struct SSTIEntityVariableData
 {
-    boost::shared_ptr<Moho::RScmResource> scmResource;
-    int mesh;
-    Wm3::Vector3f scale;
-    float health;
-    float maxHealth;
-    bool isBeingBuilt;
-    bool isDead;
-    bool requestRefreshUI;
-    Moho::VTransform curTransform;
-    Moho::VTransform lastTransform;
-    float curImpactSomething;
-    float fractionComplete;
-    int attachmentParent;
+    boost::shared_ptr<Moho::RScmResource> mScmResource;
+    int mMesh;
+    Wm3::Vector3f mScale;
+    float mHealth;
+    float mMaxHealth;
+    bool mIsBeingBuilt;
+    bool mIsDead;
+    bool mRequestRefreshUI;
+    Moho::VTransform mCurTransform;
+    Moho::VTransform mLastTransform;
+    float mCurImpactSomething;
+    float mFractionComplete;
+    int mAttachmentParent;
     int v1;
     int v2;
     int v3;
@@ -100,14 +100,14 @@ struct SSTIEntityVariableData
     int v6;
     long v7;
     long v8;
-    Moho::CSndParams *ambientSound;
-    Moho::CSndParams *rumbleSound;
-    bool notVisibility;
-    int visibility;
-    Moho::ELayer layer;
-    bool usingAltFp;
-    boost::shared_ptr<Moho::CD3DBatchTexture> underlayTexture;
-    Moho::EntityAttributes intelAttributes;
+    Moho::CSndParams *mAmbientSound;
+    Moho::CSndParams *mRumbleSound;
+    bool mNotVisibility;
+    int mVisibility;
+    Moho::ELayer mLayer;
+    bool mUsingAltFP;
+    boost::shared_ptr<Moho::CD3DBatchTexture> mUnderlayTexture;
+    Moho::EntityAttributes mAttributes;
 };
 
 
@@ -117,37 +117,37 @@ class Entity :
     public Moho::CTask          // 0x00E27590
 {
 public:
-    Moho::EEntityType type;
-    Moho::TDatListItem<unk_t> aitarget;
-    Moho::SSTIEntityConstantData sstiConst;
+    Moho::EEntityType mType;
+    Moho::TDatListItem<unk_t> mTarget;
+    Moho::SSTIEntityConstantData mConstDat;
     int gap;
-    Moho::SSTIEntityVariableData sstiVar;
-    Moho::Sim *sim;
-    Moho::CArmyImpl *army;
-    Moho::VTransform lastTrans;
-    Moho::PositionHistory *positionHistory;
-    float lastImpactSomething;
+    Moho::SSTIEntityVariableData mVarDat;
+    Moho::Sim *mSim;
+    Moho::IArmy *mArmy;
+    Moho::VTransform mLastTrans;
+    Moho::PositionHistory *mPositionHistory;
+    float mLastImpactSomething;
     int v6;
-    Moho::CColPrimitive *collisionShape;
-    std::vector<Moho::Entity *> attachedEntities;
+    Moho::CColPrimitive *mCollisionShape;
+    std::vector<Moho::Entity *> mAttachedEntities;
     Moho::SEntAttachInfo parent_p1;
     bool v3a;
-    bool destroyQueued;
-    bool destroyed;
-    std::string resId;
-    Moho::CIntel *intelManager;
-    Moho::EVisibilityMode vizToFocusPlayer;
-    Moho::EVisibilityMode vizToAllies;
-    Moho::EVisibilityMode vizToEnemies;
-    Moho::EVisibilityMode vizToNeutrals;
-    bool interfaceCreated;
-    Moho::CTextureScroller *scroller;
-    Moho::SPhysBody *physBody;
+    bool mDestroyQueued;
+    bool mDestroyed;
+    std::string mResId;
+    Moho::CIntel *mIntelManager;
+    Moho::EVisibilityMode mVizToFocusPlayer;
+    Moho::EVisibilityMode mVizToAllies;
+    Moho::EVisibilityMode mVizToEnemies;
+    Moho::EVisibilityMode mVizToNeutrals;
+    bool mInterfaceCreated;
+    Moho::CTextureScroller *mScroller;
+    Moho::SPhysBody *mPhysBody;
     bool v4;
-    std::string uniqueName;
-    Moho::EntitySetTemplate<Moho::Entity> shooters;
-    Wm3::AxisAlignedBox3f collision;
-    LuaPlus::LuaObject objPos;
+    std::string mUniqueName;
+    Moho::EntitySetTemplate<Moho::Entity> mShooters;
+    Wm3::AxisAlignedBox3f mCollision;
+    LuaPlus::LuaObject mObjPos;
 };
 
 int ENTSCR_ResolveBoneIndex(Moho::Entity *, LuaPlus::LuaStackObject &, bool); // 0x00692580

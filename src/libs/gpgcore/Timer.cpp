@@ -2,8 +2,8 @@
 
 LARGE_INTEGER PerformanceFrequency; ; // 0x00F8ED58
 float TimerCycleToSeconds; // 0x00F8ED60
-LONGLONG gpg_time; // 0x00F8ED68
-gpg::time::Timer system_timer; // 0x00F8ED78, first set at 0x00BEAB90
+LONGLONG gpgTime; // 0x00F8ED68
+gpg::time::Timer systemTimer; // 0x00F8ED78, first set at 0x00BEAB90
 
 // inline
 inline void initPerformanceCounters() {
@@ -15,25 +15,25 @@ inline void initPerformanceCounters() {
 
 // 0x009556F0 or 0x009556D0
 gpg::time::Timer::Timer() :
-    time{gpg::time::GetTime()}
+    mTime{gpg::time::GetTime()}
 {}
 
 // 0x009556D0 or 0x009556F0
 void gpg::time::Timer::Reset() {
-    this->time = gpg::time::GetTime();
+    this->mTime = gpg::time::GetTime();
 }
 
 // 0x00955710
 LONGLONG gpg::time::Timer::ElapsedCyclesAndReset() {
     LONGLONG curTime = gpg::time::GetTime();
-    LONGLONG diff = curTime - this->time;
-    this->time = curTime;
+    LONGLONG diff = curTime - this->mTime;
+    this->mTime = curTime;
     return diff;
 }
 
 // 0x00955700
 LONGLONG gpg::time::Timer::ElapsedCycles() {
-    return gpg::time::GetTime() - this->time;
+    return gpg::time::GetTime() - this->mTime;
 }
 
 // 0x00485A40
@@ -53,11 +53,11 @@ LONGLONG gpg::time::GetTime() {
     LONGLONG newVal = PerformanceCount.QuadPart;
     LONGLONG ex, cur;
     do {
-        cur = gpg_time;
+        cur = gpgTime;
         if (newVal < cur) {
-            newVal = gpg_time + 1;
+            newVal = gpgTime + 1;
         }
-        ex = InterlockedCompareExchange64(&gpg_time, newVal, gpg_time);
+        ex = InterlockedCompareExchange64(&gpgTime, newVal, gpgTime);
     } while (ex != cur);
     return newVal;
 }
@@ -86,9 +86,9 @@ gpg::time::Timer const &gpg::time::GetSystemTimer() {
     static int guard = 0; // 0x00F8ED80
     if ((guard & 1) == 0) {
         guard |= 1;
-        system_timer = gpg::time::Timer{};
+        systemTimer = gpg::time::Timer{};
     }
-    return system_timer;
+    return systemTimer;
 }
 
 // 0x00955630

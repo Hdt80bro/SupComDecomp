@@ -3,11 +3,11 @@
 
 struct struct_HeapStats
 {
-    int reserved;
-    int committed;
-    int total;
-    int inSmallBlocks;
-    int inUse;
+    int mRreserved;
+    int mCommitted;
+    int mTotal;
+    int mInSmallBlocks;
+    int mInUse;
 };
 
 
@@ -33,17 +33,17 @@ class StatItem
     int dword1C;
     int dword20;
     int counter;
-    std::string value;
+    std::string mValue;
     int val;
     std::string str2;
     int dword64;
     int dword68;
     int dword6C;
     int dword70;
-    std::string name;
-    Moho::EStatType type;
-    volatile int lockingVar;
-    boost::mutex lock;
+    std::string mName;
+    Moho::EStatType mType;
+    volatile int mLockingVar;
+    boost::mutex mLock;
 
     void Release(int val); // 0x004151E0
     void SetValue(std::string &disp);

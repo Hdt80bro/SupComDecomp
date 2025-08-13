@@ -7,10 +7,10 @@ namespace gpg::gal {
 class TextureD3D9 : public gpg::gal::Texture
 {
 public:
-    gpg::gal::TextureContext context;
-    IDirect3DTexture9 *texture;
-    bool locking;
-    int level;
+    gpg::gal::TextureContext mContext;
+    IDirect3DTexture9 *mTexture;
+    bool mLocking;
+    int mLevel;
 
     ~TextureD3D9() override = default; // 0x0094AB60
     gpg::gal::TextureContext *GetContext() override; // 0x0094A080

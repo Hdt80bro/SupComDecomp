@@ -1,5 +1,5 @@
-#include <string>
 #include "LuaPlus.h"
+#include <string>
 
 namespace Moho {
 

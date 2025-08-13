@@ -7,10 +7,10 @@ namespace gpg::gal {
 class OutputContext
 {
 public:
-    boost::shared_ptr<gpg::gal::CubeRenderTargetD3D9> cubeTarget;
-    int face;
-    boost::shared_ptr<gpg::gal::D3DSurface> surface;
-    boost::weak_ptr<int> obj2;
+    boost::shared_ptr<gpg::gal::CubeRenderTargetD3D9> mCubeTarget;
+    int mFace;
+    boost::shared_ptr<gpg::gal::D3DSurface> mSurface;
+    boost::weak_ptr<int> mObj2;
 
     virtual ~OutputContext() = default; // 0x008E8250
 };

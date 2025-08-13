@@ -7,14 +7,14 @@ struct PathTables
 
     struct Impl
     {
-        int width;
-        int height;
-        std::vector<gpg::HaStar::IOccupationSource> srcs;
-        std::vector<gpg::HaStar::ClusterMap> maps;
-        boost::shared_ptr<Moho::RScmResource> clusterCache;
+        int mWidth;
+        int mHeight;
+        std::vector<gpg::HaStar::IOccupationSource> mSrcs;
+        std::vector<gpg::HaStar::ClusterMap> mMaps;
+        boost::shared_ptr<Moho::RScmResource> mClusterCache;
     };
 
-    Moho::PathTables::Impl *impl;
+    Moho::PathTables::Impl *mImpl;
 };
 
 

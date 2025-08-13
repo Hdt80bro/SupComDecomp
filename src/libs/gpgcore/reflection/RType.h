@@ -1,9 +1,14 @@
 #include <vector>
-#include "RObject.h"
-#include "RRef.h"
-#include "RField.h"
+#include "gpgcore/reflection/RField.hpp"
+#include "gpgcore/reflection/RIndexed.hpp"
+#include "gpgcore/reflection/RObject.hpp"
+#include "gpgcore/reflection/RRef.hpp"
+#include "gpgcore/streams/WriteArchive.hpp"
+#include "gpgcore/streams/ReadArchive.hpp"
 
 namespace gpg {
+
+class REnumType;
 
 // 0x00D41694
 class RType : public gpg::RObject
@@ -11,7 +16,7 @@ class RType : public gpg::RObject
 public:
     bool mFinished;
     bool mInitFinished;
-    int size;
+    int mSize;
     int mVersion;
     int mSerSaveConstructArgsFunc;
     void (__cdecl *mSerSaveFunc)(gpg::WriteArchive *, int, int, int);
@@ -19,14 +24,14 @@ public:
     void (__cdecl *mSerLoadFunc)(gpg::ReadArchive *, int, int, gpg::RRef *);
     int v8;
     int v9;
-    std::vector<gpg::RField> bases;
+    std::vector<gpg::RField> mBases;
     std::vector<gpg::RField> mFields;
     gpg::RRef *(*NewRef)(gpg::RRef *);
-    int CpyRef;
+    int mCpyRef;
     void (*mDelete)(void *);
-    int CtrRef;
-    int MovRef;
-    int Dtr;
+    int mCtrRef;
+    int mMovRef;
+    int mDtr;
     bool v24;
 
 

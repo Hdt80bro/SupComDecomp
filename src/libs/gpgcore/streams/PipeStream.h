@@ -6,7 +6,7 @@
 struct struct_stream_buffer :
     gpg::DatListItem<struct_stream_buffer>
 {
-    char data[4096];
+    char mData[4096];
 };
 
 
@@ -16,10 +16,10 @@ namespace gpg {
 class PipeStream : public gpg::Stream
 {
 public:
-    boost::mutex lock;
+    boost::mutex mLock;
     int v11;
-    boost::condition semaphore;
-    gpg::DatListItem<struct_stream_buffer> buf;
+    boost::condition mSemaphore;
+    gpg::DatListItem<struct_stream_buffer> mBuf;
 
     PipeStream(); // 0x009565D0
     ~PipeStream(); // 0x009569A0

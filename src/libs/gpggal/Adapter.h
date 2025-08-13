@@ -3,9 +3,9 @@
 
 struct struct_AdapterMode
 {
-    int Width;
-    int Height;
-    int RefreshRate;
+    int mWidth;
+    int mHeight;
+    int mRefreshRate;
 };
 
 namespace gpg::gal {
@@ -22,12 +22,12 @@ public:
 class AdapterD3D9
 {
 public:
-    int vendorId;
-    int deviceId;
-    std::string driver;
-    std::string deviceName;
-    std::string description;
-    std::vector<gpg::gal::AdapterModeD3D9> modes;
+    int mVendorId;
+    int mDeviceId;
+    std::string mDriver;
+    std::string mDeviceName;
+    std::string mDescription;
+    std::vector<gpg::gal::AdapterModeD3D9> mModes;
 
     virtual ~AdapterD3D9() = default; // 0x008F0040
 };

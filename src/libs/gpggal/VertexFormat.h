@@ -6,8 +6,8 @@ namespace gpg::gal {
 class VertexFormat
 {
 public:
-    int format;
-    std::vector<int> v2;
+    int mFormat;
+    std::vector<int> mVec;
 
     virtual ~VertexFormat() = 0;
 };

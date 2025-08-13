@@ -1,6 +1,6 @@
 
 struct struct_EnumValue
 {
-    int value;
-    const char *name;
+    int mValue;
+    const char *mName;
 };

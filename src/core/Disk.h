@@ -1,16 +1,21 @@
-#include <memory>
-#include "boost/filesystem/path.hpp"
-#include "boost/thread/once.hpp"
+
+#include "core/DiskWatch.h"
+#include "core/VirtualFileSystem.h"
+#include "core/WaitHandleSet.h"
+
 #include "gpgcore/streams/Stream.h"
 #include "gpgcore/MemBuffer.h"
 #include "gpgcore/String.h"
+#include "boost/filesystem/path.hpp"
+#include "boost/thread/once.hpp"
+#include <memory>
 
-static boost::once_flag once_filewaitset; // 0x010A6370
-static Moho::FWaitHandleSet *pfwaithandleset; // 0x010A6374
+
+static boost::once_flag once_FileWaitSet; // 0x010A6370
+static Moho::FWaitHandleSet *sPWaitHandleSet; // 0x010A6374
 static boost::once_flag once_InitDiskWatch; // 0x010A6378
-static Moho::CDiskWatch *cdiskwatch; // 0x010A637C
-
-static Moho::FWaitHandleSet fwaithandleset; // 0x01103B30
+static Moho::CDiskWatch *sDiskWatch; // 0x010A637C
+static Moho::FWaitHandleSet sWaitHandleSet; // 0x01103B30
 
 namespace Moho {
 
@@ -37,5 +42,6 @@ void DISK_ResetWatch(); // 0x004633D0
 
 }
 
+Moho::FWaitHandleSet *func_GetFWaitHandleSet(); // 0x00457ED0 always inlined
 void func_EnsureFileCWaitHandleSet(); // 0x00457F90
 void func_InitDiskWatch(); // 0x00463220

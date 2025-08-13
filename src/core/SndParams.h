@@ -8,14 +8,14 @@ class AudioEngine;
 
 struct CSndParams
 {
-    std::string cue1;
-    std::string bank;
-    Moho::CSndVar *lodCutoff;
-    Moho::CSndVar *cue2;
+    std::string mCue;
+    std::string mBank;
+    Moho::CSndVar *mLODCutoff;
+    Moho::CSndVar *mVar2;
     int v1;
-    __int16 cueId;
-    __int16 bankId;
-    boost::shared_ptr<Moho::AudioEngine> engine;
+    __int16 mCueId;
+    __int16 mBankId;
+    boost::shared_ptr<Moho::AudioEngine> mAudioEngine;
 };
 
 }

@@ -6,11 +6,11 @@ namespace Moho {
 class CCommandTask : public Moho::CTask
 {
     int v1;
-    Moho::Unit *unit;
-    Moho::Sim *sim;
-    Moho::ETaskState task_state;
-    int *dispatchLink_airesult;
-    int link;
+    Moho::Unit *mUnit;
+    Moho::Sim *mSim;
+    Moho::ETaskState mTaskState;
+    int *mDispatchLink_airesult;
+    int mLink;
 };
 
 }

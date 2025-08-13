@@ -6,8 +6,8 @@
 #include "gpgcore/String.h"
 
 
-static std::map<std::string, gpg::RType *> prefetchTypeMap; // 0x010C7940
-static std::map<std::string, gpg::RType *> *pPrefetchTypeMap; // 0x010A6390
+static std::map<std::string, gpg::RType *> sPrefetchTypeMap; // 0x010C7940
+static std::map<std::string, gpg::RType *> *sPPrefetchTypeMap; // 0x010A6390
 
 namespace Moho {
 
@@ -15,7 +15,7 @@ namespace Moho {
 class CResourceWatcher
 {
     int gap;
-    gpg::fastvector_n<int, 2> vec; // unknown type
+    gpg::fastvector_n<int, 2> mVec; // unknown type
 
     virtual void OnResourceChanged(gpg::StrArg) = 0;
 };
@@ -31,7 +31,7 @@ struct PrefetchData
 
 struct PrefetchHandleBase
 {
-    boost::shared_ptr<Moho::PrefetchData> dat;
+    boost::shared_ptr<Moho::PrefetchData> mDat;
 };
 
 void RES_RegisterPrefetchType(const char *, gpg::RType *); // 0x004A5060

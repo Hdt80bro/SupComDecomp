@@ -1,6 +1,7 @@
-#include <vector>
-#include "Wm3Vector3.h"
 #include "gpgcore/containers/Rect.h"
+#include "Wm3Vector3.h"
+#include "Wm3Vector2.h"
+#include <vector>
 
 namespace Moho {
 
@@ -14,8 +15,8 @@ enum EDepositType
 
 struct ResourceDeposit
 {
-    gpg::Rect2i location;
-    Moho::EDepositType type;
+    gpg::Rect2i mLocation;
+    Moho::EDepositType mType;
 
     bool Intersects(Moho::CGeomSolid3 *solid, Moho::CHeightField *field); // 0x00546170
 };
@@ -31,7 +32,7 @@ public:
     virtual std::vector<Moho::ResourceDeposit> &GetDeposits() = 0;
     virtual bool IsDepositAt(gpg::Rect2i *pos, Moho::EDepositType type) = 0;
     virtual bool IsDepositAtPoint(Wm3::Vector3f *pos, Wm3::Vector2i *size, Moho::EDepositType type) = 0;
-    virtual void DepositCollides(Moho::CGeomSolid3 *solid, int, gpg::fastvector<Moho::ResourceDeposit *> *dest, Moho::EDepositType type) = 0;
+    virtual void DepositCollides(Moho::CGeomSolid3 *solid, Moho::CHeightField *field, gpg::fastvector<Moho::ResourceDeposit *> *dest, Moho::EDepositType type) = 0;
     virtual bool DepositIsInArea(Moho::EDepositType type, gpg::Rect2i *area) = 0;
     virtual bool DepositIsInAreaPoint(Moho::EDepositType type, Wm3::Vector3f *pos, Wm3::Vector2i *size) = 0;
     virtual bool FindClosestDespoit(Moho::GridPos *from, Moho::GridPos *outPos, float radius, Moho::EDepositType type) = 0;
@@ -42,8 +43,8 @@ public:
 class CSimResources : public Moho::IResources
 {
 public:
-    gpg::Mutex lock;
-    std::vector<Moho::ResourceDeposit> deposits;
+    gpg::Mutex mLock;
+    std::vector<Moho::ResourceDeposit> mDeposits;
 
     ~CSimResources() override; // 0x00546A00
     void AddDeposit(Moho::EDepositType, gpg::Rect2i *pos) override; // 0x00545F10

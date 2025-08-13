@@ -5,10 +5,10 @@
 class TextWriteArchive : public gpg::WriteArchive {
 public:
     int v7;
-    boost::shared_ptr<std::ostream> ptr;
+    boost::shared_ptr<std::ostream> mPtr;
     std::ostream *v9;
 
-    ~TextWriteArchive() override = default; // 0x
+    ~TextWriteArchive() noexcept override = default; // 0x
 };
 
 namespace gpg {

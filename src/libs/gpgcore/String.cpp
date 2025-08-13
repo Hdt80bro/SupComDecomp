@@ -2,7 +2,7 @@
 #include <stdexcept>
 
 
-std::string whitespaceChars{" \n\t\r"}; // 0x00F32308
+std::string sWhitespaceChars{" \n\t\r"}; // 0x00F32308
 
 
 // 0x009380A0
@@ -210,7 +210,7 @@ int gpg::STR_GetWordStartIndex(std::string &str, int pos) {
         *i; i = gpg::STR_NextUtf8Char(i)
     ) {
         char c = *i;
-        int res = whitespaceChars.find(&c, 0, 1);
+        int res = sWhitespaceChars.find(&c, 0, 1);
         if (! boundary) {
             boundary = res == std::string::npos;
         } else if (res != std::string::npos) {
@@ -232,7 +232,7 @@ int gpg::STR_GetNextWordStartIndex(std::string &str, int pos) {
         *i; i = gpg::STR_NextUtf8Char(i)
     ) {
         char c = *i;
-        int res = whitespaceChars.find(&c, 0, 1);
+        int res = sWhitespaceChars.find(&c, 0, 1);
         if (! boundary) {
             boundary = res == std::string::npos;
         } else if (res == std::string::npos) {
@@ -331,7 +331,7 @@ int gpg::STR_Xtoi(gpg::StrArg str) {
 
 // 0x00938C80
 std::string gpg::STR_GetWhitespaceCharacters() {
-    return std::string{whitespaceChars};
+    return std::string{sWhitespaceChars};
 }
 
 // 0x00938BF0

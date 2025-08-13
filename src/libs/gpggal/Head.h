@@ -9,19 +9,19 @@ namespace gpg::gal {
 class Head
 {
 public:
-    HWND handle;
-    HWND window;
-    bool windowed;
-    int width;
-    int height;
-    int framesPerSecond;
-    int antialiasingHigh;
-    int antialiasingLow;
-    std::string name;
-    std::vector<std::string> strs;
-    std::vector<struct_AdapterMode> adapterModes;
-    std::vector<int> validFormats2;
-    std::vector<int> validFormats1;
+    HWND mHandle;
+    HWND mWindow;
+    bool mWindowed;
+    int mWidth;
+    int mWeight;
+    int mFramesPerSecond;
+    int mAntialiasingHigh;
+    int mAntialiasingLow;
+    std::string mName;
+    std::vector<std::string> mStrs;
+    std::vector<struct_AdapterMode> mAdapterModes;
+    std::vector<int> mValidFormats2;
+    std::vector<int> mValidFormats1;
 
     virtual ~Head() = default; // 0x00436990
 };

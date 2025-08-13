@@ -5,9 +5,9 @@ namespace gpg::gal {
 class IndexBufferContext
 {
 public:
-    int format;
-    int size;
-    int type;
+    int mFormat;
+    int mSize;
+    int mType;
 
     virtual ~IndexBufferContext() = default; // 0x00940640
 };

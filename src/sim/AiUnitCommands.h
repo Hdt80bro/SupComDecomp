@@ -7,22 +7,22 @@ class CUnitCommand :
     public Moho::Broadcaster<Moho::ECommandEvent>
 {
     int v2;
-    Moho::Sim *sim;
-    Moho::SSTICommandConstantData stiConst;
-    Moho::SSTICommandVariableData stiVar;
+    Moho::Sim *mSim;
+    Moho::SSTICommandConstantData mConstDat;
+    Moho::SSTICommandVariableData mVarDat;
     int v46;
-    Moho::EntitySetTemplate<Moho::Entity> unitSet;
-    Moho::CAiFormationInstance *formationInstance;
-    Moho::CAiTarget aiTarget;
-    int cmdId;
+    Moho::EntitySetTemplate<Moho::Entity> mUnitSet;
+    Moho::CAiFormationInstance *mFormationInstance;
+    Moho::CAiTarget mTarget;
+    int mCmdId;
     bool v67a;
-    bool needsUpdate;
+    bool mNeedsUpdate;
     bool v67c;
     bool v67d;
-    std::vector<Moho::WeakPtr<Moho::CUnitCommand>> coordinatingOrders;
+    std::vector<Moho::WeakPtr<Moho::CUnitCommand>> mCoordinatingOrders;
     bool v72;
     Moho::WeakPtr<Moho::Unit> v73;
-    LuaPlus::LuaObject args;
+    LuaPlus::LuaObject mArgs;
     int v80;
 
     void AddUnit(std::vector<Moho::WeakPtr<Moho::CUnitCommand>> *queue, Moho::Unit *unit, int index);

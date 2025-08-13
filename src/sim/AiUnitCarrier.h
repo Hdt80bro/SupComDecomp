@@ -1,13 +1,6 @@
 
 namespace Moho {
 
-struct SNavGoal
-{
-    gpg::Rect2i pos1;
-    gpg::Rect2i pos2;
-    Moho::ELayer layer;
-};
-
 // 0x00E20044
 class CUnitCarrierRetrieve : public Moho::CCommandTask
 {
@@ -24,9 +17,9 @@ public:
     Moho::WeakPtr<Moho::Unit> v0;
     bool v2;
     int v3;
-    float height;
-    Wm3::Vector3f pos;
-    Wm3::Vector3f dir;
+    float mHeight;
+    Wm3::Vector3f mPos;
+    Wm3::Vector3f mDir;
     Wm3::Vector3f v11;
 };
 
@@ -34,7 +27,7 @@ public:
 class CUnitCarrierLaunch : public Moho::CCommandTask
 {
 public:
-    Moho::SNavGoal v0;
+    Moho::SNavGoal mGoal;
     bool v9;
     Moho::EntitySetTemplate<Moho::Unit> v10;
 };

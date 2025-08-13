@@ -11,7 +11,7 @@ void gpg::Logf(const char *args, ...) {
     const char *fmt = va_arg(args, const char *);
     std::string msg = gpg::STR_Va(fmt, va);
     va_end(va);
-    call_once(sub_937AD0, &dword_F8EBBC);
+    boost::call_once(sub_937AD0, &dword_F8EBBC);
     if (dword_F8EBC0) {
         sub_937640(dword_F8EBC0, 1, &msg);
     }
@@ -24,7 +24,7 @@ void gpg::Warnf(const char *args, ...) {
     const char *fmt = va_arg(args, const char *);
     std::string msg = gpg::STR_Va(fmt, va);
     va_end(va);
-    call_once(sub_937AD0, &dword_F8EBBC);
+    boost::call_once(sub_937AD0, &dword_F8EBBC);
     if (dword_F8EBC0) {
         sub_937640(dword_F8EBC0, 1, &msg);
     }
@@ -60,5 +60,5 @@ void gpg::Die(const char *args, ...) {
     gpg::InvokeDieHandler(msg.c_str());
     __debugbreak();
     while (true)
-        ;
+        {}
 }

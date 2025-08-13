@@ -8,19 +8,19 @@ namespace gpg::gal {
 class Error : public std::exception
 {
 public:
-    std::string file;
-    int line;
-    std::string msg;
+    std::string mFile;
+    int mLine;
+    std::string mMsg;
 
     ~Error() override = default; // 0x008A7B10
     const char *what() const override {
-        return this->msg.c_str();
+        return this->mMsg.c_str();
     } // 0x00940460
 
     Error(std::string &file, int line, std::string &msg) :
-        file(file),
-        line{line},
-        msg{msg}
+        mFile(file),
+        mLine{line},
+        mMsg{msg}
     {} // 0x009404D0
 };
 

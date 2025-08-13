@@ -10,8 +10,8 @@ class IAiFormationDB
 class CAiFormationDBImpl : public Moho::IAiFormationDB
 {
 public:
-    Moho::Sim *sim;
-    gpg::fastvector_n<Moho::CAiFormationInstance, 10> formInstances;
+    Moho::Sim *mSim;
+    gpg::fastvector_n<Moho::CAiFormationInstance, 10> mFormInstances;
 };
     
 }

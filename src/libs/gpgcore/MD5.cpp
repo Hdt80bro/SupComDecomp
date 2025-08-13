@@ -3,10 +3,10 @@
 
 // 0x0073B100
 bool gpg::MD5Digest::operator!=(gpg::MD5Digest *that) {
-  return this->vals[0] != that->vals[0]
-      || this->vals[1] != that->vals[1]
-      || this->vals[2] != that->vals[2]
-      || this->vals[3] != that->vals[3];
+  return this->mVals[0] != that->mVals[0]
+      || this->mVals[1] != that->mVals[1]
+      || this->mVals[2] != that->mVals[2]
+      || this->mVals[3] != that->mVals[3];
 }
 
 const char *chars = "0123456789abcdef"; // 0x00D41E00
@@ -16,7 +16,7 @@ std::string gpg::MD5Digest::ToString() const {
     std::string builder{};
     builder.reserve(32);
     for (int i = 0; i < 16; ++i) {
-        char c = ((char *) this->vals)[i];
+        char c = ((char *) this->mVals)[i];
         builder[2 * i] = chars[c >> 4];
         builder[2 * i + 1] = chars[c & 0xF];
     }
@@ -31,21 +31,21 @@ void gpg::MD5Context::Update(std::string str) {
 
 // 0x008E4F40
 void gpg::MD5Context::Reset() {
-    this->pos = 0;
-    this->size = 0LL;
-    this->digest.vals[0] = 0x67452301;
-    this->digest.vals[1] = 0xEFCDAB89;
-    this->digest.vals[2] = 0x98BADCFE;
-    this->digest.vals[3] = 0x10325476;
+    this->mPos = 0;
+    this->mSize = 0LL;
+    this->mDigest.mVals[0] = 0x67452301;
+    this->mDigest.mVals[1] = 0xEFCDAB89;
+    this->mDigest.mVals[2] = 0x98BADCFE;
+    this->mDigest.mVals[3] = 0x10325476;
 }
 
 // 0x008E5050
 void gpg::MD5Context::ProcessBlock(gpg::MD5Digest &out, const void *in) const {
     int *ptr = (int *) in;
-    int A = out.vals[0];
-    int B = out.vals[1];
-    int C = out.vals[2];
-    int D = out.vals[3];
+    int A = out.mVals[0];
+    int B = out.mVals[1];
+    int C = out.mVals[2];
+    int D = out.mVals[3];
 
     A = Round1(ptr[0] , A, B, C, D, 0xD76AA478, 7);
     B = Round1(ptr[1] , D, A, B, A, 0xE8C7B756, 12);
@@ -115,27 +115,27 @@ void gpg::MD5Context::ProcessBlock(gpg::MD5Digest &out, const void *in) const {
     C = Round4(ptr[2] , C, D, A, B, 0x2AD7D2BB, 15);
     D = Round4(ptr[9] , B, C, D, A, 0xEB86D391, 21);
 
-    out.vals[0] += A;
-    out.vals[1] += B;
-    out.vals[2] += C;
-    out.vals[3] += D;
+    out.mVals[0] += A;
+    out.mVals[1] += B;
+    out.mVals[2] += C;
+    out.mVals[3] += D;
 }
 
 // 0x008E5790
 gpg::MD5Digest gpg::MD5Context::Digest() {
-    gpg::MD5Digest dig = this->digest;
-    this->block.vals[this->pos] = 0x80;
-    if (63 - this->pos < 8) {
+    gpg::MD5Digest dig = this->mDigest;
+    this->mBlock.mVals[this->mPos] = 0x80;
+    if (63 - this->mPos < 8) {
         gpg::MD5Block arr;
-        memset(&this->block.vals[this->pos + 1], 0, 63 - this->pos);
-        this->ProcessBlock(dig, (const void *) &this->block);
+        memset(&this->mBlock.mVals[this->mPos + 1], 0, 63 - this->mPos);
+        this->ProcessBlock(dig, (const void *) &this->mBlock);
         memset(&arr, 0, 56);
-        arr.size = 8 * this->size;
+        arr.mSize = 8 * this->mSize;
         this->ProcessBlock(dig, &arr);
     } else {
-        memset(&this->block.vals[this->pos + 1], 0, 63 - this->pos - 8);
-        this->block.size = 8 * this->size;
-        this->ProcessBlock(dig, (const void *) &this->block);
+        memset(&this->mBlock.mVals[this->mPos + 1], 0, 63 - this->mPos - 8);
+        this->mBlock.mSize = 8 * this->mSize;
+        this->ProcessBlock(dig, (const void *) &this->mBlock);
     }
     return dig;
 }
@@ -143,27 +143,27 @@ gpg::MD5Digest gpg::MD5Context::Digest() {
 // 0x008E5870
 void gpg::MD5Context::Update(const void *ptr, size_t size) {
     auto dat = (const char *) ptr;
-    this->size += size;
-    if (this->pos != 0) {
-        int amt = std::min(64 - this->pos, size);
-        memcpy(&this->block.vals[this->pos], dat, amt);
-        this->pos += amt;
-        if (this->pos >= 64) {
-            this->ProcessBlock(this->digest, (const void *) &this->block);
+    this->mSize += size;
+    if (this->mPos != 0) {
+        int amt = std::min(64 - this->mPos, size);
+        memcpy(&this->mBlock.mVals[this->mPos], dat, amt);
+        this->mPos += amt;
+        if (this->mPos >= 64) {
+            this->ProcessBlock(this->mDigest, (const void *) &this->mBlock);
             dat += amt;
             size -= amt;
-            this->pos = 0;
+            this->mPos = 0;
         }
     }
-    if (this->pos >= 64) {
+    if (this->mPos >= 64) {
         while (size >= 64) {
-            this->ProcessBlock(this->digest, (const void *) dat);
+            this->ProcessBlock(this->mDigest, (const void *) dat);
             dat += 64;
             size -= 64;
         }
         if (size != 0) {
-            memcpy(&this->block, dat, size);
-            this->pos = size;
+            memcpy(&this->mBlock, dat, size);
+            this->mPos = size;
         }
     }
 }

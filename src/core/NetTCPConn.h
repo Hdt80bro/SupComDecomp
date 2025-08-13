@@ -6,7 +6,7 @@
 
 struct struct_TCPConnLL
 {
-    struct_TCPConnLL *next;
+    struct_TCPConnLL *mNext;
 
     void *GetPtr(); // 0x00485830
 };
@@ -21,26 +21,26 @@ class CNetTCPConnection :
     public Moho::TDatListItem<Moho::CNetTCPConnection>
 {
 public:
-    Moho::CNetTCPConnector *connector;
-    SOCKET socket;
-    u_long addr;
-    u_short port;
+    Moho::CNetTCPConnector *mConnector;
+    SOCKET mSocket;
+    u_long mAddr;
+    u_short mPort;
     int v266;
     int v267;
-    gpg::time::Timer timer1;
-    gpg::PipeStream pipestream1;
-    gpg::PipeStream pipestream2;
-    char buf[2048];
-    int size;
-    bool hasShutdown;
+    gpg::time::Timer mTimer1;
+    gpg::PipeStream mPipestream1;
+    gpg::PipeStream mPipestream2;
+    char mBuf[2048];
+    int mSize;
+    bool mHasShutdown;
     bool v819b;
     bool v819c;
     bool v819d;
-    struct_Datagram datagram;
+    Moho::CMessage mMessage;
     DWORD v841;
-    bool pushFailed;
-    bool pullFailed;
-    bool scheduleDestroy;
+    bool mPushFailed;
+    bool mPullFailed;
+    bool mScheduleDestroy;
     bool v842d;
     int v843;
     
@@ -64,11 +64,11 @@ class CNetTCPConnector :
     public Moho::INetNATTraversalHandler
 {
 public:
-    struct_TCPConnLL ll;
-    SOCKET socket;
-    Moho::TDatListItem<Moho::CNetTCPConnection> connections;
-    Moho::TDatListItem<Moho::SPartialConnection> partialConns;
-    HANDLE handle;
+    struct_TCPConnLL mll;
+    SOCKET mSocket;
+    Moho::TDatListItem<Moho::CNetTCPConnection> mConnections;
+    Moho::TDatListItem<Moho::SPartialConnection> mPartialConns;
+    HANDLE mHandle;
 
     ~CNetTCPConnector() override; // 0x00484AE0
     void Destroy() override; // 0x00483600
@@ -91,12 +91,12 @@ public:
 
 struct SPartialConnection : Moho::TDatListItem<Moho::SPartialConnection>
 {
-    Moho::CNetTCPConnector *connector;
-    SOCKET socket;
-    u_long addr;
-    u_short port;
-    gpg::PipeStream stream;
-    struct_Datagram buf;
+    Moho::CNetTCPConnector *mConnector;
+    SOCKET mSocket;
+    u_long mAddr;
+    u_short mPort;
+    gpg::PipeStream mStream;
+    Moho::CMessage mmessage;
 
     ~SPartialConnection(); // 0x004846E0
     SPartialConnection() = default; // 0x00484660
@@ -107,10 +107,10 @@ struct SPartialConnection : Moho::TDatListItem<Moho::SPartialConnection>
 class CNetTCPBuf : public Moho::INetTCPSocket
 {
 public:
-    gpg::Stream::Mode mode;
-    bool failed;
+    gpg::Stream::Mode mMode;
+    bool mFailed;
     char gap;
-    char buffer[4098];
+    char mBuffer[4098];
 
     ~CNetTCPBuf() override ; // 0x004827C0
     size_t VirtRead(char *buf, size_t len) override; // 0x00482A90
@@ -133,7 +133,7 @@ public:
 class CNetTCPServerImpl : public Moho::INetTCPServer
 {
 public:
-    SOCKET socket;
+    SOCKET mSocket;
 
     ~CNetTCPServerImpl() override; // 0x00483220
     unsigned short GetLocalPort() override; // 0x004832A0

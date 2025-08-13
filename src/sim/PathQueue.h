@@ -10,7 +10,7 @@ struct PathQueue
         int v1;
         int v2;
         int v3;
-        std::vector<gpg::HaStar::ClusterMap> clusters;
+        std::vector<gpg::HaStar::ClusterMap> mClusters;
         int v8;
         int v9;
         int v10;
@@ -28,7 +28,7 @@ struct PathQueue
         int v23;
         int v24;
         int v25;
-        int budget;
+        int mBudget;
         int v26;
         int v27;
         int v28;
@@ -38,14 +38,14 @@ struct PathQueue
     };
     struct Impl
     {
-        int size;
-        int height;
+        int mSize;
+        int mHeight;
         int gap;
-        Moho::PathQueue::ImplBase base;
+        Moho::PathQueue::ImplBase mBase;
     };
 
 
-    Moho::PathQueue::Impl *queue;
+    Moho::PathQueue::Impl *mImpl;
 };
 
 }

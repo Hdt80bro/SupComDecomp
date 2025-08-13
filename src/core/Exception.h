@@ -7,12 +7,12 @@ namespace Moho {
 class XException : public std::runtime_error
 {
 public:
-    unsigned int callstack[32];
-    unsigned int topStack;
-    std::string msg;
+    unsigned int mCallstack[32];
+    unsigned int mTopStack;
+    std::string mMsg;
 
-    virtual ~XException() = default;
-    virtual const char *GetMessage(); // 0x00405470
+    ~XException() override = default; // 0x00405370
+    const char *what() const override; // 0x00405470
 
     XException(const char *); // 0x004052A0
 };

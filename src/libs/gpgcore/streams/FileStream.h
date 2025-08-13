@@ -1,9 +1,12 @@
-#include "Stream.h"
+#include <stdexcept>
 #include "boost/weak_ptr.hpp"
+#include "gpgcore/streams/Stream.h"
+#include "gpgcore/MemBuffer.h"
 
 
-static int dwCreationDisposition[]; // 0x00D494B0
-static int dwMoveMethod[];// 0x00D4953C
+
+static int dwCreationDisposition[8]; // 0x00D494B0
+static int dwMoveMethod[3];// 0x00D4953C
 
 namespace gpg {
 
@@ -11,17 +14,19 @@ namespace gpg {
 class FileStream : public gpg::Stream
 {
 public:
-    HANDLE handle;
-    gpg::Stream::Mode accessKind;
-    gpg::MemBuffer<char> buff;
-
+    // 0x00D494A8
     class IOError : public std::runtime_error
     {
     public:
-        int id;
+        int mId;
 
         IOError(int id); // 0x00955890
     };
+
+public:
+    HANDLE mHandle;
+    gpg::Stream::Mode mAccessKind;
+    gpg::MemBuffer<char> mBuff;
 
     ~FileStream() noexcept override; // 0x00955870
     size_t VirtTell(gpg::Stream::Mode mode) override; // 0x00955CE0

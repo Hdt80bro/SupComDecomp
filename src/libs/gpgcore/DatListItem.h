@@ -4,12 +4,12 @@ namespace gpg {
 template<class T>
 struct DatListItem
 {
-    DatListItem<T> *prev;
-    DatListItem<T> *next;
+    DatListItem<T> *mPrev;
+    DatListItem<T> *mNext;
 
     DatListItem() :
-        prev{this},
-        next{this}
+        mPrev{this},
+        mNext{this}
     {
         this->Reset(); // usually
     } // inline
@@ -20,16 +20,16 @@ struct DatListItem
         return static_cast<T*>(this);
     } // inline
     void Reset() {
-        this->prev->next = this->next;
-        this->next->prev = this->prev;
-        this->next = this;
-        this->prev = this;
+        this->mPrev->mNext = this->mNext;
+        this->mNext->mPrev = this->mPrev;
+        this->mNext = this;
+        this->mPrev = this;
     } // inline
     void InsertBefore(DatListItem<T> *that) {
-        this->prev = that->prev;
-        this->next = that;
-        that->prev = this;
-        this->prev->next = this;
+        this->mPrev = that->mPrev;
+        this->mNext = that;
+        that->mPrev = this;
+        this->mPrev->mNext = this;
     } // inline
 };
 

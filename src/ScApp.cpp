@@ -1,30 +1,30 @@
 #include "ScApp.h"
-#include <string>
-#include <vector>
-#include "boost/filesystem/path.hpp"
+#include "core/Disk.h"
+#include "user/User.h"
 #include "gpgcore/String.h"
 #include "gpggal/Device.h"
-#include "core/Disk.h"
-#include "core/Win.h"
-#include "user/User.h"
+#include "LuaPlus.h"
+#include "boost/filesystem/path.hpp"
+#include <string>
+#include <vector>
 
 // 0x008D4B20
 float struct_RollingFrameRates::median() {
     float arr[10];
     int pos = 0;
-    for (int k = this->start; k != this->end; k = (k + 1) % 10) {
-        arr[pos++] = this->vals[k];
+    for (int k = this->mStart; k != this->mEnd; k = (k + 1) % 10) {
+        arr[pos++] = this->mVals[k];
     }
     std::sort(arr, &arr[pos]);
     return arr[pos / 2];
 }
 
 // 0x008CEDE0
-bool CScApp::Main() {
+bool CScApp::AppInit() {
     func_SetSSE2(Moho::CFG_GetArgOption("/sse2", 0, nullptr));
     if (Moho::CFG_GetArgOption("/splash", 0, nullptr)) {
         boost::filesystem::path dir = Moho::DISK_GetLaunchDir() / "splash.png";
-        Moho::WINX_InitSplash(dir.string());
+        Moho::WINX_InitSplash(dir.string().c_str());
     }
     std::string init1{" SCMain AppInit 1"};
     if (! this->AppInitCommonServices()) {
@@ -51,7 +51,7 @@ bool CScApp::Main() {
     Moho::UI_Init();
     std::string init7{" SCMain AppInit 7"};
     if (! Moho::CFG_GetArgOption("/novalidate", 0, nullptr)) {
-        tagMONITORINFO mi;
+        MONITORINFO mi;
         mi.cbSize = 40;
         GetMonitorInfoW(MonitorFromPoint(0LL, 1), &mi);
         if (mi.rcMonitor.right - mi.rcMonitor.left < Moho::wnd_MinCmdLineWidth
@@ -60,19 +60,19 @@ bool CScApp::Main() {
             LuaPlus::LuaState *state = Moho::USER_GetLuaState();
             std::string cap = Moho::Loc(state, "<LOC Engine0029>Inadequate monitor resolution (minimum is 1024x768.)");
             std::string title = Moho::Loc(state, "<LOC Engine0013>Unable to start.");
-            MessageBoxW(0, gpg::STR_Utf8ToWide(title.c_str()), gpg::STR_Utf8ToWide(cap.c_str()), 0x10);
+            MessageBoxW(0, gpg::STR_Utf8ToWide(title.c_str()), gpg::STR_Utf8ToWide(cap.c_str()), MB_ICONSTOP);
             return false;
         }
     }
-    if (! func_CreateDevice(this)) {
+    if (! this->CreateDevice()) {
         std::vector<std::string> log = gpg::gal::Device::GetInstance()->GetLog();
         std::string desc = Moho::Loc(Moho::USER_GetLuaState(), "<LOC Engine0018>Please verify video hardware meets minimum specifications.");
-        if (log.size()) {
+        if (log.size() > 0) {
             desc = Moho::Loc(Moho::USER_GetLuaState(), log[0].c_str());
         }
         desc = desc + "\n" + Moho::Loc(Moho::USER_GetLuaState(), "<LOC Engine0019>Please ensure system has current video drivers.");
         std::string title = Moho::Loc(Moho::USER_GetLuaState(), "<LOC Engine0013>Unable to start.");
-        MessageBoxW(0, gpg::STR_Utf8ToWide(title.c_str()), gpg::STR_Utf8ToWide(desc.c_str()), 0x10);
+        MessageBoxW(0, gpg::STR_Utf8ToWide(title.c_str()).c_str(), gpg::STR_Utf8ToWide(desc.c_str()).c_str(), MB_ICONSTOP);
         return false;
     }
     if (Moho::CFG_GetArgOption("/loadrulesandexit", 0, nullptr)) {
@@ -81,24 +81,24 @@ bool CScApp::Main() {
         return false;
     }
     std::string init8{" SCMain AppInit 8"};
-    SystemParametersInfoW(SPI_GETSCREENSAVEACTIVE, 0, &this->usingScreensaver, 0);
+    SystemParametersInfoW(SPI_GETSCREENSAVEACTIVE, 0, &this->mUsingScreensaver, 0);
     if (! SystemParametersInfoW(SPI_SETSCREENSAVEACTIVE, 0, 0, 0)) {
         gpg::Warnf("unable to suppress screensaver");
     }
     gpg::gal::DeviceContext *context = gpg::gal::Device::GetInstance()->GetDeviceContext();
-    if (context->GetHead(0)->windowed) {
-        func_CreateFileMapping(context->GetHead(0)->handle);
+    if (context->GetHead(0)->mWindowed) {
+        func_CreateFileMapping(context->GetHead(0)->mHandle);
     }
-    if (! context->GetHead(0)->GetHead(0)->windowed && Moho::USER_DebugFacilitiesEnabled()) {
-        func_AppendMenuLuaDebugger(context->GetHead(0)->handle);
+    if (! context->GetHead(0)->mWindowed && Moho::USER_DebugFacilitiesEnabled()) {
+        func_AppendMenuLuaDebugger(context->GetHead(0)->mHandle);
     }
     Moho::OPTIONS_Apply();
     if (context->GetHeadCount() == 1 &&
-        context->GetHead(0)->windowed &&
+        context->GetHead(0)->mWindowed &&
         Moho::OPTIONS_GetInt("lock_fullscreen_cursor_to_window") == 1
     ) {
         RECT r;
-        GetWindowRect(this->supcomFrame->GetHandle(), &r);
+        GetWindowRect(this->mFrame1->GetHandle(), &r);
         ClipCursor(&r);
     }
     std::string init{" SCMain AppInit 9"};
@@ -106,38 +106,38 @@ bool CScApp::Main() {
 }
 
 // 0x008D1470
-int CScApp::OnNoMoreEvents() {
+int CScApp::Main() {
     Moho::CTimeBarSection bar{"AppFrame"};
     struct_HeapStats heapStats = funcGetHeapInfo();
-    if (engine_stat_heap_reserved == nullptr) {
-        engine_stat_heap_reserved = func_GetEngineStats()->GetItem("Heap_Reserved");    
+    if (sEngineStat_Heap_Reserved == nullptr) {
+        sEngineStat_Heap_Reserved = func_GetEngineStats()->GetItem("Heap_Reserved");
     }
-    engine_stat_heap_reserved->SetValue(func_FmtByteSize(heapStats.reserved));
+    sEngineStat_Heap_Reserved->SetValue(func_FmtByteSize(heapStats.mReserved));
     
-    if (engine_stat_heap_committed == nullptr) {
-        engine_stat_heap_committed = func_GetEngineStats()->GetItem("Heap_Committed");    
+    if (sEngineStat_Heap_Committed == nullptr) {
+        sEngineStat_Heap_Committed = func_GetEngineStats()->GetItem("Heap_Committed");
     }
-    engine_stat_heap_committed->SetValue(func_FmtByteSize(heapStats.committed));
+    sEngineStat_Heap_Committed->SetValue(func_FmtByteSize(heapStats.mCommitted));
     
-    if (engine_stat_heap_total == nullptr) {
-        engine_stat_heap_total = func_GetEngineStats()->GetItem("Heap_Total");    
+    if (sEngineStat_Heap_Total == nullptr) {
+        sEngineStat_Heap_Total = func_GetEngineStats()->GetItem("Heap_Total");
     }
-    engine_stat_heap_total->SetValue(func_FmtByteSize(heapStats.total));
+    sEngineStat_Heap_Total->SetValue(func_FmtByteSize(heapStats.mTotal));
     
-    if (engine_stat_heap_insmallblocks == nullptr) {
-        engine_stat_heap_insmallblocks = func_GetEngineStats()->GetItem("Heap_InSmallBlocks");    
+    if (sEngineStat_Heap_InSmallBlocks == nullptr) {
+        sEngineStat_Heap_InSmallBlocks = func_GetEngineStats()->GetItem("Heap_InSmallBlocks");
     }
-    engine_stat_heap_insmallblocks->SetValue(func_FmtByteSize(heapStats.inSmallBlocks));
+    sEngineStat_Heap_InSmallBlocks->SetValue(func_FmtByteSize(heapStats.mInSmallBlocks));
     
-    if (engine_stat_heap_inuse == nullptr) {
-        engine_stat_heap_inuse = func_GetEngineStats()->GetItem("Heap_InUse");    
+    if (sEngineStat_Heap_InUse == nullptr) {
+        sEngineStat_Heap_InUse = func_GetEngineStats()->GetItem("Heap_InUse");
     }
-    engine_stat_heap_inuse->SetValue(func_FmtByteSize(heapStats.inUse));
+    sEngineStat_Heap_InUse->SetValue(func_FmtByteSize(heapStats.mInUse));
     
-    if (engine_stat_heap_totalcheck == nullptr) {
-        engine_stat_heap_totalcheck = func_GetEngineStats()->GetItem("Heap_TotalCheck");    
+    if (sEngineStat_Heap_TotalCheck == nullptr) {
+        sEngineStat_Heap_TotalCheck = func_GetEngineStats()->GetItem("Heap_TotalCheck");
     }
-    engine_stat_heap_totalcheck->SetValue(func_FmtByteSize(heapStats.inSmallBlocks + heapStats.inUse));
+    sEngineStat_Heap_TotalCheck->SetValue(func_FmtByteSize(heapStats.mInSmallBlocks + heapStats.mInUse));
 
     if (dbg_MonitorAddressSpace) {
         static gpg::time::Timer monitor{};
@@ -146,8 +146,8 @@ int CScApp::OnNoMoreEvents() {
             func_QueryHeap();
         }
     }
-    if (csimdriver != nullptr) {
-        int hnd = csimdriver->GetEvent();
+    if (sSimDriver != nullptr) {
+        int hnd = sSimDriver->GetEvent();
         Moho::WIN_GetWaitHandleSet()->RemoveHandle(hnd);
     }
     float framerate;
@@ -164,7 +164,7 @@ int CScApp::OnNoMoreEvents() {
         ) {
             framerate = 1.0 / clfr;
         } else {
-            float millis = this->curTime.ElapsedMilliseconds();
+            float millis = this->mCurTime.ElapsedMilliseconds();
             if (Moho::sc_FrameTimeClamp > millis) {
                 Moho::WIN_SetWakeupTimer(Moho::sc_FrameTimeClamp - millis);
                 return;
@@ -172,8 +172,8 @@ int CScApp::OnNoMoreEvents() {
             framerate = millis * 0.001;
         }
     }
-    this->curTime.Reset();
-    this->framerates.roll(framerate);
+    this->mCurTime.Reset();
+    this->mFrameRates.roll(framerate);
 
     Moho::SND_Frame();
     func_CheckDiskWatch();
@@ -181,51 +181,51 @@ int CScApp::OnNoMoreEvents() {
     if (Moho::dump_frame_rate) {
         rate = 1 / Moho::dump_rate;
     } else {
-        rate = this->framerates.median();
+        rate = this->mFramerates.median();
     }
     if (! Moho::WLD_Frame(rate)) {
         wxTheApp->ExitMainLoop();
     }
     int tick = 0;
     int delta = 0.0;
-    if (cwldsession != nullptr) {
-        tick = cwldsession->gameTick;
-        delta = cwldsession->timeSinceLastTick;
+    if (sWldSession != nullptr) {
+        tick = sWldSession->mGameTick;
+        delta = sWldSession->mTimeSinceLastTick;
     }
     func_GetCamManager()->Frame(delta, framerate);
-    func_UserFrame(pUserstage);
+    func_UserFrame(sPUserStage);
     ADXM_ExecMain();
     Moho::REN_Frame(tick, delta, framerate);
     Moho::USER_GetSound()->Frame(delta, framerate);
-    if (global_CUIManager != nullptr) {
-        global_CUIManager->Update(framerate);
+    if (sUIManager != nullptr) {
+        sUIManager->Update(framerate);
     }
     bool isMinimized = IsIconic(mainWindow->GetHandle());
     if (isMinimized) {
-        if (cwldsession != nullptr) {
-            float delay = cwldsession->GetDelayToNextBeat();
+        if (sWldSession != nullptr) {
+            float delay = sWldSession->GetDelayToNextBeat();
             if (delay > 0.0) {
                 Moho::WIN_SetWakeupTimer(delay * 1000.0);
             } else {
-                int hnd = csimdriver->GetEvent();
+                int hnd = sSimDriver->GetEvent();
                 Moho::WIN_GetWaitHandleSet()->AddHandle(hnd);
             }
         }
     } else {
         Moho::D3D_GetDevice()->Refresh();
     }
-    if (! this->initialized) {
-        func_InitializeProcess();
-        this->initialized = true;
+    if (! this->mInitialized) {
+        func_InitializeSession();
+        this->mInitialized = true;
     }
-    if (this->isMinimized != isMinimized) {
+    if (this->mIsMinimized != isMinimized) {
         Moho::SND_Mute(isMinimized);
-        if (global_CUIManager != nullptr) {
-            global_CUIManager->Func4(&isMinimized);
+        if (sUIManager != nullptr) {
+            sUIManager->Func4(&isMinimized);
         }
         gpg::Logf("Minimized %s", isMinimized ? "true" : "false");
     }
-    this->isMinimized = isMinimized;
+    this->mIsMinimized = isMinimized;
 }
 
 // 0x008D0F20
@@ -235,28 +235,28 @@ void CScApp::Destroy() {
     }
     Moho::WLD_Teardown();
     func_NetCleanup();
-    if (global_CUIManager != nullptr) {
-        delete(global_CUIManager);
+    if (sUIManager != nullptr) {
+        delete(sUIManager);
     }
-    global_CUIManager = nullptr;
+    sUIManager = nullptr;
     func_GetWldSessionLoader()->Func6();
-    if (moviemanager != nullptr) {
-        moviemanager->Destroy();
+    if (sMovieManager != nullptr) {
+        sMovieManager->Destroy();
     }
-    moviemanager = nullptr;
+    sMovieManager = nullptr;
     Moho::D3D_Exit();
-    mainWindow = nullptr;
+    sMainWindow = nullptr;
     ren_viewport = nullptr;
-    if (soundconfiguration != nullptr) {
-        delete(soundconfiguration);
+    if (sSoundConfiguration != nullptr) {
+        delete(sSoundConfiguration);
     }
     Moho::SCR_DestroyDebugWindow();
     Moho::USER_SavePreferences();
-    if (this->supcomFrame != nullptr) {
-        this->supcomFrame->Destroy();
+    if (this->mFrame1 != nullptr) {
+        this->mFrame1->Destroy();
     }
-    if (this->frame != nullptr) {
-        this->frame->Destroy();
+    if (this->mFrame2 != nullptr) {
+        this->mFrame2->Destroy();
     }
     ClipCursor(0);
 }
@@ -265,7 +265,7 @@ void CScApp::Destroy() {
 bool CScApp::HasFrame() {
     return
         gpg::gal::Device::IsReady() &&
-        gpg::gal::Device::GetInstance()->GetDeviceContext()->GetHead(0)->windowed &&
-        this->supcomFrame != nullptr &&
-        this->supcomFrame->v94d;
+        gpg::gal::Device::GetInstance()->GetDeviceContext()->GetHead(0)->mWindowed &&
+        this->mFrame1 != nullptr &&
+        this->mFrame1->v94d;
 }

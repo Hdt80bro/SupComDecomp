@@ -4,11 +4,11 @@
 namespace gpg {
 
 // 0x00D48CA0
-struct REnumType : public gpg::RType
+class REnumType : public gpg::RType
 {
 public:
-    const char *prefix;
-    std::vector<struct_EnumValue> enumnames;
+    const char *mPrefix;
+    std::vector<struct_EnumValue> mEnumNames;
 };
 
 };

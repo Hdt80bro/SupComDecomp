@@ -1,5 +1,5 @@
-#include "boost/function.hpp"
 #include "core/TDatListItem.h"
+#include "boost/function.hpp"
 
 namespace Moho {
 
@@ -24,13 +24,13 @@ class CTask
 {
 public:
     int v1;
-    bool *destroyed;
-    Moho::CTaskThread *taskThread;
-    Moho::CTask *subtask;
-    bool isOwning;
+    bool *mDestroyed;
+    Moho::CTaskThread *mTaskThread;
+    Moho::CTask *mSubtask;
+    bool mIsOwning;
 
     virtual ~CTask(); // 0x00408C90
-    virtual int Dispatch() = 0;
+    virtual int Execute() = 0;
 
     CTask(Moho::CTaskThread *, bool); // 0x00408C40
     void TaskInterruptSubtasks(); // 0x00408D70
@@ -39,9 +39,9 @@ public:
 
 struct CTaskStage
 {
-    Moho::TDatListItem<Moho::CTaskThread> threads;
-    Moho::CTaskThread *prev2;
-    Moho::CTaskThread *next2;
+    Moho::TDatListItem<Moho::CTaskThread> mThreads;
+    Moho::CTaskThread *mPrev;
+    Moho::CTaskThread *mNext;
     bool v5;
 };
 
@@ -49,10 +49,10 @@ struct CTaskStage
 struct CTaskThread : Moho::TDatListItem<Moho::CTaskThread>
 {
     int unk;
-    Moho::CTaskStage *stage;
-    Moho::CTask *task;
+    Moho::CTaskStage *mStage;
+    Moho::CTask *mTask;
     int val1;
-    bool staged;
+    bool mStaged;
 
     void Destroy(); //0x00409190
     void Stage(); // 0x004093E0

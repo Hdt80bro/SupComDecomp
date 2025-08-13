@@ -9,7 +9,7 @@ public:
     int v2;
     int v3;
     int v4;
-    boost::shared_ptr<Moho::MeshBatch> obj1;
+    boost::shared_ptr<Moho::MeshBatch> mObj1;
 };
 
 }

@@ -34,13 +34,13 @@ class IAiBuilder
 class CAiBuilderImpl : public Moho::IAiBuilder
 {
 public:
-    Moho::Unit *unit;
-    bool bool1;
-    bool bool3;
-    bool bool2;
-    Wm3::Vector3f vec;
-    std::map<uint, Moho::RUnitBlueprint> v6;
-    std::vector<Moho::WeakPtr<Moho::CUnitCommand>> commands;
+    Moho::Unit *mUnit;
+    bool mBool1;
+    bool mBool3;
+    bool mBool2;
+    Wm3::Vector3f mVec;
+    std::map<uint, Moho::RUnitBlueprint> mMap;
+    std::vector<Moho::WeakPtr<Moho::CUnitCommand>> mCommands;
     
     ~CAiBuilderImpl() override = default; // 0x0059FB50
     bool GetBool1(); // 0x0059FAA0

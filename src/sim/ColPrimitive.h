@@ -5,9 +5,9 @@
 struct struct_CollisionEntry
 {
     int unk;
-    Wm3::Vector3f dir;
-    Wm3::Vector3f pos;
-    float dist;
+    Wm3::Vector3f mDir;
+    Wm3::Vector3f mPos;
+    float mDist;
 };
 
 
@@ -33,8 +33,8 @@ public:
 template <class T>
 class CColPrimitive
 {
-    T shape;
-    Wm3::Vector3f center;
+    T mShape;
+    Wm3::Vector3f mCenter;
 
     virtual Wm3::AxisAlignedBox3f GetBoundingBox() = 0;
     virtual Wm3::Sphere3f *GetSphere() = 0;
