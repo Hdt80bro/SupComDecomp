@@ -1,5 +1,5 @@
-#include <string>
 #include "boost/thread/mutex.hpp"
+#include <string>
 
 struct struct_HeapStats
 {
@@ -48,6 +48,22 @@ class StatItem
     void Release(int val); // 0x004151E0
     void SetValue(std::string &disp);
 };
+
+template<class T>
+class Stats
+{
+public:
+    T *mItem;
+    gpg::Mutex mLock;
+};
+
+// 0x00E00314
+template<>
+class Stats<Moho::StatItem>;
+
+// 0x00E2FA8C
+template<>
+class Stats<Moho::CArmyStatItem>;
 
 }
 

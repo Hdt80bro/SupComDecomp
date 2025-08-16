@@ -18,6 +18,8 @@ struct CRandomStream : Moho::CMersenneTwister
     float mMarsagliaPair;
     bool mHasMarsagliaPair;
 
+    using Moho::CMersenneTwister::IRand;
+
     float FRand(); // 0x0040EA70
     float FRandGaussian(); // 0x0040EEC0
     float FRand(float scale) {

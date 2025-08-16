@@ -1,6 +1,6 @@
-#include <string>
-#include "boost/shared_ptr.hpp"
 #include "core/SndVar.h"
+#include "boost/shared_ptr.hpp"
+#include <string>
 
 namespace Moho {
 

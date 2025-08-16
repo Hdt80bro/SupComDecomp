@@ -1,4 +1,4 @@
-#include "gpgcore/reflection/RObject.h"
+#include "gpgcore/reflection/reflection.h"
 #include <string>
 
 namespace Moho {
@@ -7,11 +7,13 @@ namespace Moho {
 class RBlueprint : public gpg::RObject
 {
 public:
-    Moho::RRuleGameRulesImpl *mOwner;
+    Moho::IRuleGameRules *mOwner;
     std::string mName;
     std::string mDesc;
     std::string mSource;
     unsigned int mBlueprintOrdinal;
+
+    virtual void OnInitBlueprint() {} // 0x0050DBA0
 };
 
 }

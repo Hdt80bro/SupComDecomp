@@ -1,9 +1,9 @@
-#include "gpgcore/DatListItem.h"
+#include "gpgcore/DListItem.h"
 
 namespace Moho {
 
 template<class T>
-struct TDatListItem : public gpg::DatListItem<T>
+struct TDatListItem : gpg::DListItem<T>
 {
 };
 

@@ -2,18 +2,18 @@
 namespace gpg {
 
 template<class T>
-struct DatListItem
+struct DListItem
 {
     DatListItem<T> *mPrev;
     DatListItem<T> *mNext;
 
-    DatListItem() :
+    DListItem() :
         mPrev{this},
         mNext{this}
     {
         this->Reset(); // usually
     } // inline
-    ~DatListItem() {
+    ~DListItem() {
         this->Reset();
     } // inline
     T *Get() {

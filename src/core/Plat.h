@@ -1,9 +1,11 @@
+#include "BugSplat.h"
+#include "boost/thread/mutex.hpp"
+#include "boost/thread/once.hpp"
 #include <string>
 #include <vector>
-#include "boost/thread/mutex.hpp"
 
-static std::vector<std::wstring> error_report_filenames; // 0x010A87A8
-static std::wstring error_report_output_dir; // 0x00F59358
+static std::vector<std::wstring> sErrorReportFilenames; // 0x010A87A8
+static std::wstring sErrorReportOutputDir; // 0x00F59358
 
 static bool sPlatGuard; // 0x010A6382
 static bool sSymbolHandlerInit; // 0x010A6383

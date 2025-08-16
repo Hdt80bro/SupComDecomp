@@ -1,9 +1,9 @@
-#include <string>
-#include <map>
-#include "boost/shared_ptr.hpp"
 #include "gpgcore/containers/fastvector.h"
 #include "gpgcore/reflection/RType.h"
 #include "gpgcore/String.h"
+#include "boost/shared_ptr.hpp"
+#include <map>
+#include <string>
 
 
 static std::map<std::string, gpg::RType *> sPrefetchTypeMap; // 0x010C7940

@@ -1,6 +1,6 @@
 #include "Plat.h"
-#include <Windows.h>
 #include "core/Win.h"
+#include <Windows.h>
 
 std::vector<std::wstring> sErrorReportFilenames; // 0x010A87A8
 std::wstring sErrorReportOutputDir; // 0x00F59358
@@ -10,11 +10,13 @@ bool sSymbolHandlerInit; // 0x010A6383
 boost::mutex *sPMutexSymHandler; // 0x010A6388
 boost::once_flag once_InitSymHandlerMutex = BOOST_ONCE_INIT; // 0x010A638C
 
+MiniDmpSender sBugSplatSender; // 0x010A87B8
+
 // 0x004A0ED0
 void Moho::PLAT_RegisterFileForErrorReport(const wchar_t *file) {
     if (file != nullptr && file[0] != '\0') {
         if (! sErrorReportFilenames.empty()) {
-            for (auto itr = sErrorReportFilenames.begin(); itr != error_report_filenames.end(); ++itr) {
+            for (auto itr = sErrorReportFilenames.begin(); itr != sErrorReportFilenames.end(); ++itr) {
                 if (itr->compare(file) == 0) {
                     return;
                 }
@@ -38,10 +40,10 @@ void Moho::PLAT_InitErrorReportOutputDir(const wchar_t *dir) {
 // 0x004A1230
 void Moho::PLAT_CreateGameLogForReport() {
     std::string recentLines = Moho::LOG_GetRecentLines();
-    std::wstring title = gpg::STR_Utf8ToWide(supcomapp->title.c_str());
-    std::wstring strFilename = error_report_output_dir + title + L".sclog";
+    std::wstring title = gpg::STR_Utf8ToWide(mSupComApp->title.c_str());
+    std::wstring strFilename = mErrorReportOutputDir + title + L".sclog";
     const wchar_t *filename = strFilename.c_str();
-    int handle = CreateFileW(filename, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_READ_ATTRIBUTES, 0);
+    HANDLE handle = CreateFileW(filename, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_READ_ATTRIBUTES, 0);
     if (handle == INVALID_HANDLE_VALUE) {
         std::string err = Moho::WIN_GetLastError();
         gpg::Warnf("PLAT_CreateGameLogForReport(\"%s\") log file creation failed: %s",
@@ -90,8 +92,7 @@ void Moho::PLAT_Exit() {
     boost::mutex::scoped_lock lock{sPMutexSymHandler};
     if (sPlatGuard) {
         if (sSymbolHandlerInit) {
-            CurrentProcess = GetCurrentProcess();
-            SymCleanup(CurrentProcess);
+            SymCleanup(GetCurrentProcess());
             sSymbolHandlerInit = false;
         }
         sPlatGuard = false;
@@ -395,8 +396,8 @@ LONG TopLevelExceptionFilter(_EXCEPTION_POINTERS *exceptionInfo) {
             }
         } while (Thread32Next(toolhelp32Snapshot, &te));
         ReportFault(exceptionInfo, 0);
-        sBugSplatMiniDmpSender.setCallback(sub_4A1610);
-        sBugSplatMiniDmpSender.createReport(exceptionInfo);
+        sBugSplatSender.setCallback(sub_4A1610);
+        sBugSplatSender.createReport(exceptionInfo);
         return true;
     }
 }

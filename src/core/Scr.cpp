@@ -1,7 +1,7 @@
 #include "Scr.h"
-#include "gpgcore/General.h"
 #include "core/Disk.h"
 #include "core/Exception.h"
+#include "gpgcore/General.h"
 
 int sCurThreadId; // 0x010A63A0
 Moho::ScrDebugWindow *sSrcDebugWindow; // 0x010A63A4

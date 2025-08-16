@@ -1,12 +1,12 @@
-#include "boost/shared_ptr.hpp"
-#include "LuaPlus.h"
+#include "core/HeightField.h"
 #include "gpgcore/containers/Array2D.h"
 #include "gpgcore/containers/fastvector.h"
 #include "gpgcore/containers/Rect.h"
-#include "core/HeightField.h"
+#include "LuaPlus.h"
+#include "boost/shared_ptr.hpp"
 
 namespace Moho {
-
+    
 struct TerrainTypes
 {
     gpg::fastvector_n<LuaPlus::LuaObject, 256> mTTVec;

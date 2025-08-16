@@ -1,4 +1,4 @@
-#include "core/reflection/Blueprint.h"
+#include "core/rules/Blueprint.h"
 #include "boost/shared_ptr.hpp"
 #include <string>
 #include <vector>

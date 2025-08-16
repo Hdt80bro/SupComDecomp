@@ -1,8 +1,8 @@
 // known file
 
 #include "Message.h"
-#include <stdexcept>
 #include "gpgcore/streams/Stream.h"
+#include <stdexcept>
 
 
 Moho::CMessage::CMessage(int size, char type) {

@@ -44,7 +44,7 @@ public:
     const char *mClassName;
     const char *mHelp;
     Moho::CScrLuaBinder *mPreviousDef;
-    lua_CFunction mGunc;
+    lua_CFunction mFunc;
     Moho::CScrLuaObjectFactory *mFactory;
 
     virtual void Run(LuaPlus::LuaState *); // 0x004CD3A0

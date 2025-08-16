@@ -1,5 +1,5 @@
-#include "LuaPlus.h"
 #include "core/TDatListItem.h"
+#include "LuaPlus.h"
 
 namespace Moho {
 

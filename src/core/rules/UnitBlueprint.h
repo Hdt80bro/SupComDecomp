@@ -1,4 +1,4 @@
-#include "core/reflection/EntityBlueprint.h"
+#include "core/rules/EntityBlueprint.h"
 #include "core/MinMax.h"
 #include <string>
 #include <vector>

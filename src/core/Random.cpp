@@ -34,7 +34,7 @@ void Moho::CMersenneTwister::ShuffleState() {
         int x = this->mState[i] ^ (this->mState[i] ^ this->mState[i + 1]) & 0x7FFFFFFF;
         this->mState[i] = this->mState[(i + 397) % 624] ^ mersenne_twist_coef[x & 1] ^ (x >> 1);
     }
-    this->mState[623] = ((this->mState[623] ^ (this->mState[623] ^ this->mState[0]) & 0x7FFFFFFF) >> 1) ^ this->state[396] ^ mersenne_twist_coef[this->mState[0] & 1];
+    this->mState[623] = ((this->mState[623] ^ (this->mState[623] ^ this->mState[0]) & 0x7FFFFFFF) >> 1) ^ this->mState[396] ^ mersenne_twist_coef[this->mState[0] & 1];
     this->mPos = 0;
 }
 

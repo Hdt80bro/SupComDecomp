@@ -14,9 +14,7 @@ struct Array2D
         return this->mData[x + y * this->mSizeX];
     }
     char *At(int x, int y) {   
-        if (x >= this->mSizeX || y >= this->mSizeY) {
-            gpg::HandleAssertFailure("x < mSizeX && y < mSizeY", 135, "c:\\work\\rts\\main\\code\\src\\libs\\gpgcore/containers/Array2D.h");
-        }
+        GPG_ASSERT(x < mSizeX && y < mSizeY); // if (! (x < this->mSizeX && y < this->mSizeY)) { gpg::HandleAssertFailure("x < mSizeX && y < mSizeY", 135, "c:\\work\\rts\\main\\code\\src\\libs\\gpgcore/containers/Array2D.h"); }
         return &this->mData[x + y * this->mSizeX];
     }
 };

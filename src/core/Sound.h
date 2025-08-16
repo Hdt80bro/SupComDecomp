@@ -1,7 +1,7 @@
-#include <string>
-#include "boost/shared_ptr.hpp"
 #include "core/AudioEngine.h"
 #include "core/HSound.h"
+#include "boost/shared_ptr.hpp"
+#include <string>
 
 namespace Moho {
 

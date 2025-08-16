@@ -1,6 +1,6 @@
-#include "boost/shared_ptr.hpp"
-#include "Wm3Vector3.h"
 #include "core/IntelGrid.h"
+#include "Wm3Vector3.h"
+#include "boost/shared_ptr.hpp"
 
 namespace Moho {
 
