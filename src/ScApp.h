@@ -59,4 +59,8 @@ public:
     int CreateDevice(); // 0x008D0370
 };
 
+std::string func_FindMapScenario(const char *); // 0x008CE220
+bool func_StartCommandLineSession(const char *mapName, bool isPerfTest); // 0x008CE2A0
 void func_InitializeSession(); // 0x008CE3D0
+bool func_StartJoinLobbyUI(const char *playerName, const char *gameName, const char *mapName); // 0x0083D030
+bool func_StartHostLobbyUI(const char *protocol, int port, const char *playerName, const char *gameName, const char *mapName); // 0x0083CF20

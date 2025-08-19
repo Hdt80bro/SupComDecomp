@@ -286,8 +286,8 @@ bool gpg::STR_IsIdent(gpg::StrArg str) {
 // 0x00938B40
 int gpg::STR_Replace(std::string &str, gpg::StrArg what, gpg::StrArg with, unsigned int unk) {
     int n = 0;
-    if (unk) {
-        unsigned int searchPos = 0;
+    if (unk) { // sometimes passed as `1`, sometimes `-1` - but never `0`
+        size_t searchPos = 0;
         int pos;
         while ((pos = str.find(what, searchPos, strlen(what))) != std::string::npos) {
             str.replace(pos, strlen(what), with);

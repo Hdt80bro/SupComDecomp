@@ -17,8 +17,8 @@ TOGGLEKEYS sObjToggleKeys; // 0x00F57890
 FILTERKEYS sObjFilterKeys; // 0x00F57898
 mem_hook_t sMemHook; // 0x00F8F330
 RTL_CRITICAL_SECTION sLogCritSection; // 0x010A6344
-FILE *sAlloclog; // 0x010A648C
-bool sFlushingAlloclog; // 0x010A6490
+FILE *sAllocLog; // 0x010A648C
+bool sFlushingAllocLog; // 0x010A6490
 
 void func_MemHook(int isFreeing, int size, ...); // 0x008D1E50
 void func_CleanupAllocLoc(); // 0x008D2140
@@ -52,9 +52,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, const char *cmdline, i
     if (Moho::CFG_GetArgOption("/purgecache", 0, nullptr)) {
         Moho::USER_PurgeAppCacheDir();
     }
-    SystemParametersInfoW(SPI_GETSTICKYKEYS, sizeof(obj_stickykeys), &obj_stickykeys, 0);
-    SystemParametersInfoW(SPI_GETTOGGLEKEYS, sizeof(obj_togglekeys), &obj_togglekeys, 0);
-    SystemParametersInfoW(SPI_GETFILTERKEYS, sizeof(obj_filterkeys), &obj_filterkeys, 0);
+    SystemParametersInfoW(SPI_GETSTICKYKEYS, sizeof(sObjStickyKeys), &sObjStickyKeys, 0);
+    SystemParametersInfoW(SPI_GETTOGGLEKEYS, sizeof(sObjToggleKeys), &sObjToggleKeys, 0);
+    SystemParametersInfoW(SPI_GETFILTERKEYS, sizeof(sObjFilterKeys), &sObjFilterKeys, 0);
     func_SetSystemParameters(false);
     CScApp app{};
     Moho::WIN_AppExecute(&app);
@@ -71,23 +71,23 @@ void func_MemHook(int isFreeing, int size, ...) {
     va_list ptrs;
     va_start(ptrs, size);
     EnterCriticalSection(&sLogCritSection);
-    if (! sFlushingAlloclog) {
-        sFlushingAlloclog = true;
+    if (! sFlushingAllocLog) {
+        sFlushingAllocLog = true;
         DWORD buffer = GetCurrentThreadId();
-        fwrite(&buffer, 4u, 1u, sAlloclog);
+        fwrite(&buffer, 4, 1, sAllocLog);
         LARGE_INTEGER performanceCount;
         QueryPerformanceCounter(&performanceCount);
-        fwrite(&performanceCount, 8, 1, sAlloclog);
-        fwrite(&isFreeing, 4, 1, sAlloclog);
-        fwrite(&size, 4, 1, sAlloclog);
-        fwrite(ptrs, 4, 1, sAlloclog);
+        fwrite(&performanceCount, 8, 1, sAllocLog);
+        fwrite(&isFreeing, 4, 1, sAllocLog);
+        fwrite(&size, 4, 1, sAllocLog);
+        fwrite(ptrs, 4, 1, sAllocLog);
         // see Moho::PLAT_FormatCallStack
         unsigned int stack[64];
         unsigned int stackSize = Moho::PLAT_GetCallStack(0, 64, stack);
         unsigned int *addr = &stack[0];
         for ( ; stackSize != 0; --stackSize, ++addr) {
-            fwrite(addr, 4u, 1u, sAlloclog);
-            if (sub_8D4C10(addr)->found) {
+            fwrite(addr, 4, 1, sAllocLog);
+            if (sub_8D4C10(addr).found) {
                 Moho::SPlatSymbolInfo info{};
                 std::string out{};
                 if (Moho::PLAT_GetSymbolInfo(*addr, info)) {
@@ -100,12 +100,12 @@ void func_MemHook(int isFreeing, int size, ...) {
                         info.mLineDis
                     );
                 }
-                fwrite(out.c_str(), 1, out.size() + 1, sAlloclog);
+                fwrite(out.c_str(), 1, out.size() + 1, sAllocLog);
             }
         }
         int zero = 0;
-        fwrite(&zero, 4, 1, sAlloclog);
-        sFlushingAlloclog = false;
+        fwrite(&zero, 4, 1, sAllocLog);
+        sFlushingAllocLog = false;
     }
     LeaveCriticalSection(&sLogCritSection);
 }
@@ -113,20 +113,20 @@ void func_MemHook(int isFreeing, int size, ...) {
 // 0x008D2140
 void func_CleanupAllocLoc() {
     func_SetMemHook(0);
-    fclose(sAlloclog);
-    sAlloclog = nullptr;
+    fclose(sAllocLog);
+    sAllocLog = nullptr;
     DeleteCriticalSection(&SleepEx);
 }
 
 // 0x008D2170
 void func_AllocLog(const char *filename) {
     FILE *file = fopen(filename, "wb");
-    if (file) {
+    if (file != nullptr) {
         LARGE_INTEGER frequency;
         QueryPerformanceFrequency(&frequency);
         fwrite(&frequency, 8, 1, file);
         InitializeCriticalSection(&sLogCritSection);
-        sAlloclog = file;
+        sAllocLog = file;
         atexit(func_CleanupAllocLoc);
         func_SetMemHook(func_MemHook);
     }

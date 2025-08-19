@@ -15,6 +15,7 @@ public:
     const char *what() const override; // 0x00405470
 
     XException(const char *); // 0x004052A0
+    XException(const char *msg, void *stack, unsigned int size); // 0x00405390
 };
 
 // 0x00E07DC0
@@ -28,7 +29,18 @@ public:
 class XFileError : public Moho::XException
 {
 public:
-    XFileError(const char *msg) : XException{msg} {}
+    XFileError(const char *msg) : Moho::XException{msg} {}
+    XFileError(std::string *msg, void *stack, unsigned int size) : Moho::XException{msg->c_str(), stack, size} {} // 0x0040FA80
 };
+
+#define THROW_FILE_ERROR(method, err) do {\
+    unsigned int stack1[32];\
+    unsigned int size = Moho::PLAT_GetCallStack(nullptr, 32, stack1);\
+    std::string msg = gpg::STR_Printf("%s: %s", method, err);\
+    int stack2[32];\
+    throw Moho::XFileError{&msg, stack2, size};\
+} while (false)
+
+#define THROW_NULL_ARG_FILE_ERROR(method) THROW_FILE_ERROR(method, "Null argument.")
 
 }
