@@ -5,56 +5,67 @@ namespace gpg {
 template<class T>
 struct MemBuffer
 {
-    boost::shared_ptr<T> mData;
-    T *mBegin;
-    T *mEnd;
+    using type = T;
+
+    boost::shared_ptr<type> mData;
+    type *mBegin;
+    type *mEnd;
 
     MemBuffer() :
         mData{},
         mBegin{nullptr},
         mEnd{nullptr}
     {}
-    MemBuffer(const MemBuffer<T> &cpy) :
-        mData{cpy.data},
-        mBegin{cpy.begin},
-        mEnd{cpy.end}
+    MemBuffer(const MemBuffer<type> &cpy) :
+        mData{cpy.mData},
+        mBegin{cpy.mBegin},
+        mEnd{cpy.mEnd}
     {}
-    MemBuffer(boost::shared_ptr<T> ptr, T *begin, T *end) :
+    MemBuffer(boost::shared_ptr<type> ptr, type *begin, T *end) :
         mData{ptr},
         mBegin{begin},
         mEnd{end}
     {}
-    MemBuffer(boost::shared_ptr<T> ptr, unsigned int len) :
+    MemBuffer(boost::shared_ptr<type> ptr, unsigned int len) :
         mData{ptr},
         mBegin{ptr.data()},
         mEnd{ptr.data() + len}
     {}
 
-    T *GetPtr(unsigned int start, unsigned int len) {
-        T *begin = &this->mBegin[start];
+    type *GetPtr(unsigned int start, unsigned int len) {
+        type *begin = &this->mBegin[start];
         if (&begin[len] > this->mEnd) {
             throw std::range_error{std::string{"Out of bound access in MemBuffer<>::GetPtr()"}};
         }
         return begin;
     }
-    gpg::MemBuffer<T> SubBuffer(unsigned int start, unsigned int len) {
-        return gpg::MemBuffer<T>{this->mData, this->GetPtr(start, end), this->GetPtr(start + end, 0)};
+    gpg::MemBuffer<type> SubBuffer(unsigned int start, unsigned int len) {
+        return gpg::MemBuffer<type>{this->mData, this->GetPtr(start, end), this->GetPtr(start + end, 0)};
     }
     void Reset() {
         this->mData.release();
         this->mBegin = nullptr;
         this->mEnd = nullptr;
     }
-    unsigned int Size() {
-        return (this->mEnd - this->mBegin) / sizeof(T);
+    size_t Size() {
+        return (this->mEnd - this->mBegin) / sizeof(type);
     }
-    gpg::MemBuffer<T> &operator=(gpg::MemBuffer<T> const &that) {
+    gpg::MemBuffer<type> &operator=(gpg::MemBuffer<type> const &that) {
         this->mData = that.mData;
         this->mBegin = that.mBegin;
         this->mEnd = that.mEnd;
     }
-    T *operator T *() {
+    type *operator type *() {
         return *this->mBegin;
+    }
+    type *begin() {
+        return this->mBegin;
+    }
+    type *end() {
+        rerturn this->mEnd;
+    }
+    type &operator[](int ind) {
+        return &this->mBegin[ind];
     }
 };
 

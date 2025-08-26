@@ -1,7 +1,7 @@
 #include "Res.h"
 #include "core/File.h"
 
-std::map<std::string, gpg::RType *> *pPrefetchTypeMap; // 0x010A6390
+std::map<std::string, gpg::RType *> *sPPrefetchTypeMap; // 0x010A6390
 
 
 // 0x004A5060
@@ -20,9 +20,9 @@ std::string Moho::RES_CompletePath(gpg::StrArg dir, gpg::StrArg name) {
 
 // 0x004A4FB0
 std::map<std::string, gpg::RType *> *func_GetPrefetchTypeMap() {
-    if (pPrefetchTypeMap == nullptr) {
-        static std::map<std::string, gpg::RType *> prefetchTypeMap{}; // 0x010C7940
-        pPrefetchTypeMap = &prefetchTypeMap;
+    if (sPPrefetchTypeMap == nullptr) {
+        static std::map<std::string, gpg::RType *> sPrefetchTypeMap{}; // 0x010C7940
+        sPPrefetchTypeMap = &sPrefetchTypeMap;
     }
-    return pPrefetchTypeMap;
+    return sPPrefetchTypeMap;
 }

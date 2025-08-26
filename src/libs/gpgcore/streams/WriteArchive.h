@@ -7,8 +7,8 @@ namespace gpg {
 class WriteArchive
 {
 public:
-    std::map<unk_t> mMap1;
-    std::map<unk_t> mMap2;
+    std::map<unk_t, unk_t> mMap1;
+    std::map<unk_t, unk_t> mMap2;
 
     virtual ~WriteArchive() = default; // 0x00953C80
     virtual void WriteBytes(char *, size_t) = 0;

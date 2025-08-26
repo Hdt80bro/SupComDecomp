@@ -6,7 +6,7 @@
 #include "gpgcore/String.h"
 #include <Windows.h>
 
-int dwCreationDisposition[] = { // 0x00D494B0
+int sCreationDisposition[] = { // 0x00D494B0
     CREATE_NEW,
     OPEN_ALWAYS,
     OPEN_EXISTING,
@@ -16,15 +16,15 @@ int dwCreationDisposition[] = { // 0x00D494B0
     0,
     0,
 };
-int dwMoveMethod[] = { // 0x00D4953C
+int sMoveMethod[] = { // 0x00D4953C
     FILE_BEGIN,
     FILE_CURRENT,
     FILE_END,
 };
 
 // 0x00955890
-gpg::FileStream::IOError::IOError(int id)
-    : std::runtime_error{gpg::FileErrorToString(id)},
+gpg::FileStream::IOError::IOError(int id) :
+    std::runtime_error{gpg::GetWin32ErrorString(id)},
     mId{id}
 {}
 
@@ -41,15 +41,15 @@ size_t gpg::FileStream::VirtTell(gpg::Stream::Mode mode) {
     LARGE_INTEGER size;
     size.QuadPart = 0;
     LARGE_INTEGER newFilePointer;
-    if (! SetFilePointerEx(this->mHandle, size, &newFilePointer, 1)) {
+    if (! SetFilePointerEx(this->mHandle, size, &newFilePointer, FILE_CURRENT)) {
         throw gpg::FileStream::IOError{GetLastError()};
     }
     size_t pos = newFilePointer.LowPart;
-    if (this->mEnd != this->mReadHead) {
-        pos -= this->mEnd - this->mReadHead;
+    if (this->LeftToRead() != 0) {
+        pos -= this->LeftToRead();
     }
-    if (this->mWriteStart != this->mWriteHead) {
-        pos += this->mWriteStart - this->mWriteHead;
+    if (this->LeftToFlush() != 0) {
+        pos += this->LeftToFlush();
     }
     return pos;
 }
@@ -62,24 +62,24 @@ size_t gpg::FileStream::VirtSeek(gpg::Stream::Mode mode, gpg::Stream::SeekOrigin
     if (orig > gpg::Stream::OriginEnd) {
         throw std::invalid_argument{std::string{"Invalid origin for Seek()"}};
     }
-    if (this->mWriteStart != this->mWriteHead) {
-        this->Flush(this->mWriteHead, this->mWriteStart - this->mWriteHead);
+    if (this->LeftToFlush() != 0) {
+        this->DoWrite(this->mWriteStart, this->LeftToFlush());
+    }
+    if (this->LeftToRead() != 0 && orig == gpg::Stream::OriginCurr) {
+        pos -= this->LeftToRead();
     }
     LARGE_INTEGER dist;
     dist.QuadPart = pos;
-    if (this->mEnd != this->mReadHead && orig == gpg::Stream::OriginCurr) {
-        dist.QuadPart -= this->mEnd - this->mReadHead;
-    }
     LARGE_INTEGER newFilePointer;
-    if (! SetFilePointerEx(this->mHandle, dist, &newFilePointer, dwMoveMethod[orig])) {
+    if (! SetFilePointerEx(this->mHandle, dist, &newFilePointer, sMoveMethod[orig])) {
         throw gpg::FileStream::IOError{GetLastError()};
     }
-    this->mEnd = nullptr;
+    this->mReadEnd = nullptr;
     this->mReadHead = nullptr;
-    this->mStart = nullptr;
-    this->mDataEnd = nullptr;
-    this->mWriteStart = nullptr;
+    this->mReadStart = nullptr;
+    this->mWriteEnd = nullptr;
     this->mWriteHead = nullptr;
+    this->mWriteStart = nullptr;
     return newFilePointer.QuadPart;
 }
 
@@ -88,110 +88,111 @@ void gpg::FileStream::VirtWrite(const char *str, size_t len) {
     if ((this->mAccessKind & gpg::Stream::ModeSend) == 0) {
         throw std::runtime_error{std::string{"Attempt to write to a file that isn't open for output."}};
     }
-    if (len > this->LeftInWriteBuffer()) {
-        int size = this->LeftInWriteBuffer();
+    int size = this->LeftToWrite();
+    if (len > size) {
         if (size != 0 && len - size < this->mBuff.Size()) {
-            memcpy(this->mWriteStart, str, size);
-            this->mWriteStart += size;
+            memcpy(this->mWriteHead, str, size);
+            this->mWriteHead += size;
             str += size;
             len -= size;
         }
+        this->DoWrite(this->mWriteStart, this->LeftToFlush());
         if (len >= this->mBuff.Size()) {
-            this->Flush(str, len);
+            this->DoWrite(str, len);
             return;
         }
     }
-    memcpy(this->mWriteStart, str, len);
-    this->mWriteStart += len;
+    memcpy(this->mWriteHead, str, len);
+    this->mWriteHead += len;
 }
 
 // 0x00955F80
-size_t gpg::FileStream::VirtRead(char *buf, size_t len) {
+size_t gpg::FileStream::VirtRead(char *buff, size_t len) {
     if ((this->mAccessKind & gpg::Stream::ModeReceive) == 0) {
         throw std::runtime_error{std::string{"Attempt to read from a file that isn't open for input."}};
     }
-    size_t readBuf = this->LeftInReadBuffer();
+    size_t readBuff = this->LeftToRead();
     int readAmt = 0;
-    while (readBuf < len) {
-        if (readBuf != 0) {
-            memcpy(&buf[readAmt], this->mReadHead, readBuf);
-            this->mReadHead += readBuf;
-            readAmt += readBuf;
-            buf += readBuf;
-            len -= readBuf;
+    while (readBuff < len) {
+        if (readBuff != 0) {
+            memcpy(&buff[readAmt], this->mReadHead, readBuff);
+            this->mReadHead += readBuff;
+            readAmt += readBuff;
+            buff += readBuff;
+            len -= readBuff;
         }
         if (len >= this->mBuff.Size()) {
-            size_t amt = this->ReadFile(buf, len);
-            if (amt) {
+            size_t amt = this->DoRead(buff, len);
+            if (amt != 0) {
                 readAmt += amt;
-                buf += amt;
+                buff += amt;
                 len -= amt;
             } else {
                 return readAmt;
             }
         } else {
-            size_t amt = this->ReadFile(this->mBuff.begin, this->mBuff.Size());
+            size_t amt = this->DoRead(this->mBuff.begin(), this->mBuff.Size());
             if (amt == 0) {
                 return readAmt;
             }
-            this->readHead = this->buff.begin;
-            this->start = this->buff.begin;
-            this->end = &this->buff.begin[amt];
+            this->mReadHead = this->mBuff.begin();
+            this->mReadStart = this->mBuff.begin();
+            this->mReadEnd = &this->mBuff[amt];
         }
-        readBuf = this->end - this->readHead;
+        readBuff = this->mReadEnd - this->mReadHead;
     }
-    memcpy(buf, this->readHead, len);
-    this->readHead += len;
+    memcpy(buff, this->mReadHead, len);
+    this->mReadHead += len;
     readAmt += len;
     return readAmt;
 }
 
 // 0x009560C0
 bool gpg::FileStream::VirtAtEnd() {
-    if ((this->accessKind & gpg::Stream::ModeReceive) == 0) {
+    if ((this->mAccessKind & gpg::Stream::ModeReceive) == 0) {
         throw std::runtime_error{std::string{"Attempt to read from a file that isn't open for input."}};
     }
-    if (this->readHead != this->end) {
+    if (this->LeftToRead() == 0) {
         return false;
     }
-    size_t amt = this->ReadFile(this->buff.begin, this->buff.Size());
-    this->readHead = this->buff.begin;
-    this->start = this->buff.begin;
-    this->end = &this->buff.begin[amt];
+    size_t amt = this->DoRead(this->mBuff.begin(), this->mBuff.Size());
+    this->mReadHead = this->mBuff.begin();
+    this->mReadStart = this->mBuff.begin();
+    this->mReadEnd = &this->mBuff[amt];
     return amt == 0;
 }
 
 // 0x00956290
 void gpg::FileStream::VirtFlush() {
-    if ((this->accessKind & gpg::Stream::ModeSend) == 0) {
+    if ((this->mAccessKind & gpg::Stream::ModeSend) == 0) {
         throw std::runtime_error{std::string{"Attempt to write to a file that isn't open for output."}};
     }
-    if (this->writeStart != this->writeHead) {
-        this->Flush(this->writeHead, this->writeStart - this->writeHead);
+    if (this->LeftToFlush() != 0) {
+        this->DoWrite(this->mWriteStart, this->LeftToFlush());
     }
 }
 
 // 0x00956320
 void gpg::FileStream::VirtClose(gpg::Stream::Mode mode) {
-    if ((this->accessKind & mode & gpg::Stream::ModeSend) != 0) {
-        if (this->writeStart != this->writeHead) {
-            this->Flush(this->writeHead, this->writeStart - this->writeHead);
+    if ((this->mAccessKind & mode & gpg::Stream::ModeSend) != 0) {
+        if (this->LeftToFlush() != 0) {
+            this->DoWrite(this->mWriteStart, this->LeftToFlush());
         }
-        this->accessKind &=~ gpg::Stream::ModeSend;
-        this->dataEnd = nullptr;
-        this->writeStart = nullptr;
-        this->writeHead = nullptr;
+        this->mAccessKind &=~ gpg::Stream::ModeSend;
+        this->mWriteEnd = nullptr;
+        this->mWriteHead = nullptr;
+        this->mWriteStart = nullptr;
     }
-    if ((this->accessKind & mode & gpg::Stream::ModeReceive) != 0) {
-        this->accessKind &=~ gpg::Stream::ModeReceive;
-        this->end = nullptr;
-        this->readHead = nullptr;
-        this->start = nullptr;
+    if ((this->mAccessKind & mode & gpg::Stream::ModeReceive) != 0) {
+        this->mAccessKind &=~ gpg::Stream::ModeReceive;
+        this->mReadEnd = nullptr;
+        this->mReadHead = nullptr;
+        this->mReadStart = nullptr;
     }
-    if (this->handle != (HANDLE)-1) {
-        CloseHandle(this->handle);
-        this->handle = (HANDLE)-1;
-        this->buff.Reset();
+    if (this->mHandle != INVALID_HANDLE_VALUE) {
+        CloseHandle(this->mHandle);
+        this->mHandle = INVALID_HANDLE_VALUE;
+        this->mBuff.Reset();
     }
 }
 
@@ -199,72 +200,73 @@ void gpg::FileStream::VirtClose(gpg::Stream::Mode mode) {
 // 0x00955BD0
 gpg::FileStream::FileStream(const char *filename, gpg::Stream::Mode accessKind, unsigned int attributes, size_t buffSize) :
     gpg::Stream{},
-    handle{0},
-    accessKind{gpg::Stream::ModeNone}
+    mHandle{0},
+    mAccessKind{gpg::Stream::ModeNone}
 {
-    this->buff = gpg::AllocMemBuffer(buffSize);
-    this->OpenFile(filename, accessKind, attributes);
+    this->mBuff = gpg::AllocMemBuffer(buffSize);
+    this->DoOpen(filename, accessKind, attributes);
 }
 
 // 0x00955990
-void gpg::FileStream::OpenFile(const char *file, gpg::Stream::Mode accessKind, unsigned int attributes) {
-    std::wstring filename = gpg::STR_Utf8ToWide(file);
-    HANDLE FileW = CreateFileW(
-        filename.data(),
+void gpg::FileStream::DoOpen(const char *filename, gpg::Stream::Mode accessKind, unsigned int attributes) {
+    std::wstring fileStr = gpg::STR_Utf8ToWide(filename);
+    HANDLE file = CreateFileW(
+        fileStr.c_str(),
         ((4 * accessKind) | accessKind & 2) << 29,
         (attributes >> 3) & 3,
         0,
-        dwCreationDisposition[attributes & 7],
+        sCreationDisposition[attributes & 7],
         ((attributes & 0x20) << 21) | FILE_ATTRIBUTE_NORMAL,
-        0);
-    this->handle = FileW;
-    if (this->handle == INVALID_HANDLE_VALUE) {
+        0
+    );
+    this->mHandle = file;
+    if (this->mHandle == INVALID_HANDLE_VALUE) {
         throw gpg::FileStream::IOError(GetLastError());
     }
-    this->accessKind = accessKind;
-}
-
-// 0x00955B60
-size_t gpg::FileStream::ReadFile(char *buf, size_t len) {
-    if (this->writeStart != this->writeHead) {
-        this->Flush(this->writeHead, this->writeStart - this->writeHead);
-    }
-    this->dataEnd = nullptr;
-    this->writeHead = nullptr;
-    this->writeStart = nullptr;
-    DWORD NumberOfBytesRead;
-    if (! ::ReadFile(this->handle, buf, len, &NumberOfBytesRead, 0)) {
-        throw gpg::FileStream::IOError{GetLastError()};
-    }
-    return NumberOfBytesRead;
+    this->mAccessKind = accessKind;
 }
 
 // 0x00955A80
-void gpg::FileStream::Flush(const char *buf, size_t bytes) {
-    if (this->readHead != this->end) {
+void gpg::FileStream::DoWrite(const char *buff, size_t bytes) {
+    if (this->LeftToRead() != 0) {
         LARGE_INTEGER dist;
-        dist.QuadPart = this->readHead - this->end;
-        if (! SetFilePointerEx(this->handle, dist, nullptr, FILE_CURRENT)) {
+        dist.QuadPart = this->LeftToRead();
+        if (! SetFilePointerEx(this->mHandle, dist, nullptr, FILE_CURRENT)) {
             throw gpg::FileStream::IOError{GetLastError()};
         }
     }
-    this->end = nullptr;
-    this->readHead = nullptr;
-    this->start = nullptr;
+    this->mReadEnd = nullptr;
+    this->mReadHead = nullptr;
+    this->mReadStart = nullptr;
     if (bytes == 0) {
         DWORD written;
-        if (! WriteFile(this->handle, buf, bytes, &written, 0)) {
+        if (! ::WriteFile(this->mHandle, buff, bytes, &written, 0)) {
             throw gpg::FileStream::IOError{*_errno()};
         }
         GPG_ASSERT(written == bytes); // if (written != bytes) { gpg::HandleAssertFailure("written == bytes", 288, "c:\\work\\rts\\main\\code\\src\\libs\\gpgcore\\streams\\FileStream.cpp"); }
     }
-    this->writeStart = this->buff.begin;
-    this->writeHead = this->buff.begin;
-    this->dataEnd = this->buff.end;
+    this->mWriteHead = this->mBuff.begin();
+    this->mWriteStart = this->mBuff.begin();
+    this->mWriteEnd = this->mBuff.end();
+}
+
+// 0x00955B60
+size_t gpg::FileStream::DoRead(char *buff, size_t bytes) {
+    if (this->LeftToFlush() != 0) {
+        this->DoWrite(this->mWriteStart, this->LeftToFlush());
+    }
+    this->mWriteEnd = nullptr;
+    this->mWriteStart = nullptr;
+    this->mWriteHead = nullptr;
+    DWORD read;
+    if (! ::ReadFile(this->mHandle, buff, bytes, &read, 0)) {
+        throw gpg::FileStream::IOError{GetLastError()};
+    }
+    return read;
 }
 
 // 0x00957950
-std::string gpg::FileErrorToString(int id) {
+std::string gpg::GetWin32ErrorString(int id) {
     LPWSTR Buffer;
     int res = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_ALLOCATE_BUFFER, 0, id, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR) &Buffer, 0, 0);
     if (res == 0) {

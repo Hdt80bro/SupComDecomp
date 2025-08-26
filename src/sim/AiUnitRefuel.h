@@ -1,3 +1,6 @@
+#include "sim/CommandTask.h"
+#include "sim/Unit.h"
+#include "core/WeakPtr.h"
 
 namespace Moho {
 
@@ -8,6 +11,9 @@ public:
     Moho::WeakPtr<Moho::Unit> v1;
     bool v2;
     bool isCarrier;
+
+    ~CUnitRefuel() override; // 0x00621250
+    int Execute() override; // 0x00621490
 };
 
 }

@@ -1,5 +1,5 @@
 #include "gpgcore/containers/fastvector.h"
-#include "gpgcore/reflection/RType.h"
+#include "gpgcore/reflection/reflection.h"
 #include "gpgcore/String.h"
 #include "boost/shared_ptr.hpp"
 #include <map>

@@ -3,14 +3,28 @@ namespace gpg::HaStar {
 
 struct Cluster
 {
-    struct Data
+    struct Node
     {
-        int rrefs;
-        int v1;
-        int v2;
+        short mVal;
     };
 
-    gpg::HaStar::Cluster::Data *data;
+    struct Edge
+    {
+        char mVal;
+    };
+
+    // variable size!
+    struct Data
+    {
+        int mRefs;
+        int v1;
+        int v2;
+        char mNodeCount;
+        //! gpg::HaStar::Cluster::Node mNodes[mNodeCount];
+        //! gpg::HaStar::Cluster::Edge mEdges[(mNodeCount * (mNodeCount - 1)) / 2];
+    };
+
+    gpg::HaStar::Cluster::Data *mData;
 };
 
 

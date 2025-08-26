@@ -31,17 +31,17 @@ public:
     };
 
 public:
-    char *mStart;
+    char *mReadStart;
     char *mReadHead;
-    char *mEnd;
-    char *mWriteHead;
+    char *mReadEnd;
     char *mWriteStart;
-    char *mDataEnd;
+    char *mWriteHead;
+    char *mWriteEnd;
 
     virtual ~Stream() = default; // 0x00956E20
     virtual size_t VirtTell(gpg::Stream::Mode mode); // 0x00956F50
     virtual size_t VirtSeek(gpg::Stream::Mode mode, gpg::Stream::SeekOrigin orig, size_t pos); // 0x00956F90
-    virtual size_t VirtRead(char * buf, size_t len); // 0x00956FB0
+    virtual size_t VirtRead(char * buff, size_t len); // 0x00956FB0
     virtual size_t VirtReadNonBlocking(char * buf, size_t len); // 0x00956DE0
     virtual void VirtUnGetByte(int); // 0x00956FD0
     virtual bool VirtAtEnd(); // 0x00956DF0
@@ -50,17 +50,20 @@ public:
     virtual void VirtClose(gpg::Stream::Mode mode); // 0x00956E10
 
     Stream() = default; // 0x00956DB0
-    int LeftInReadBuffer() {
-        return this->mEnd - this->mReadHead;
+    int LeftToRead() {
+        return this->mReadEnd - this->mReadHead;
     } // inline
-    int LeftInWriteBuffer() {
-        return this->mDataEnd - this->mWriteStart;
+    int LeftToWrite() {
+        return this->mWriteEnd - this->mWriteHead;
     } // inline
+    int LeftToFlush() {
+        return this->mWriteHead - this->mWriteStart;
+    }
     void Write(const char *buf, size_t size); // 0x0043D130
     bool Close(gpg::Stream::Mode access); // 0x00955760
     size_t Read(char *buf, size_t size); // 0x0043D100
     size_t ReadNonBlocking(char *buf, size_t size) {
-        if (size > this->LeftInReadBuffer()) {
+        if (size > this->LeftToRead()) {
             size = this->VirtReadNonBlocking(buf, size);
         } else if (size) {
             memcpy(buf, this->mReadHead, size);

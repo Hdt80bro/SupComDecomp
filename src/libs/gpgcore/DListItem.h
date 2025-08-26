@@ -4,8 +4,10 @@ namespace gpg {
 template<class T>
 struct DListItem
 {
-    DatListItem<T> *mPrev;
-    DatListItem<T> *mNext;
+    using type = T;
+
+    gpg::DListItem<type> *mPrev;
+    gpg::DListItem<type> *mNext;
 
     DListItem() :
         mPrev{this},
@@ -16,8 +18,8 @@ struct DListItem
     ~DListItem() {
         this->Reset();
     } // inline
-    T *Get() {
-        return static_cast<T*>(this);
+    type *Get() {
+        return static_cast<type *>(this);
     } // inline
     void Reset() {
         this->mPrev->mNext = this->mNext;
@@ -25,11 +27,17 @@ struct DListItem
         this->mNext = this;
         this->mPrev = this;
     } // inline
-    void InsertBefore(DatListItem<T> *that) {
+    void InsertBefore(gpg::DListItem<type> *that) {
         this->mPrev = that->mPrev;
         this->mNext = that;
         that->mPrev = this;
         this->mPrev->mNext = this;
+    } // inline
+    bool Empty() {
+        return this->mNext == this;
+    } // inline
+    bool HasNext() {
+        return this->mPrev != this->mNext;
     } // inline
 };
 

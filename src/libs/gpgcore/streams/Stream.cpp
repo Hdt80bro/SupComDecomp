@@ -48,11 +48,11 @@ void gpg::Stream::VirtClose(gpg::Stream::Mode) {}
 
 // 0x0043D130
 void gpg::Stream::Write(const char *buf, size_t size) {
-    if (size > this->LeftInWriteBuffer()) {
+    if (size > this->LeftToWrite()) {
         this->VirtWrite(buf, size);
     } else {
-        memcpy(this->mWriteStart, buf, size);
-        this->mWriteStart += size;
+        memcpy(this->mWriteHead, buf, size);
+        this->mWriteHead += size;
     }
 }
 
@@ -64,7 +64,7 @@ bool gpg::Stream::Close(gpg::Stream::Mode access) {
 
 // 0x0043D100
 size_t gpg::Stream::Read(char *buf, size_t size) {
-    if (size > this->LeftInReadBuffer()) {
+    if (size > this->LeftToRead()) {
         size = this->VirtRead(buf, size);
     } else if (size) {
         memcpy(buf, this->mReadHead, size);

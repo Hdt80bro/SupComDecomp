@@ -8,8 +8,8 @@ namespace gpg {
 class MemBufferStream : public gpg::Stream
 {
 public:
-    gpg::MemBuffer<char> input;
-    gpg::MemBuffer<char> output;
+    gpg::MemBuffer<char> mInput;
+    gpg::MemBuffer<char> mOutput;
 
     ~MemBufferStream() noexcept override; // 0x008E5B80
     size_t VirtTell(gpg::Stream::Mode mode) override; // 0x0008E5DC0
