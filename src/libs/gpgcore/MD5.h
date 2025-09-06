@@ -58,4 +58,8 @@ struct MD5Context
     void Update(const void *, size_t); // 0x008E5870
 };
 
+unsigned int HashDword/*guess*/(unsigned int dat, unsigned int salt); // 0x008E3EA0
+unsigned int HashBytes(const void *dat, size_t size, unsigned int salt); // 0x008E3EC0
+unsigned int Hash(const std::string &dat, unsigned int salt); // 0x008E3F40
+
 }

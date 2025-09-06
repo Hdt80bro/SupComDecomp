@@ -1,5 +1,5 @@
 #include "core/Stats.h"
-
+#include <type_traits>
 
 namespace Moho {
 
@@ -11,6 +11,16 @@ public:
     virtual ~CountedObject() = default; // 0x004228E0
 
     CountedObject() : mCount{0} {} // 0x004228D0
+
+    void Increment() {
+        ++this->mCount;
+    }
+    void Decrement() {
+        --this->mCount;
+        if (this->mCount == 0) {
+            delete this;
+        }
+    }
 };
 
 template<class T>
@@ -33,13 +43,44 @@ struct InstanceCounter
         return s_StatItem;
     }
 
+    static void Increment() {
+        _InterlockedExchangeAdd(GetStatItem()->mCounter, 1);
+    }
+
+    static void Decrement() {
+        _InterlockedExchangeAdd(GetStatItem()->mCounter, -1);
+    }
+
 };
 
 template<class T>
 struct CountedPtr
 {
-public: 
+public:
     T *mPtr;
+
+    CountedPtr(T *ptr) : mPtr{ptr} {
+        this->mPtr->Increment();
+    }
+    ~CountedPtr() {
+        this->mPtr->Decrement();
+        this->mPtr = nullptr;
+    }
+
+    T &operator*() {
+        return *this->mPtr;
+    }
+    T *operator->() {
+        return &**this;
+    }
+    T *get() {
+        return this->mPtr;
+    }
 };
+
+template<class T>
+bool operator==(Moho::CountedPtr<T> obj, std::nullptr_t) {
+    return obj.get() == nullptr;
+}
 
 }

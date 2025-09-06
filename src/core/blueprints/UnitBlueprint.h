@@ -1,5 +1,6 @@
-#include "core/rules/EntityBlueprint.h"
+#include "core/blueprints/EntityBlueprint.h"
 #include "core/MinMax.h"
+#include "Wm3Vector3.h"
 #include <string>
 #include <vector>
 

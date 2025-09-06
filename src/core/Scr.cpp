@@ -134,7 +134,7 @@ bool Moho::SCR_LuaDoString(LuaPlus::LuaState *state, gpg::StrArg str) {
 
 // 0x004CDF60
 void Moho::SCR_AddHookDirectory(gpg::StrArg dir) {
-    hookDirs.push_back(std::string{dir});
+    sHookDirs.push_back(std::string{dir});
 }
 
 // 0x004CE020
@@ -142,7 +142,7 @@ bool SCR_LuaDoFile(LuaPlus::LuaState *state, gpg::StrArg filename, LuaPlus::LuaO
     int top = state->GetTop();
     {
         gpg::MemBuffer<const char> memmap = Moho::DISK_MemoryMapFile(filename);
-        if (memmap.begin == nullptr) {
+        if (memmap.begin() == nullptr) {
             gpg::Warnf("Can't open lua file \"%s\"", filename);
             state->SetTop(top);
             return false;
@@ -174,14 +174,14 @@ bool SCR_LuaDoFile(LuaPlus::LuaState *state, gpg::StrArg filename, LuaPlus::LuaO
 // 0x004CDCF0
 const lua_WChar *func_LuaFileLoader(lua_State *L, void *ud, size_t *sz) {
     auto dat = (struct_LuaFileLoaderDat *) ud;
-    if (dat->buf.begin == nullptr) {
+    if (dat->mBuff.begin() == nullptr) {
         return nullptr;
     }
-    int size = dat->buf.end - dat->buf.begin;
-    if (size == 0 || dat->done) {
+    int size = dat->mBuff.Size();
+    if (size == 0 || dat->mDone) {
         return nullptr;
     }
     *sz = size;
-    dat->done = true;
-    return (const lua_WChar *) dat->buf.begin;
+    dat->mDone = true;
+    return (const lua_WChar *) dat->mBuff.begin();
 }

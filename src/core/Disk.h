@@ -9,6 +9,8 @@
 #include "boost/filesystem/path.hpp"
 #include "boost/thread/once.hpp"
 #include <memory>
+#include <string>
+#include <vector>
 
 
 static boost::once_flag once_FileWaitSet; // 0x010A6370

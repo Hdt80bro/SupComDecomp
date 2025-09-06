@@ -1,5 +1,7 @@
 // known file
 
+#include "core/Math.h"
+#include "gpgcore/General.h"
 #include "Wm3AxisAlignedBox3.h"
 #include "Wm3Box3.h"
 #include "Wm3Vector3.h"
@@ -40,7 +42,7 @@ public:
     virtual bool CollideSphere(Wm3::Sphere3f *box, Moho::CollisionResult *res) = 0;
     virtual bool PointInShape(Wm3::Vector3f *p) = 0;
 
-    bool Collide(Moho::CColPrimitiveBase* with,  Moho::CollisionResult *res) {
+    bool Collide(Moho::CColPrimitiveBase* with, Moho::CollisionResult *res) {
         if (with->GetBox() != nullptr) {
             return this->CollideBox(with->GetBox(), res);
         } else {

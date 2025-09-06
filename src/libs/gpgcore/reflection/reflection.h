@@ -15,7 +15,7 @@ class REnumType;
 
 
 void PreRegisterRType(type_info *info, gpg::RType *type); // 0x008DF850
-gpg::RType *LookupRType(type_info *info); // 0x008E0750
+gpg::RType *LookupRType(const type_info *info); // 0x008E0750
 
 gpg::RRef REF_UpcastPtr(const gpg::RRef &ref, const gpg::RType *type); // 0x008D9590
 const gpg::RType *REF_GetTypeIndexed(int ind); // 0x008DD940
@@ -35,10 +35,10 @@ struct RRef {
     size_t GetCount() const; // 0x004A3630
     const gpg::RType *GetRType() const; // 0x004A3650
     const gpg::RIndexed *IsIndexed() const; // 0x004A3660
-    const gpg::RIndexed *IsPointer() const; // gpgcore.dll
+    const gpg::RIndexed *IsPointer() const; // 0x004CC9E0
     int GetNumBases() const; // gpgcore.dll
     gpg::RRef GetBase(int ind) const; // gpgcore.dll
-    int GetNumFields() const; // gpgcore.dll
+    int GetNumFields() const; // 0x004CC9B0
     gpg::RRef GetField(int ind) const; // gpgcore.dll
     const char *GetFieldName(int ind) const; // gpgcore.dll
     void Delete(); // 0x008D8800
@@ -53,6 +53,21 @@ public:
 
     bool IsA(gpg::RType *) const; // 0x
 };
+
+#define DEFINE_ROBJECT_COMMON(clazz)\
+gpg::RType *clazz::StaticGetClass() {\
+    static gpg::RType *sType;\
+    if (sType == nullptr) {\
+        sType = gpg::LookupRType(&typeid(clazz));\
+    }\
+    return sType;\
+}\
+gpg::RType *clazz::GetClass() const {\
+    return clazz::StaticGetClass();\
+}\
+gpg::RRef clazz::GetDerivedObjectRef() {\
+    return gpg::RRef{this, this->GetClass()};\
+}
 
 struct RField {
     const char *mName;
@@ -118,6 +133,7 @@ public:
     dtr_func_t mDtr;
     bool v24;
 
+    static gpg::RType *StaticGetClass(); // 0x00401350
     gpg::RType *GetClass() const override; // 0x00401370
     gpg::RRef GetDerivedObjectRef() override; // 0x00401390
     ~RType() override = default;

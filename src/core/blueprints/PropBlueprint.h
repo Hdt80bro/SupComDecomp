@@ -1,4 +1,4 @@
-#include "core/rules/EntityBlueprint.h"
+#include "core/blueprints/EntityBlueprint.h"
 #include <string>
 
 

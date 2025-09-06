@@ -40,8 +40,8 @@ void Moho::PLAT_InitErrorReportOutputDir(const wchar_t *dir) {
 // 0x004A1230
 void Moho::PLAT_CreateGameLogForReport() {
     std::string recentLines = Moho::LOG_GetRecentLines();
-    std::wstring title = gpg::STR_Utf8ToWide(mSupComApp->title.c_str());
-    std::wstring strFilename = mErrorReportOutputDir + title + L".sclog";
+    std::wstring title = gpg::STR_Utf8ToWide(Moho::WIN_GetCurrentApp()->title.c_str());
+    std::wstring strFilename = sErrorReportOutputDir + title + L".sclog";
     const wchar_t *filename = strFilename.c_str();
     HANDLE handle = CreateFileW(filename, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_READ_ATTRIBUTES, 0);
     if (handle == INVALID_HANDLE_VALUE) {
@@ -431,6 +431,6 @@ const char *func_StructuedExceptionToString(unsigned int err) {
 
 // 0x004A1E20
 void func_InitSymHandlerMutex() {
-    static boost::mutex sMutexSymHandler; // 0x010C7958
+    static boost::mutex sMutexSymHandler{}; // 0x010C7958
     sPMutexSymHandler = &sMutexSymHandler;
 }

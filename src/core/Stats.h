@@ -98,6 +98,10 @@ public:
 };
 
 
+void STAT_GetLuaTable(LuaPlus::LuaState *, Moho::StatItem *, LuaPlus::LuaObject &); // 0x0041B390
+void STAT_Frame(); // 0x00415E60
+
+
 }
 
 static Moho::EngineStats *sEngineStats; // 0x010A67B8

@@ -23,19 +23,19 @@ struct CRandomStream : Moho::CMersenneTwister
     float FRand(); // 0x0040EA70
     float FRandGaussian(); // 0x0040EEC0
     float FRand(float scale) {
-        return FRand() * scale;
+        return this->FRand() * scale;
     } // inline
     float FRand(float min, float max) {
-        return min + FRand(max - min);
+        return min + this->FRand(max - min);
     } // inline
     double DRand() {
-        return ((double) (IRand() >> 6) + (double) (IRand() >> 5) * 67108864.0) * 1.110223024625157e-16;
+        return ((double) (this->IRand() >> 6) + (double) (IRand() >> 5) * 67108864.0) * 1.110223024625157e-16;
     } // inline
     unsigned int IRand(int scale) {
-        return (scale * (__int64) IRand()) >> 32;
+        return (scale * (__int64) this->IRand()) >> 32;
     } // inline
     float IRand(unsigned int min, unsigned int max) {
-        return min + IRand(max - min);
+        return min + this->IRand(max - min);
     } // inline
 };
 

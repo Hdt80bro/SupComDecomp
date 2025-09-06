@@ -11,4 +11,5 @@ void THREAD_InvokeWait(boost::function<void>, unsigned int); // 0x00413C50
 bool THREAD_IsMainThread(); // 0x00413AB0
 void THREAD_Call/*guess*/(boost::function<void> *); // 0x00413AE0
 void THREAD_SetAffinity(bool); // 0x004141A0
+
 }

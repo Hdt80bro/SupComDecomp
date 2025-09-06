@@ -45,7 +45,7 @@ void Moho::CMersenneTwister::Checksum(gpg::MD5Context &cont) {
 
 // 0x0040EA70
 float Moho::CRandomStream::FRand() {
-    return IRand() * 2.3283064e-10;
+    return this->IRand() * 2.3283064e-10;
 }
 
 // 0x0040EEC0
@@ -56,8 +56,8 @@ float Moho::CRandomStream::FRandGaussian() {
     } else {
         float x, y, s;
         do {
-            x = FRand(-1, 1);
-            y = FRand(-1, 1);
+            x = this->FRand(-1, 1);
+            y = this->FRand(-1, 1);
             s = x*x + y*y;
         } while (s >= 1.0);
         s = sqrtf(-2.0 * log(s) / s);

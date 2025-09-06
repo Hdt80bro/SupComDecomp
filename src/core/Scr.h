@@ -1,4 +1,4 @@
-#include "gpgcore/reflection/RRef.h"
+#include "gpgcore/reflection/reflection.h"
 #include "gpgcore/streams/Stream.h"
 #include "gpgcore/MemBuffer.h"
 #include "gpgcore/String.h"
@@ -15,58 +15,6 @@ class ScrDebugWindow : public wxFrame
     // ...
 };
 
-// 0x00E01720
-class CScrLuaObjectFactory
-{
-public:
-    int mIndex;
-
-    virtual LuaPlus::LuaObject Create(LuaPlus::LuaState *) = 0;
-
-    LuaPlus::LuaObject Get(LuaPlus::LuaState *); // 0x004CCE70
-};
-
-template<class T>
-class CScrLuaMetatableFactory : public Moho::CScrLuaObjectFactory
-{
-    static Moho::CScrLuaMetatableFactory<T> sInstance;
-
-    LuaPlus::LuaObject Create(LuaPlus::LuaState *L) {
-        return Moho::SCR_CreateSimpleMetatable(L);
-    }
-};
-
-// 0x00E00E8C
-class CScrLuaBinder
-{
-public:
-    const char *mMethodName;
-    const char *mClassName;
-    const char *mHelp;
-    Moho::CScrLuaBinder *mPreviousDef;
-    lua_CFunction mFunc;
-    Moho::CScrLuaObjectFactory *mFactory;
-
-    virtual void Run(LuaPlus::LuaState *); // 0x004CD3A0
-};
-
-// 0x00E0A6BC
-class CScrLuaInitForm : public Moho::CScrLuaBinder
-{
-};
-
-// 0x00E072A8
-class CScrLuaClassBinder : public Moho::CScrLuaInitForm
-{
-};
-
-struct CScrLuaInitFormSet
-{
-    const char *mName;
-    Moho::CScrLuaInitForm *mForms;
-    bool mRegistered;
-    Moho::CScrLuaInitFormSet *mNextSet;
-};
 
 // 0x00E076B8
 class ScrBreakpoint
@@ -93,6 +41,7 @@ public:
 // 0x00E07E58
 class ScrWatch
 {
+public:
     std::string mFile;
     LuaPlus::LuaObject mObj;
 
@@ -157,11 +106,11 @@ static std::vector<std::string> sHookDirs; // 0x010A91D0
 
 struct struct_LuaFileLoaderDat
 {
-    gpg::MemBuffer<const char> mBuf;
+    gpg::MemBuffer<const char> mBuff;
     bool mDone;
 
-    struct_LuaFileLoaderDat(gpg::MemBuffer<const char> &buf) :
-        mBuf{buf},
+    struct_LuaFileLoaderDat(gpg::MemBuffer<const char> &buff) :
+        mBuff{buff},
         mDone{false}
     {} // inline e.g. 0x004CE0E2
 };

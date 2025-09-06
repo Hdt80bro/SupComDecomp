@@ -1,4 +1,5 @@
 #include "core/TDatListItem.h"
+#include "core/WeakPtr.h"
 
 namespace Moho {
 

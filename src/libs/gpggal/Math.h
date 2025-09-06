@@ -1,5 +1,5 @@
 
-namespace gpg::gpg {
+namespace gpg::gal {
 
 struct Matrix
 {

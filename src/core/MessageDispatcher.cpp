@@ -3,8 +3,8 @@
 // 0x0047C360
 void Moho::CMessageDispatcher::PushReceiver(unsigned int lower, unsigned int upper, Moho::IMessageReceiver *rec) {
     auto linkage = new Moho::SMsgReceiverLinkage{lower, upper, rec, this};
-    linkage->Moho::TDatListItem<Moho::SMsgReceiverLinkage>::InsertBefore(this);
-    linkage->Moho::TDatListItem<Moho::IMessageReceiver>::InsertBefore(rec);
+    linkage->Moho::TDatListItem<Moho::SMsgReceiverLinkage>::ListLinkBefore(this);
+    linkage->Moho::TDatListItem<Moho::IMessageReceiver>::ListLinkBefore(rec);
     if (lower < upper) {
         for (int k = lower; k <= upper; ++k) {
             this->mReceivers[k] = rec;
@@ -19,7 +19,7 @@ void Moho::CMessageDispatcher::RemoveLinkage(Moho::SMsgReceiverLinkage *linkage)
     while (lower < linkage->mUpper) {
         if (*cur == linkage->mReceiver) {
             *cur = nullptr;
-            for (auto i = linkage->Moho::TDatListItem<Moho::SMsgReceiverLinkage>::next; i != this; i = i->next) {
+            for (auto i = linkage->Moho::TDatListItem<Moho::SMsgReceiverLinkage>::mNext; i != this; i = i->mNext) {
                 Moho::SMsgReceiverLinkage *msg = i->Get();
                 if (msg->mLower <= lower && lower < msg->mUpper) {
                     *cur = msg->mReceiver;
