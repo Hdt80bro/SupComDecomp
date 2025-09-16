@@ -1,4 +1,4 @@
-#include "core/TDatListItem.h"
+#include "core/TDatList.h"
 #include "core/Message.h"
 
 namespace Moho {
@@ -6,27 +6,29 @@ namespace Moho {
 struct CMessageDispatcher;
 
 // 0x00E03BE4
-class IMessageReceiver : public Moho::TDatListItem<Moho::IMessageReceiver>
+class IMessageReceiver
 {
 public:
+    Moho::TDatList<Moho::IMessageReceiver, void> mReceiverList;
+
     virtual void Receive(Moho::CMessage *, Moho::CMessageDispatcher *) = 0;
 
     ~IMessageReceiver(); // 0x0047C4F0
 };
 
-struct struct_filler4 { int filler; };
-
-struct SMsgReceiverLinkage :
-    Moho::TDatListItem<Moho::SMsgReceiverLinkage>,
-    struct_filler4,
-    Moho::TDatListItem<Moho::IMessageReceiver>
+struct SMsgReceiverLinkage
 {
+    Moho::TDatList<Moho::SMsgReceiverLinkage, void> mReceiverLinkages;
+    int gap;
+    Moho::TDatList<Moho::IMessageReceiver, void> mReceivers;
     unsigned int mLower;
     unsigned int mUpper;
     Moho::IMessageReceiver *mReceiver;
     Moho::CMessageDispatcher *mDispatcher;
 
     SMsgReceiverLinkage(unsigned int lower, unsigned int upper, Moho::IMessageReceiver *rec, Moho::CMessageDispatcher *disp) :
+        mReceiverLinkages{},
+        mReceivers{},
         mLower{lower},
         mUpper{upper},
         mReceiver{rec},

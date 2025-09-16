@@ -2,14 +2,14 @@
 
 // 0x00577F20
 bool Moho::STIMap::IsBlockingTerrain(unsigned int x, unsigned int y) {
-  return y >= this->mHeightField->mWidth - 1
-      || x >= this->mHeightField->mHeight - 1
+  return y >= this->mHeightField->mGrid.mWidth - 1
+      || x >= this->mHeightField->mGrid.mHeight - 1
       || this->mBlocking[(unsigned __int8)this->mTerrainType.Get(x, y)];
 }
 
 // 0x00577EC01
 void Moho::STIMap::SetTerrainType(unsigned int x, unsigned int z, char type) {
-    if (x < this->mHeightField->mWidth - 1 && z < this->mHeightField->mHeight - 1) {
+    if (x < this->mHeightField->mGrid.mWidth - 1 && z < this->mHeightField->mGrid.mHeight - 1) {
         *this->mTerrainType.At(x, z) = type;
     }
 }
@@ -17,7 +17,7 @@ void Moho::STIMap::SetTerrainType(unsigned int x, unsigned int z, char type) {
 // 0x00758E10
 LuaPlus::LuaObject Moho::STIMap::GetTerrainType(unsigned int x, unsigned int z) {
     int k = 1;
-    if (x < this->mHeightField->mWidth - 1 && z < this->mHeightField->mHeight - 1) {
+    if (x < this->mHeightField->mGrid.mWidth - 1 && z < this->mHeightField->mGrid.mHeight - 1) {
         k = this->mTerrainType.Get(x, z);
     }
     return this->mTerrainTypes.mTTVec[k];

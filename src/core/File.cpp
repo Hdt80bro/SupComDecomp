@@ -321,7 +321,7 @@ bool Moho::FILE_Wild(gpg::StrArg dir, gpg::StrArg pat, bool a3, char a4) {
 }
 
 // 0x004115A0
-std::string Moho::FILE_CollapsePath(IN gpg::StrArg filename, OUT bool *success) {
+std::string Moho::FILE_CollapsePath(__in gpg::StrArg filename, __out bool *success) {
     if (filename == nullptr || filename[0] == '\0') {
         THROW_NULL_ARG_FILE_ERROR("Moho::FILE_CollapsePath");
     }
@@ -344,7 +344,7 @@ std::string Moho::FILE_GetErrorFromErrno(int err) {
 
 
 // 0x0048E0C0
-bool Moho::URI_Split(IN gpg::StrArg uri, OUT std::string &scheme, OUT std::string &authority, OUT std::string &path, OUT std::string &query, OUT std::string &fragment) {
+bool Moho::URI_Split(__in gpg::StrArg uri, __out std::string &scheme, __out std::string &authority, __out std::string &path, __out std::string &query, __out std::string &fragment) {
     scheme.clear();
     authority.clear();
     path.clear();

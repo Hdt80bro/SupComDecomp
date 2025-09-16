@@ -60,7 +60,7 @@ struct UnitAttributes
 
 struct SSTIUnitVariableData
 {
-    Moho::TDatListItem_1 *aitarget1;
+    Moho::TDatListItem<unk_t, void> *aitarget1;
     int mCreationTick;
     bool mAutoMode;
     bool mAutoSurfaceMode;

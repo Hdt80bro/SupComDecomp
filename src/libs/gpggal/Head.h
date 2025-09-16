@@ -3,6 +3,17 @@
 #include <Windows.h>
 #include "gpggal/Adapter.h"
 
+// 0x00E4F428
+class Resolution
+{
+public:
+    int mWidth;
+    int mHeight;
+    int mFramesPerSecond;
+
+    virtual ~Resolution() = default; // 0x008CD880
+};
+
 namespace gpg::gal {
 
 // 0x00D42128

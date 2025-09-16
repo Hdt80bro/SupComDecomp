@@ -5,15 +5,15 @@ DEFINE_ROBJECT_COMMON(Moho::CMauiEdit)
 
 
 // 0x0078F820
-void Moho::CMauiEdit::Draw(Moho::CD3DPrimBatcher *batcher, int renderPass) {
+void Moho::CMauiEdit::DoRender(Moho::CD3DPrimBatcher *batcher, unsigned int renderPass) {
     if (this->mFont == nullptr) {
         return;
     }
 
-    float left = this->GetLeft();
-    float right = this->GetRight();
-    float top = this->GetTop();
-    float bottom = this->GetBottom();
+    float left = this->Left();
+    float right = this->Right();
+    float top = this->Top();
+    float bottom = this->Bottom();
     if (this->mBackgroundVisible) {
         auto bk = Moho::CD3DBatchTexture::FromSolidColor(this->mBackgroundColor);
         batcher->SetTexture(bk);
@@ -72,7 +72,7 @@ void Moho::CMauiEdit::Draw(Moho::CD3DPrimBatcher *batcher, int renderPass) {
         if ( v67._Mysize < 0x10 )
         Myfirstiter = (struct _Iterator_base *)&v67;
         Advance = this->mFont->GetAdvance((const char *)Myfirstiter, SLODWORD(v51));
-        v58 = func_GetLazyValue(&this->mTopLV);
+        v58 = this->mTop();
         v58 = this->mFont->mFontMetrics.mAscent + v58;
         if (this->mDropShadow) {
             v12 = COERCE_FLOAT(this->MultiplyAlpha(this->mForegroundColor & 0xFF000000));
@@ -106,7 +106,7 @@ void Moho::CMauiEdit::Draw(Moho::CD3DPrimBatcher *batcher, int renderPass) {
         a4.mV0.z = 0.0;
         arg0.mV0.y = v58;
         arg0.mV0.z = 0.0;
-        v15 = COERCE_FLOAT(this->MultiplyAlpha(this->mForegroundColor));
+        v15 = COERCE_FLOAT(this->AdjustARGBAlpha(this->mForegroundColor));
         v16 = (std::string::_Bxty *)v67._Bx._Ptr;
         a9 = v15;
         p_arg0 = (Wm3::Vector3f *)&a3;
@@ -182,13 +182,13 @@ void Moho::CMauiEdit::Draw(Moho::CD3DPrimBatcher *batcher, int renderPass) {
                 (struct Moho::CD3DPrimBatcher::Vertex *)&a4.mV0.y,
                 (struct Moho::CD3DPrimBatcher::Vertex *)&a3.mV0.y);
         }
-        v57 = func_GetLazyValue(&this->mTopLV);
+        v57 = this->Top();
         v11 = !this->mDropShadow;
         v23 = v57 + this->mFont->mFontMetrics.mAscent;
         v58 = v23;
         if ( !v11 )
         {
-        v24 = COERCE_FLOAT(this->MultiplyAlpha(this->mHighlightForegroundColor & 0xFF000000));
+        v24 = COERCE_FLOAT(this->AdjustARGBAlpha(this->mHighlightForegroundColor & 0xFF000000));
         v25 = (char *)*((_DWORD *)&v67._Bx._Ptr + 1);
         v52 = NaN_227;
         v51 = v24;
@@ -230,7 +230,7 @@ void Moho::CMauiEdit::Draw(Moho::CD3DPrimBatcher *batcher, int renderPass) {
         arg0.mV0.y = Advance;
         arg0.mV0.z = v23;
         arg0.mV1.x = 0.0;
-        v27 = COERCE_FLOAT(this->MultiplyAlpha(mHighlightForegroundColor));
+        v27 = COERCE_FLOAT(this->AdjustARGBAlpha(mHighlightForegroundColor));
         v28 = (char *)*((_DWORD *)&v67._Bx._Ptr + 1);
         v51 = v27;
         LODWORD(a9) = &a3.mV0.y;
@@ -281,7 +281,7 @@ void Moho::CMauiEdit::Draw(Moho::CD3DPrimBatcher *batcher, int renderPass) {
         result = this->mFont->mFontMetrics.mAscent + v58;
         if ( !v11 )
         {
-        v32 = COERCE_FLOAT(this->MultiplyAlpha(this->mForegroundColor & 0xFF000000));
+        v32 = COERCE_FLOAT(this->AdjustARGBAlpha(this->mForegroundColor & 0xFF000000));
         v33 = (char *)*((_DWORD *)&v67._Bx._Ptr + 2);
         v53[0] = NaN_227;
         v52 = v32;
@@ -321,7 +321,7 @@ void Moho::CMauiEdit::Draw(Moho::CD3DPrimBatcher *batcher, int renderPass) {
         a4.mV1.y = 0.0;
         arg0.mV1.x = result;
         arg0.mV1.y = 0.0;
-        v35 = COERCE_FLOAT(Moho::CMauiEdit::MultiplyAlpha(this, v34));
+        v35 = COERCE_FLOAT(this->AdjustARGBAlpha(v34));
         v36 = (char *)*((_DWORD *)&v67._Bx._Ptr + 2);
         v52 = v35;
         v51 = COERCE_FLOAT((struct Moho::CD3DPrimBatcher::Vertex *)&a3.mV0.z);
@@ -418,7 +418,7 @@ bool Moho::CMauiEdit::HandleEvent(const Moho::SMauiEventData &ev) {
 }
 
 // 0x0078F720
-void Moho::CMauiEdit::OnFrame(float delta) {
+void Moho::CMauiEdit::Frame(float delta) {
     this->RunScript("OnFrame", &delta);
     this->mCaretTime += delta;
     if (this->mCaretTime > this->mCaretCycleSeconds) {
@@ -435,17 +435,17 @@ void Moho::CMauiEdit::OnFrame(float delta) {
 }
 
 // 0x0078F330
-void Moho::CMauiEdit::LoseFocus() {
+void Moho::CMauiEdit::AbandonKeyboardFocus() {
     this->mCaretVisible = false;
-    Moho::CScriptObject *cur = Moho::Maui_CurrentFocusControl.ListGetPrev();
+    Moho::CScriptObject *cur = MAUI_CurrentKeyboardFocus.ListGetPrev();
     if (cur == this) {
-        func_AcquireFocus(nullptr, true);
+        Moho::MAUI_SetKeyboardFocus(nullptr, true);
     }
 }
 
 // 0x007915A0
-void Moho::CMauiEdit::LoseKeyboardFocus() {
-    this->LoseFocus();
+void Moho::CMauiEdit::LosingKeyboardFocus() {
+    this->AbandonKeyboardFocus();
     this->RunScript("OnLoseKeyboardFocus");
 }
 
@@ -467,7 +467,7 @@ void Moho::CMauiEdit::Dump() {
 
 // 0x007913A0
 void Moho::CMauiEdit::DragMove(Moho::SMauiEventData *ev) {
-    float x = ev->mMouseX - this->GetLeft();
+    float x = ev->mMouseX - this->Left();
     std::string select = gpg::STR_Utf8SubString(this->GetText(), this->mClipOffset, this->mClipLength);
     int nearest = this->mFont->GetNearestCharacterIndex(select.c_str(), x) + this->mClipOffset;
     if (nearest == this->mDragStart) {
@@ -487,7 +487,7 @@ void Moho::CMauiEdit::DragMove(Moho::SMauiEventData *ev) {
 
 // 0x007914C0
 void Moho::CMauiEdit::DragRelease(Moho::SMauiEventData *ev) {
-    float x = ev->mMouseX - this->GetLeft();
+    float x = ev->mMouseX - this->Left();
     std::string select = gpg::STR_Utf8SubString(this->GetText(), this->mClipOffset, this->mClipLength);
     int endChar = this->mClipOffset + this->mFont->GetNearestCharacterIndex(this->GetText(), x);
     if (endChar == this->mDragStart) {
@@ -496,11 +496,6 @@ void Moho::CMauiEdit::DragRelease(Moho::SMauiEventData *ev) {
     }
 }
 
-
-// 0x0078EC10
-Moho::color_t Moho::CMauiEdit::MultiplyAlpha(Moho::color_t col) {
-    return (col & 0xFFFFFF) - ((unsigned int) (__int64) (this->mAlpha * -255.0) << 24);
-}
 
 // 0x0078F380
 void Moho::CMauiEdit::SetText(std::string *text) {
@@ -674,7 +669,7 @@ void Moho::CMauiEdit::SetClipOffsetRight(int pos) {
         return;
     }
 
-    if (this->mFont->GetAdvance(this->GetText(), pos) <= this->GetWidth()) {
+    if (this->mFont->GetAdvance(this->GetText(), pos) <= this->Width()) {
         this->mClipLength = this->GetTextLen();
     } else {
         if (pos > this->GetTextLen()) {
@@ -695,7 +690,7 @@ void Moho::CMauiEdit::SetClipOffsetLeft(int pos) {
         return;
     }
 
-    if (this->mFont->GetAdvance(this->GetText(), pos) <= this->GetWidth()) {
+    if (this->mFont->GetAdvance(this->GetText(), pos) <= this->Width()) {
         this->mClipLength = this->GetTextLen();
     } else {
         if (pos > this->GetTextLen()) {
@@ -783,9 +778,9 @@ void Moho::CMauiEdit::HandleClickEvent(const Moho::SMauiEventData &ev) {
     if ((ev.mModifiers & MEM_Left) != 0) {
         if (this->mIsEnabled) {
             this->mCaretVisible = true;
-            func_AcquireFocus(this, true);
+            Moho::MAUI_SetKeyboardFocus(this, true);
         }
-        int x = ev.mMouseX - this->GetLeft();
+        int x = ev.mMouseX - this->Left();
         std::string text = gpg::STR_Utf8SubString(this->GetText(), this->mClipOffset, this->mClipLength);
         int nearest = this->mFont->GetNearestCharacterIndex(this->GetText(), x);
         if (ev.mEventType == MET_ButtonPress) {
@@ -913,7 +908,7 @@ void Moho::CMauiEdit::HandleKeyEvent(const Moho::SMauiEventData &ev) {
                 if (! this->mText.empty()) {
                     this->ClearText();
                 } else {
-                    this->LoseFocus();
+                    this->AbandonKeyboardFocus();
                 }
             }
             break;

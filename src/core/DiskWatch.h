@@ -1,5 +1,6 @@
-#include "core/TDatListItem.h"
+#include "core/TDatList.h"
 #include <string>
+#include <vector>
 
 namespace Moho {
 
@@ -8,7 +9,7 @@ struct SDiskWatchEvent
 
 };
 
-struct CDiskWatch : Moho::TDatListItem<Moho::CDiskWatch>
+struct CDiskWatch : Moho::TDatListItem<Moho::CDiskWatch, void>
 {
     int mVal;
     struct_SharedLock mLock;
@@ -18,7 +19,7 @@ struct CDiskWatch : Moho::TDatListItem<Moho::CDiskWatch>
 };
 
 // 0x00E03474
-class CDiskWatchListener : public Moho::TDatListItem<Moho::CDiskWatchListener>
+class CDiskWatchListener : public Moho::TDatListItem<Moho::CDiskWatchListener, void>
 {
 public:
     Moho::CDiskWatch *mWatch;

@@ -1,7 +1,9 @@
 // implied file
 
 #include "NetTCPConn.h"
+#include "winsock.h"
 
+// 0x00485830
 void *struct_TCPConnLL::GetPtr() {
     struct_TCPConnLL *next = this->mNext;
     if (next != nullptr) {
@@ -11,30 +13,56 @@ void *struct_TCPConnLL::GetPtr() {
     }
 }
 
-int Moho::CNetTCPConnection::GetAddr() {
+// inline 0x00484BD5
+struct_TCPConnLL::~struct_TCPConnLL() {
+    for (struct_TCPConnLL *i = this->mNext; i; i = this->mNext) {
+        this->mNext = i[1].mNext;
+        i->mNext = nullptr;
+        i[1].mNext = nullptr;
+    }
+}
+
+// 0x004835B0
+u_long Moho::CNetTCPConnection::GetAddr() {
     return this->mAddr;
 }
-int Moho::CNetTCPConnection::GetPort() {
+
+// 0x004835C0
+u_short Moho::CNetTCPConnection::GetPort() {
     return this->mPort;
 }
+
+// 0x004835D0
 float Moho::CNetTCPConnection::GetPing() {
     return 100.0;
 }
+
+// 0x00484520
 float Moho::CNetTCPConnection::GetTime() {
     return gpg::time::CyclesToMilliseconds(this->mTimer1.ElapsedCycles());
 }
+
+// 0x00484540
 void Moho::CNetTCPConnection::Write(struct_DataSpan *data) {
     this->mPipestream2.Write(data->mStart, data->mEnd - data->mStart);
 }
+
+// 0x00484590
 void Moho::CNetTCPConnection::Close() {
     this->mPipestream2.VirtClose(gpg::Stream::ModeSend);
 }
+
+// 0x004845B0
 std::string Moho::CNetTCPConnection::ToString() {
-    return gpg::STR_Printf("%s:%d", Moho::NET_GetHostName(this->addr), this->port);
+    return gpg::STR_Printf("%s:%d", Moho::NET_GetHostName(this->mAddr), this->mPort);
 }
+
+// 0x004835E0
 void Moho::CNetTCPConnection::ScheduleDestroy() {
     this->mScheduleDestroy = true;
 }
+
+// 0x00483650
 Moho::CNetTCPConnection::CNetTCPConnection(Moho::CNetTCPConnector *connector, SOCKET sock, u_long addr, u_short port, int a7) :
     Moho::INetConnection{},
     mConnector{connector},
@@ -52,13 +80,14 @@ Moho::CNetTCPConnection::CNetTCPConnection(Moho::CNetTCPConnector *connector, SO
     this->mPrev->mPrev = this;
     this->mPrev->mNext = this;
     if (connector->mHandle) {
-        WSAEventSelect(sock, connector->mHandle, FD_READ|FD_CONNECT|FD_CLOSE);
+        ::WSAEventSelect(sock, connector->mHandle, FD_READ|FD_CONNECT|FD_CLOSE);
     }
 }
 
+// 0x004838D0
 void Moho::CNetTCPConnection::Push() {
     if (this->mScheduleDestroy) {
-        delete this;
+        delete(this);
     } else if (! this->mHasShutdown && ! this->mPushFailed && (this->v266 == 3 || this->v266 == 4)) {
         while (true) {
             if (this->mSize < 2048) {
@@ -75,13 +104,13 @@ void Moho::CNetTCPConnection::Push() {
             if (! this->mSize) {
                 break;
             }
-            int res = send(this->mSocket, this->mBuf, this->mSize, 0);
+            int res = ::send(this->mSocket, this->mBuf, this->mSize, 0);
             if (res == SOCKET_ERROR) {
-                if (WSAGetLastError() != 10035) {
+                if (::WSAGetLastError() != 10035) {
                     gpg::Logf("CNetTCPConnection::Push: send() failed: %s", Moho::NET_GetWinsockErrorString());
                     this->mPushFailed = true;
                     if (this->mConnector->mHandle) {
-                        SetEvent(this->mConnector->mHandle);
+                        ::SetEvent(this->mConnector->mHandle);
                     }
                 }
                 return;
@@ -92,13 +121,14 @@ void Moho::CNetTCPConnection::Push() {
             this->mSize -= res;
         }
         if (this->mPipestream2.Empty()) {
-            shutdown(this->mSocket, SD_SEND);
+            ::shutdown(this->mSocket, SD_SEND);
             this->mHasShutdown = true;
         }
     }
 }
 
-void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection> *partConn) {
+// 0x00483A60
+void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection, void> *partConn) {
     int v2; // ebx
     struct _EXCEPTION_REGISTRATION_RECORD *ExceptionList; // eax
     Moho::CNetTCPConnector *connector; // eax
@@ -182,7 +212,7 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection> 
 
 
     v59 = v2;
-    if (this->mConnector) {
+    if (this->mConnector != nullptr) {
         p_ll = (vtable_stream *)&this->mConnector->mll;
     } else {
         p_ll = 0;
@@ -218,7 +248,7 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection> 
         timeval timeout;
         timeout.tv_sec = 0;
         timeout.tv_usec = 0;
-        if (! select(0, 0, &writefds, &exceptfds, &timeout)) {
+        if (! ::select(0, 0, &writefds, &exceptfds, &timeout)) {
             p_dtr = &v60.vtable->dtr;
             if (! v60.vtable)
                 return;
@@ -229,7 +259,7 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection> 
             }
             goto LABEL_136;
         }
-        if (_WSAFDIsSet(this->mSocket, &writefds)) {
+        if (::_WSAFDIsSet(this->mSocket, &writefds)) {
             gpg::Logf("CNetTCPConnection<%s:%d>::Pull(): connection succeeded",
                 Moho::NET_GetHostName(this->mAddr).c_str(), this->port);
             LOBYTE(v56) = -55;
@@ -245,7 +275,7 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection> 
                 a3 = *v79;
             }
             v77 = pos;
-        } else if (_WSAFDIsSet(this->mSocket, &exceptfds)) {
+        } else if (::_WSAFDIsSet(this->mSocket, &exceptfds)) {
             gpg::Logf("CNetTCPConnection<%s:%d>::Pull(): connection failed",
                 Moho::NET_GetHostName(this->mAddr).c_str(), this->port);
             LOBYTE(v56) = 200;
@@ -296,21 +326,21 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection> 
         v60.writeHead = v74 + 3;
         v60.dataEnd = &v15[v16];
         v85 = 6;
-        v59 = this->connector->GetLocalPort();
+        v59 = this->mConnector->GetLocalPort();
         if ((unsigned int)(v60.dataEnd - v60.writeStart) < 2) {
             v60->VirtWrite(&v60, (char *)&v59, 2);
         } else {
             *(_WORD *)v60.writeStart = v59;
             v60.writeStart += 2;
         }
-        v23 = this->pipestream2.writeStart;
+        v23 = this->mPipestream2.writeStart;
         v24 = v75 - (DWORD)v74;
         v53 = v75 - (DWORD)v74;
-        if (v75 - (int)v74 > (unsigned int)(this->pipestream2.dataEnd - v23)) {
-            this->pipestream2->VirtWrite(&this->pipestream2, v74, v53);
+        if (v75 - (int)v74 > (unsigned int)(this->mPipestream2.dataEnd - v23)) {
+            this->mPipestream2->VirtWrite(&this->mPipestream2, v74, v53);
         } else {
             memcpy(v23, v74, v53);
-            this->pipestream2.writeStart += v24;
+            this->mPipestream2.writeStart += v24;
         }
         v85 = 5;
         gpg::Stream::~Stream(&v60);
@@ -331,7 +361,7 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection> 
     HIBYTE(v60.readHead) = 0;
     if (! this->mPullFailed) {
         while (true) {
-            v26 = recv(this->mSocket, buf, 2048, 0);
+            v26 = ::recv(this->mSocket, buf, 2048, 0);
             if (v26 < 0)
                 break;
             gpg::time::Timer::Timer(&this->mTimer1);
@@ -346,7 +376,7 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection> 
             if (this->mPullFailed)
                 goto LABEL_84;
         }
-        if (WSAGetLastError() != 10035) {
+        if (::WSAGetLastError() != 10035) {
             gpg::Logf("CNetTCPConnection<%s:%d>::Pull(): recv() failed: %s",
                 Moho::NET_GetHostName(this->mAddr).c_str(),
                 this->mPort,
@@ -486,13 +516,15 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection> 
 }
 
 
+// 0x00484AB0
 Moho::CNetTCPConnector::CNetTCPConnector(SOCKET sock)
     : Moho::INetConnector{}, mSocket{sock}
 {}
 
+// 0x00484AE0
 Moho::CNetTCPConnector::~CNetTCPConnector() {
-    for (auto cur = this->mConnections.mNext; cur != &this->mConnections; cur = cur->mNext) {
-        Moho::CNetTCPConnection *conn = cur->Get();
+    while (! this->mConnections.ListEmpty()) {
+        Moho::CNetTCPConnection *conn = *this->mConnections.begin();
         if (conn != nullptr) {
             delete(conn);
         }
@@ -500,26 +532,27 @@ Moho::CNetTCPConnector::~CNetTCPConnector() {
     if (this->mSocket != INVALID_SOCKET) {
         closesocket(this->mSocket);
     }
-    // TDatItemList dtrs
-    for (struct_TCPConnLL *i = this->mll.mNext; i; i = this->mll.mNext) {
-        this->mll = i[1];
-        i->mNext = 0;
-        i[1].mNext = 0;
-    }
 }
 
+// 0x00483600
 void Moho::CNetTCPConnector::Destroy() {
     delete(this);
 }
+
+// 0x00483610
 Moho::ENetProtocol Moho::CNetTCPConnector::GetProtocol() {
     return Moho::NETPROTO_TCP;
 }
+
+// 0x00484C20
 int Moho::CNetTCPConnector::GetLocalPort() {
     sockaddr_in name;
     int namelen = sizeof(name);
-    getsockname(this->mSocket, (SOCKADDR *) &name, &namelen);
-    return ntohs(name.sin_port);
+    ::getsockname(this->mSocket, (SOCKADDR *) &name, &namelen);
+    return ::ntohs(name.sin_port);
 }
+
+// 0x00484C50
 Moho::INetConnection *Moho::CNetTCPConnector::Connect(u_long addr, u_short port) {
     SOCKET sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == INVALID_SOCKET) {
@@ -527,16 +560,16 @@ Moho::INetConnection *Moho::CNetTCPConnector::Connect(u_long addr, u_short port)
         return nullptr;
     }
     int argp = 1;
-    if (ioctlsocket(sock, FIONBIO, &argp) == SOCKET_ERROR) {
+    if (::ioctlsocket(sock, FIONBIO, &argp) == SOCKET_ERROR) {
         gpg::Logf("CNetTCPConnector::Connect(%s:%d): ioctlsocket(FIONBIO) failed: %s", Moho::NET_GetHostName(addr), port, Moho::NET_GetWinsockErrorString());
         closesocket(sock);
         return nullptr;
     }
     sockaddr_in name;
     name.sin_family = AF_INET;
-    name.sin_port = htons(port);
-    name.sin_addr.S_un.S_addr = htonl(addr);
-    if (connect(sock, (SOCKADDR *) &name, sizeof(name)) == SOCKET_ERROR && WSAGetLastError() != 10035) {
+    name.sin_port = ::htons(port);
+    name.sin_addr.S_un.S_addr = ::htonl(addr);
+    if (::connect(sock, (SOCKADDR *) &name, sizeof(name)) == SOCKET_ERROR && WSAGetLastError() != 10035) {
         gpg::Logf("CNetTCPConnector::Connect(%s:%d): connect() failed: %s", Moho::NET_GetHostName(addr).c_str(), port, Moho::NET_GetWinsockErrorString());
         closesocket(sock);
         return nullptr;
@@ -544,9 +577,11 @@ Moho::INetConnection *Moho::CNetTCPConnector::Connect(u_long addr, u_short port)
     gpg::Logf("CNetTCPConnector::Connect(%s:%d)...", Moho::NET_GetHostName(addr).c_str(), port);
     return new Moho::CNetTCPConnection(this, sock, addr, port, 1);
 }
-bool Moho::CNetTCPConnector::Func2(OUT u_long &addr, OUT u_short &port) {
-    for (auto cur = this->mConnections.mNext; cur != &this->mConnections; cur = cur->mNext) {
-        Moho::CNetTCPConnection *conn = cur->Get();
+
+// 0x00484EA0
+bool Moho::CNetTCPConnector::FindNextAddr(__out u_long &addr, __out u_short &port) {
+    for (auto cur = this->mConnections.begin(); cur != this->mConnections.end(); ++cur) {
+        Moho::CNetTCPConnection *conn = *cur;
         if (conn->v266 != 0) {
             addr = conn->GetAddr();
             port = conn->GetPort();
@@ -555,10 +590,12 @@ bool Moho::CNetTCPConnector::Func2(OUT u_long &addr, OUT u_short &port) {
     }
     return false;
 }
+
+// 0x00484F00
 Moho::INetConnection *Moho::CNetTCPConnector::Accept(u_long addr, u_short port) {
     gpg::Logf("CNetTCPConnector::Accept(%s:%d)", Moho::NET_GetHostName(addr).c_str(), port);
-    for (auto cur = this->mConnections.mNext; cur != &this->mConnections; cur = cur->next) {
-        Moho::CNetTCPConnection * conn = cur->Get();
+    for (auto cur = this->mConnections.begin(); cur != this->mConnections.end(); ++cur) {
+        Moho::CNetTCPConnection * conn = *cur;
         if (conn->GetAddr() == addr && conn->GetPort() == port && conn->v266 != 0) {
             conn->v266 = 3;
             return conn;
@@ -566,10 +603,12 @@ Moho::INetConnection *Moho::CNetTCPConnector::Accept(u_long addr, u_short port) 
     }
     return new Moho::CNetTCPConnection(this, INVALID_SOCKET, addr, port, 2);
 }
+
+// 0x00485050
 void Moho::CNetTCPConnector::Reject(u_long addr, u_short port) {
     gpg::Logf("CNetTCPConnector::Reject(%s:%d)", Moho::NET_GetHostName(addr).c_str(), port);
-    for (auto cur = this->mConnections.mNext; cur != &this->mConnections; cur = cur->mNext) {
-        Moho::CNetTCPConnection * conn = cur->Get();
+    for (auto cur = this->mConnections.begin(); cur != this->mConnections.end(); ++cur) {
+        Moho::CNetTCPConnection * conn = *cur;
         if (conn->GetAddr() == addr && conn->GetPort() == port && conn->v266 != 0) {
             conn->ScheduleDestroy();
             return;
@@ -577,19 +616,21 @@ void Moho::CNetTCPConnector::Reject(u_long addr, u_short port) {
     }
     gpg::Logf("CNetTCPConnector::Reject(%s:%d): No such connection pending.", Moho::NET_GetHostName(addr).c_str(), port);
 }
+
+// 0x004838D0
 void Moho::CNetTCPConnector::Pull() {
     sockaddr_in addr;
     int addrlen = sizeof(addr);
-    SOCKET sock = accept(this->mSocket, (SOCKADDR *) &addr, &addrlen);
+    SOCKET sock = ::accept(this->mSocket, (SOCKADDR *) &addr, &addrlen);
     if (sock == INVALID_SOCKET) {
-        if (WSAGetLastError() != 10035) {
+        if (::WSAGetLastError() != 10035) {
             gpg::Logf("CNetTCPConnector::Pull: accept() failed: %s", Moho::NET_GetWinsockErrorString());
         }
     } else {
-        u_long host = ntohl(addr.sin_addr.S_un.S_addr);
-        u_short port = ntohs(addr.sin_port);
+        u_long host = ::ntohl(addr.sin_addr.S_un.S_addr);
+        u_short port = ::ntohs(addr.sin_port);
         gpg::Logf("CNetTCPConnector::Pull(): accepted connection from %s:%d", Moho::NET_GetHostName(host).c_str(), port);
-        Moho::SPartialConnection * partConn = new Moho::SPartialConnection(sock, host, this, port);
+        auto partConn = new Moho::SPartialConnection{sock, host, this, port};
         partConn->mPrev->mNext = partConn->mNext;
         partConn->mNext->mPrev = partConn->mPrev;
         partConn->mPrev = partConn;
@@ -607,13 +648,13 @@ void Moho::CNetTCPConnector::Pull() {
     curLL->mNext = &workingLL;
 
     if (this->partialConns.next != &this->partialConns) {
-        for (auto next = this->mPartialConns.mNext; next != &this->mPartialConns; next = next->mNext) {
-            next->Get()->Pull();
+        for (auto next = this->mPartialConns.begin(); next != this->mPartialConns.end(); ++next) {
+            next->Pull();
         }
         curLL = workingLL.mNext;
     }
-    for (auto next = this->mConnections.mNext; next != &this->mConnections; next = next->mNext) {
-        Moho::CNetTCPConnection *conn = next->Get();
+    for (auto next = this->mConnections.begin(); next != this->mConnections.end(); ++next) {
+        Moho::CNetTCPConnection *conn = *next;
         conn->Pull(&this->mPartialConns);
         if (! workingLL.GetPtr()) {
             curLL = workingLL.mNext;
@@ -627,34 +668,28 @@ void Moho::CNetTCPConnector::Pull() {
         curLL->mNext = startingLL;
     }
 }
+
+// 0x00485610
 void Moho::CNetTCPConnector::Push() {
-    for (auto cur = this->mConnections.mNext; cur != &this->connections; cur = cur->mNext) {
-        cur->Get()->Push();
+    for (auto cur = this->mConnections.begin(); cur != this->connections.end(); ++cur) {
+        cur->Push();
     }
 }
+
+// 0x00485640
 void Moho::CNetTCPConnector::SelectEvent(HANDLE ev) {
-    WSAEventSelect(this->mSocket, ev, FD_ACCEPT);
-    for (auto cur = this->mConnections.mNext; cur != &this->mConnections; cur = cur->mNext) {
-        WSAEventSelect(cur->Get()->mSocket, ev, FD_READ|FD_CONNECT|FD_CLOSE);
+    ::WSAEventSelect(this->mSocket, ev, FD_ACCEPT);
+    for (auto cur = this->mConnections.begin(); cur != this->mConnections.end(); ++cur) {
+        ::WSAEventSelect(cur->mSocket, ev, FD_READ|FD_CONNECT|FD_CLOSE);
     }
 }
+
+// 0x00483620
 void *Moho::CNetTCPConnector::Func3() {
     return nullptr; // unknown type;
 }
 
-
-Moho::CNetTCPConnection *Moho::CNetTCPConnector::GetConnection(SOCKET s, u_long addr, u_short port) {
-    for (auto cur = this->mConnections.mNext; cur != &this->connections; cur = cur->mNext) {
-        Moho::CNetTCPConnection * conn = cur->Get();
-        if (conn->GetAddr() == addr && conn->GetPort() == port && conn->v266 == 2) {
-            conn->mSocket = s;
-            conn->v266 = 3;
-            return conn;
-        }
-    }
-    return new Moho::CNetTCPConnection{this, s, addr, port, 0};
-}
-
+// 0x004853D0
 bool Moho::CNetTCPConnector::ReadFromStream(SOCKET s, u_long addr, u_short port, gpg::PipeStream *strm) {
     Moho::CNetTCPConnection *conn = this->GetConnection(s, addr, port);
     conn->mPipestream1.Write(Moho::CMessage{0, 201}.buf); // ?
@@ -667,18 +702,33 @@ bool Moho::CNetTCPConnector::ReadFromStream(SOCKET s, u_long addr, u_short port,
     return true;
 }
 
+// inline 0x004853F8
+Moho::CNetTCPConnection *Moho::CNetTCPConnector::GetConnection(SOCKET s, u_long addr, u_short port) {
+    for (auto cur = this->mConnections.begin(); cur != this->mConnections.end(); ++cur) {
+        Moho::CNetTCPConnection * conn = *cur;
+        if (conn->GetAddr() == addr && conn->GetPort() == port && conn->v266 == 2) {
+            conn->mSocket = s;
+            conn->v266 = 3;
+            return conn;
+        }
+    }
+    return new Moho::CNetTCPConnection{this, s, addr, port, 0};
+}
+
+// 0x004846E0
 Moho::SPartialConnection::~SPartialConnection() {
     if (this->mSocket != INVALID_SOCKET) {
-        closesocket(this->mSocket);
+        ::closesocket(this->mSocket);
     }
 }
 
+// 0x00484770
 void Moho::SPartialConnection::Pull() {
     char buf[2048];
 
-    int res = recv(this->mSocket, buf, sizeof(buf), 0);
+    int res = ::recv(this->mSocket, buf, sizeof(buf), 0);
     if (res < 0) {
-        delete this;
+        delete(this);
         return;
     }
     while (res != 0) {
@@ -692,9 +742,9 @@ void Moho::SPartialConnection::Pull() {
             delete(this);
             return;
         }
-        res = recv(this->mSocket, buf, sizeof(buf), 0);
+        res = ::recv(this->mSocket, buf, sizeof(buf), 0);
         if (res < 0) {
-            if (WSAGetLastError() == 10035) {
+            if (::WSAGetLastError() == 10035) {
                 return;
             }
             gpg::Logf("SPartialConnection<%s:%d>::Pull(): recv() failed: %s",
@@ -712,48 +762,127 @@ void Moho::SPartialConnection::Pull() {
 }
 
 
-Moho::CNetTCPServerImpl::CNetTCPServerImpl(SOCKET sock) :
-    Moho::INetTCPServer{},
-    mSocket{sock}
-{}
-Moho::CNetTCPServerImpl::~CNetTCPServerImpl() {
-    if (this->mSocket != INVALID_SOCKET) {
-        closesocket(this->mSocket);
-        this->mSocket = INVALID_SOCKET;
+// 0x004827C0
+Moho::CNetTCPBuf::~CNetTCPBuf() {
+    this->VirtClose(this->mMode);
+}
+
+// 0x00482A90
+unsigned int Moho::CNetTCPBuf::VirtRead(char *buf, unsigned int len) {
+    return this->Read(buf, len, true);
+}
+
+// 0x00482AB0
+unsigned int Moho::CNetTCPBuf::VirtReadNonBlocking(char *buf, unsigned int len) {
+    return this->Read(buf, len, false);
+}
+
+// 0x00482AD0
+bool Moho::CNetTCPBuf::VirtAtEnd() {
+    if (this->mSocket = INVALID_SOCKET) {
+        throw std::runtime_error{std::string{"socket closed"}};
     }
+    return this->mFailed;
 }
-Moho::INetTCPSocket *Moho::CNetTCPServerImpl::Accept() {
-    SOCKADDR addr;
-    int addrlen = sizeof(addr);
-    SOCKET sock = accept(this->mSocket, &addr, &addrlen);
-    if (sock == INVALID_SOCKET) {
-        gpg::Logf("CNetTCPServerImpl::Accept(): accept() failed: %s", Moho::NET_GetWinsockErrorString());
-        return nullptr;
+
+// 0x00482B50
+void Moho::CNetTCPBuf::VirtWrite(const char *buf, unsigned int len) {
+    if (this->mSocket == INVALID_SOCKET) {
+        throw std::runtime_error{std::string{"socket closed"}};
     }
-    return new Moho::CNetTCPBuf{sock};
-}
-unsigned short Moho::CNetTCPServerImpl::GetLocalPort() {
-    sockaddr_in name;
-    int namelen = sizeof(name);
-    getsockname(this->mSocket, (SOCKADDR *) &name, &namelen);
-    return ntohs(name.sin_port);
-}
-void Moho::CNetTCPServerImpl::CloseSocket() {
-    if (this->mSocket != INVALID_SOCKET) {
-        closesocket(this->mSocket);
-        this->mSocket = INVALID_SOCKET;
+    if ((this->mMode & gpg::Stream::ModeSend) == 0) {
+        throw std::runtime_error{std::string{"output shutdown"}};
+    }
+    if (len != 0) {
+        this->Write(buf, len);
     }
 }
 
+// 0x00482CE0
+void Moho::CNetTCPBuf::VirtFlush() {
+    if (this->mSocket == INVALID_SOCKET) {
+        throw std::runtime_error{std::string{"socket closed"}};
+    }
+    int len = this->mWriteStart - this->mWriteHead;
+    if (len != 0)  {
+        if (::send(socket, &this->mBuffer[2048], len, 0) == SOCKET_ERROR) {
+            gpg::Logf("CNetTCPBuf::Flush(): send() failed: %s", Moho::NET_GetWinsockErrorString());
+        }
+        this->mWriteStart = &this->mBuffer[2048];
+    }
+}
+
+// 0x00482DA0
+void Moho::CNetTCPBuf::VirtClose(gpg::Stream::Mode mode) {
+    if (this->socket != INVALID_SOCKET) {
+        if ((this->mMode & mode & gpg::Stream::ModeSend) != 0) {
+            this->VirtFlush();
+            ::shutdown(this->mSocket, SD_SEND);
+            this->mMode &=~ gpg::Stream::ModeSend;
+            this->mDataEnd = 0;
+            this->mWriteStart = 0;
+            this->mWriteHead = 0;
+        }
+        if ((this->mMode & mode & gpg::Stream::ModeReceive) != 0) {
+            ::shutdown(this->mSocket, SD_RECEIVE);
+            this->mMode &=~ gpg::Stream::ModeReceive;
+            this->mEnd = 0;
+            this->mReadHead = 0;
+            this->mStart = 0;
+        }
+        if (this->mMode != gpg::Stream::ModeNone) {
+            ::closesocket(this->mSocket);
+            this->mSocket = INVALID_SOCKET;
+        }
+    }
+}
+
+// 0x00482880
+u_short Moho::CNetTCPBuf::GetPort() {
+    if (this->mSocket == INVALID_SOCKET) {
+        throw std::runtime_error{std::string{"socket closed"}};
+    }
+    sockaddr_in name;
+    int namelen = sizeof(name);
+    ::getsockname(this->mSocket, (SOCKADDR *) &name, &namelen);
+    return ::ntohs(name.sin_port);
+}
+
+// 0x00482930
+u_long Moho::CNetTCPBuf::GetPeerAddr() {
+    if (this->mSocket == INVALID_SOCKET) {
+        throw std::runtime_error{std::string{"socket closed"}};
+    }
+    sockaddr_in name;
+    int namelen = sizeof(name);
+    ::getpeername(this->mSocket, (SOCKADDR *) &name, &namelen);
+    return ::ntohl(name.sin_addr.S_un.S_addr);
+}
+
+// 0x004829E0
+u_short Moho::CNetTCPBuf::GetPeerPort() {
+    if (this->mSocket == INVALID_SOCKET) {
+        throw std::runtime_error{std::string{"socket closed"}};
+    }
+    sockaddr_in name;
+    int namelen = sizeof(name);
+    ::getpeername(this->mSocket, (SOCKADDR *) &name, &namelen);
+    return ::ntohs(name.sin_port);
+}
+
+
+// 0x00482770
 Moho::CNetTCPBuf::CNetTCPBuf(SOCKET sock) :
     Moho::INetTCPSocket{},
     mSocket{sock}    
 {}
+
+// 0x00482E20
 int Moho::CNetTCPBuf::Read(char *buf, unsigned int amt, bool isBlocking) {
     if (this->mSocket == INVALID_SOCKET) {
         throw std::runtime_error{std::string{"socket closed"}};
     }
-    if (this->mFailed || ! amt) {
+    if (this->mFailed || amt == 0) {
         return 0;
     }
     int avail = this->mEnd - this->mReadHead;
@@ -775,12 +904,12 @@ int Moho::CNetTCPBuf::Read(char *buf, unsigned int amt, bool isBlocking) {
                 timeval timeout;
                 timeout.tv_sec = 0;
                 timeout.tv_usec = 0;
-                int res = select(1, &readfds, 0, 0, &timeout);
+                int res = ::select(1, &readfds, 0, 0, &timeout);
                 if (res != SOCKET_ERROR && res <= 0) {
                     return totalRead;
                 }
             }
-            int res = recv(this->mSocket, buf, amt, 0);
+            int res = ::recv(this->mSocket, buf, amt, 0);
             if (res == SOCKET_ERROR) {
                 gpg::Logf("CNetTCPBuf::Read(): recv() failed: %s", Moho::NET_GetWinsockErrorString());
                 this->mFailed = true;
@@ -792,14 +921,14 @@ int Moho::CNetTCPBuf::Read(char *buf, unsigned int amt, bool isBlocking) {
             }
             buf += res;
             amt -= res;
-            if (! amt) {
+            if (amt == 0) {
                 return totalRead;
             }
         }
         if (! isBlocking && ! this->Select()) {
             return totalRead;
         }
-        int res = recv(this->mSocket, this->mBuffer, 2048, 0);
+        int res = ::recv(this->mSocket, this->mBuffer, 2048, 0);
         if (res == SOCKET_ERROR) {
             gpg::Logf("CNetTCPBuf::Read(): recv() failed: %s", Moho::NET_GetWinsockErrorString());
             this->mFailed = true;
@@ -816,11 +945,13 @@ int Moho::CNetTCPBuf::Read(char *buf, unsigned int amt, bool isBlocking) {
     this->mReadHead += amt;
     return amt + totalRead;
 }
+
+// inline 0x00482C0A
 void Moho::CNetTCPBuf::Write(const char *buf, unsigned int size) {
     if (size > this->LeftInWriteBuffer()) {
         
         int left = this->LeftInWriteBuffer();
-        if (left) {
+        if (left != 0) {
             memcpy(writeStart, buf, left);
             this->mWriteStart += left;
             buf += left;
@@ -840,6 +971,7 @@ void Moho::CNetTCPBuf::Write(const char *buf, unsigned int size) {
     }
 }
 
+// 0x00483040     
 BOOL Moho::CNetTCPBuf::Select() {
     fd_set readfds;
     readfds.fd_array[0] = this->mSocket;
@@ -847,113 +979,60 @@ BOOL Moho::CNetTCPBuf::Select() {
     timeval timeout;
     timeout.tv_sec = 0;
     timeout.tv_usec = 0;
-    int res = select(1, &readfds, 0, 0, &timeout);
+    int res = ::select(1, &readfds, 0, 0, &timeout);
     return res == SOCKET_ERROR || res > 0;
 }
 
-Moho::CNetTCPBuf::~CNetTCPBuf() {
-    this->VirtClose(this->mMode);
-}
 
-unsigned int Moho::CNetTCPBuf::VirtRead(char *buf, unsigned int len) {
-    return this->Read(buf, len, true);
-}
 
-unsigned int Moho::CNetTCPBuf::VirtReadNonBlocking(char *buf, unsigned int len) {
-    return this->Read(buf, len, false);
-}
+Moho::CNetTCPServerImpl::CNetTCPServerImpl(SOCKET sock) :
+    Moho::INetTCPServer{},
+    mSocket{sock}
+{}
 
-bool Moho::CNetTCPBuf::VirtAtEnd() {
-    if (this->mSocket = INVALID_SOCKET) {
-        throw std::runtime_error{std::string{"socket closed"}};
-    }
-    return this->mFailed;
-}
-
-void Moho::CNetTCPBuf::VirtWrite(const char *buf, unsigned int len) {
-    if (this->mSocket == INVALID_SOCKET) {
-        throw std::runtime_error{std::string{"socket closed"}};
-    }
-    if ((this->mMode & gpg::Stream::ModeSend) == 0) {
-        throw std::runtime_error{std::string{"output shutdown"}};
-    }
-    if (len) {
-        this->Write(buf, len);
+// 0x00483220
+Moho::CNetTCPServerImpl::~CNetTCPServerImpl() {
+    if (this->mSocket != INVALID_SOCKET) {
+        ::closesocket(this->mSocket);
+        this->mSocket = INVALID_SOCKET;
     }
 }
 
-void Moho::CNetTCPBuf::VirtFlush() {
-    if (this->mSocket == INVALID_SOCKET) {
-        throw std::runtime_error{std::string{"socket closed"}};
-    }
-    int len = this->mWriteStart - this->mWriteHead;
-    if (len)  {
-        if (send(socket, &this->mBuffer[2048], len, 0) == SOCKET_ERROR) {
-            gpg::Logf("CNetTCPBuf::Flush(): send() failed: %s", Moho::NET_GetWinsockErrorString());
-        }
-        this->mWriteStart = &this->mBuffer[2048];
-    }
-}
-void Moho::CNetTCPBuf::VirtClose(gpg::Stream::Mode mode) {
-    if (this->socket != INVALID_SOCKET) {
-        if ((this->mMode & mode & gpg::Stream::ModeSend) != 0) {
-            this->VirtFlush();
-            shutdown(this->mSocket, SD_SEND);
-            this->mMode &=~ gpg::Stream::ModeSend;
-            this->mDataEnd = 0;
-            this->mWriteStart = 0;
-            this->mWriteHead = 0;
-        }
-        if ((this->mMode & mode & gpg::Stream::ModeReceive) != 0) {
-            shutdown(this->mSocket, SD_RECEIVE);
-            this->mMode &=~ gpg::Stream::ModeReceive;
-            this->mEnd = 0;
-            this->mReadHead = 0;
-            this->mStart = 0;
-        }
-        if (this->mMode != gpg::Stream::ModeNone) {
-            closesocket(this->mSocket);
-            this->mSocket = INVALID_SOCKET;
-        }
-    }
-}
-
-u_short Moho::CNetTCPBuf::GetPort() {
-    if (this->socket == INVALID_SOCKET) {
-        throw std::runtime_error{std::string{"socket closed"}};
-    }
+// 0x004832A0
+unsigned short Moho::CNetTCPServerImpl::GetLocalPort() {
     sockaddr_in name;
     int namelen = sizeof(name);
-    getsockname(this->socket, (SOCKADDR *) &name, &namelen);
-    return ntohs(name.sin_port);
+    ::getsockname(this->mSocket, (SOCKADDR *) &name, &namelen);
+    return ::ntohs(name.sin_port);
 }
 
-u_long Moho::CNetTCPBuf::GetPeerAddr() {
-    if (this->socket == INVALID_SOCKET) {
-        throw std::runtime_error{std::string{"socket closed"}};
+// 0x004832D0
+Moho::INetTCPSocket *Moho::CNetTCPServerImpl::Accept() {
+    SOCKADDR addr;
+    int addrlen = sizeof(addr);
+    SOCKET sock = ::accept(this->mSocket, &addr, &addrlen);
+    if (sock == INVALID_SOCKET) {
+        gpg::Logf("CNetTCPServerImpl::Accept(): accept() failed: %s", Moho::NET_GetWinsockErrorString());
+        return nullptr;
     }
-    sockaddr_in name;
-    int namelen = sizeof(name);
-    getpeername(this->socket, (SOCKADDR *) &name, &namelen);
-    return ntohl(name.sin_addr.S_un.S_addr);
+    return new Moho::CNetTCPBuf{sock};
 }
 
-u_short Moho::CNetTCPBuf::GetPeerPort() {
-    if (this->socket == INVALID_SOCKET) {
-        throw std::runtime_error{std::string{"socket closed"}};
+// 0x00483370
+void Moho::CNetTCPServerImpl::CloseSocket() {
+    if (this->mSocket != INVALID_SOCKET) {
+        ::closesocket(this->mSocket);
+        this->mSocket = INVALID_SOCKET;
     }
-    sockaddr_in name;
-    int namelen = sizeof(name);
-    getpeername(this->socket, (SOCKADDR *) &name, &namelen);
-    return ntohs(name.sin_port);
 }
 
 
+// 0x004830A0
 Moho::INetTCPSocket *Moho::NET_TCPConnect(u_long addr, u_short port) {
     if (! Moho::NET_Init()) {
         return nullptr;
     }
-    SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    SOCKET sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == INVALID_SOCKET) {
         gpg::Logf("NET_TCPConnect(%s:%d): socket() failed: %s",
             Moho::NET_GetHostName(addr).c_str(), port, Moho::NET_GetWinsockErrorString());
@@ -961,70 +1040,72 @@ Moho::INetTCPSocket *Moho::NET_TCPConnect(u_long addr, u_short port) {
     }
     sockaddr_in name;
     name.sin_family = AF_INET;
-    name.sin_port = htons(port);
-    name.sin_addr.S_un.S_addr = htonl(addr);
-    if (connect(sock, (SOCKADDR *) &name, sizeof(name)) == SOCKET_ERROR) {
+    name.sin_port = ::htons(port);
+    name.sin_addr.S_un.S_addr = ::htonl(addr);
+    if (::connect(sock, (SOCKADDR *) &name, sizeof(name)) == SOCKET_ERROR) {
         gpg::Logf("NET_TCPConnect(%s:%d): connect() failed: %s",
             Moho::NET_GetHostName(addr).c_str(), port, Moho::NET_GetWinsockErrorString());
-        closesocket(sock);
+        ::closesocket(sock);
         return nullptr;
     }
     return new Moho::CNetTCPBuf{sock};
 }
 
+// 0x00483390
 Moho::INetTCPServer *Moho::NET_CreateTCPServer(u_long addr, u_short port) {
     if (! Moho::NET_Init()) {
         return nullptr;
     }
-    SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    SOCKET sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == INVALID_SOCKET) {
         gpg::Logf("NET_CreateTCPServer(%d): socket() failed: %s", port, Moho::NET_GetWinsockErrorString());
         return nullptr;
     }
     sockaddr_in name;
     name.sin_family = AF_INET;
-    name.sin_port = htons(port);
-    name.sin_addr.S_un.S_addr = htonl(addr);
-    if (bind(sock, (SOCKADDR *) &name, sizeof(name)) == SOCKET_ERROR) {
+    name.sin_port = ::htons(port);
+    name.sin_addr.S_un.S_addr = ::htonl(addr);
+    if (::bind(sock, (SOCKADDR *) &name, sizeof(name)) == SOCKET_ERROR) {
         gpg::Logf("NET_CreateTCPServer(%d): bind() failed: %s", port, Moho::NET_GetWinsockErrorString());
-        closesocket(sock);
+        ::closesocket(sock);
         return nullptr;
     }
-    if (listen(sock, SOMAXCONN) == SOCKET_ERROR) {
+    if (::listen(sock, SOMAXCONN) == SOCKET_ERROR) {
         gpg::Logf("NET_CreateTCPServer(%d): listen() failed: %s", port, Moho::NET_GetWinsockErrorString());
-        closesocket(sock);
+        ::closesocket(sock);
         return nullptr;
     }
     return new Moho::CNetTCPServerImpl{sock};
 }
 
+// 0x004849A0
 Moho::INetConnector *Moho::NET_MakeTCPConnector(u_short port) {
     if (! Moho::NET_Init()) {
         return nullptr;
     }
-    SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    SOCKET sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == INVALID_SOCKET) {
         gpg::Logf("NET_MakeConnector: socket() failed: %s", Moho::NET_GetWinsockErrorString());
         return nullptr;
     }
     unsigned long argp = 1;
-    if (ioctlsocket(sock, FIONBIO, &argp) == SOCKET_ERROR) {
+    if (::ioctlsocket(sock, FIONBIO, &argp) == SOCKET_ERROR) {
         gpg::Logf("NET_MakeConnector: ioctlsocket(FIONBIO) failed: %s", Moho::NET_GetWinsockErrorString());
-        closesocket(sock);
+        ::closesocket(sock);
         return nullptr;
     }
     sockaddr_in name;
     name.sin_family = AF_INET;
-    name.sin_port = htons(port);
-    name.sin_addr.S_un.S_addr = htonl(0);
-    if (bind(sock, (SOCKADDR *) &name, sizeof(name)) == SOCKET_ERROR) {
+    name.sin_port = ::htons(port);
+    name.sin_addr.S_un.S_addr = ::htonl(0);
+    if (::bind(sock, (SOCKADDR *) &name, sizeof(name)) == SOCKET_ERROR) {
         gpg::Logf("NET_MakeConnector: bind(%d) failed: %s", port, Moho::NET_GetWinsockErrorString());
-        closesocket(sock);
+        ::closesocket(sock);
         return nullptr;
     }
-    if (listen(sock, SOMAXCONN) == SOCKET_ERROR) {
+    if (::listen(sock, SOMAXCONN) == SOCKET_ERROR) {
         gpg::Logf("NET_MakeConnector: listen() failed: %s", Moho::NET_GetWinsockErrorString());
-        closesocket(sock);
+        ::closesocket(sock);
         return nullptr;
     }
     return new Moho::CNetTCPConnector{sock};

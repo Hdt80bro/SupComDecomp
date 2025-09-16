@@ -1,5 +1,5 @@
-#include "zlib.h"
 #include "gpgcore/streams/PipeStream.h"
+#include "zlib.h"
 
 namespace gpg {
 

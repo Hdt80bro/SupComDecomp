@@ -1,4 +1,4 @@
-#include "core/TDatListItem.h"
+#include "core/TDatList.h"
 #include "core/WeakPtr.h"
 #include "Wm3Vector3.h"
 #include <vector>
@@ -32,7 +32,7 @@ struct STransportPickUpInfo
 };
 
 // 0x00E1F0AC
-class IAiTransport : public Moho::TDatListItem<Moho::IAiTransport>
+class IAiTransport : public Moho::TDatListItem<Moho::IAiTransport, void>
 {
 public:
     virtual ~IAiTransport() = default; // 0x005E3C70

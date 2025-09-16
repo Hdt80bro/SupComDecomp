@@ -1,6 +1,6 @@
+#include <Windows.h>
 #include <string>
 #include <vector>
-#include <Windows.h>
 
 static std::string sWhitespaceChars; // 0x00F32308
 
@@ -19,8 +19,8 @@ const char *STR_DecodeUtf8Char(const char *, wchar_t &); // 0x00937EF0
 std::string STR_WideToUtf8(const wchar_t *); // 0x00938680
 std::wstring STR_Utf8ToWide(gpg::StrArg str); // 0x00938720
 
-bool STR_GetToken(IN OUT const char *&find, IN const char *str, OUT std::string &dest); // 0x00938CB0
-void STR_GetTokens(IN OUT gpg::StrArg find, IN const char *str, OUT std::vector<std::string> &dest); // 0x00938F40
+bool STR_GetToken(__out __out const char *&find, __out const char *str, __out std::string &dest); // 0x00938CB0
+void STR_GetTokens(__out __out gpg::StrArg find, __out const char *str, __out std::vector<std::string> &dest); // 0x00938F40
 int STR_GetWordStartIndex(std::string &str, int pos); // 0x009384A0
 int STR_GetNextWordStartIndex(std::string &str, int pos); // 0x00938570
 bool STR_EndsWith(gpg::StrArg str, gpg::StrArg end); // 0x00938190

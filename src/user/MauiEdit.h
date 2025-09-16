@@ -1,6 +1,7 @@
 #include "user/MauiControl.h"
 #include "user/MauiDragger.h"
 #include "core/D3DRes.h"
+#include "core/Win.h"
 #include "gpgcore/String.h"
 
 namespace Moho {
@@ -40,18 +41,17 @@ public:
     gpg::RType *GetClass() const override; // 0x0078EC80
     gpg::RRef GetDerivedObjectRef() override; // 0x0078ECA0
     ~CMauiEdit() override = default; // 0x0078F190
-    void Draw(Moho::CD3DPrimBatcher *batcher, int renderPass) override; // 0x0078F820
+    void DoRender(Moho::CD3DPrimBatcher *batcher, unsigned int renderPass) override; // 0x0078F820
     bool HandleEvent(const Moho::SMauiEventData &ev) override; // 0x00790470
-    void OnFrame(float delta) override; // 0x0078F720
-    void LoseFocus() override; // 0x0078F330
-    void LoseKeyboardFocus() override; // 0x007915A0
+    void Frame(float delta) override; // 0x0078F720
+    void AbandonKeyboardFocus() override; // 0x0078F330
+    void LosingKeyboardFocus() override; // 0x007915A0
     void Dump() override; // 0x0078F280
     //~CMauiEdit(IMauiDragger) override; // 0x00795A00 -> 0x0078F190
     void DragMove(Moho::SMauiEventData *ev) override; // 0x007913A0
     void DragRelease(Moho::SMauiEventData *ev) override; // 0x007914C0
     void DragCancel() override {} // 0x00791590
 
-    Moho::color_t MultiplyAlpha(Moho::color_t col); // 0x0078EC10
     void SetText(std::string *text); // 0x0078F380
     void ClearText(); // 0x0078F4C0
     void SetMaxChars(int max); // 0x0078F570
@@ -91,7 +91,7 @@ public:
             wchar_t wChar;
             gpg::STR_DecodeUtf8Char(thres, wChar);
             totalAdv += this->mFont->GetCharInfo(wChar).mAdvance;
-            if (totalAdv > this->GetWidth()) {
+            if (totalAdv > this->Width()) {
                 thres = gpg::STR_DecodeUtf8Char(thres, wChar);
                 break;
             }

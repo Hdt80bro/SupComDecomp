@@ -4,7 +4,7 @@
 namespace Moho {
 
 // 0x00E38DC0
-class IMauiDragger : public Moho::TDatListItem<Moho::IMauiDragger>
+class IMauiDragger : public Moho::TDatListItem<Moho::IMauiDragger, void>
 {
 public:
     virtual ~IMauiDragger() = default; // 0x0078DB90

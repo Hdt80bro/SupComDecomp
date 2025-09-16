@@ -1,8 +1,12 @@
 #include "user/ClientManager.h"
+#include "user/WldMap.h"
+#include "core/blueprints/RuleGameRules.h"
+#include "core/TDatList.h"
+#include "LuaPlus.h"
 #include "boost/shared_ptr.hpp"
 #include <string>
 
-struct struct_ScenarioInfo : Moho::TDatListItem<struct_ScenarioInfo>
+struct struct_ScenarioInfo : Moho::TDatListItem<struct_ScenarioInfo, void>
 {
     std::string mMapName;
     std::string mGameMods;

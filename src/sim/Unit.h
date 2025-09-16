@@ -30,7 +30,7 @@ public:
     Moho::WeakPtr<Moho::Unit> mCreator;
     Moho::WeakPtr<Moho::Unit> mTransportedBy;
     Moho::WeakPtr<Moho::Unit> mFerryUnit;
-    Moho::TDatListItem<Moho::CScriptObject> mFocusEntity;
+    Moho::TDatList<Moho::CScriptObject, void> mFocusEntity;
     Moho::WeakPtr<Moho::Entity> v92;
     Moho::WeakPtr<Moho::Unit> mGuardedUnit;
     Wm3::Vector3f v96;

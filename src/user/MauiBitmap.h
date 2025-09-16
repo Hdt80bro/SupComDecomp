@@ -30,9 +30,9 @@ public:
     gpg::RType *GetClass() const override; // 0x0077F7A0
     gpg::RRef GetDerivedObjectRef() override; // 0x0077F7C0
     ~CMauiBitmap() override; // 0x0077FAA0
-    void Draw(Moho::CD3DPrimBatcher *batcher, int renderPass) override; // 0x00780850
+    void DoRender(Moho::CD3DPrimBatcher *batcher, unsigned int renderPass) override; // 0x00780850
     bool HitTest(float x, float y) override; // 0x0077FF70
-    void OnFrame(float delta) override; // 0x00780270
+    void Frame(float delta) override; // 0x00780270
     void Dump() override; // 0x0077FAD0
 
     CMauiBitmap(LuaPlus::LuaObject *lobj, Moho::CMauiControl *parent); // 0x0077F950

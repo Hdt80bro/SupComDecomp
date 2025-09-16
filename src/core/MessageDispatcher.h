@@ -1,10 +1,11 @@
-#include "core/TDatListItem.h"
+#include "core/TDatList.h"
 #include "core/MessageReceiver.h"
 
 namespace Moho {
 
-struct CMessageDispatcher : Moho::TDatListItem<Moho::SMsgReceiverLinkage>
+struct CMessageDispatcher
 {
+    Moho::TDatList<Moho::SMsgReceiverLinkage, void> mLinkageList;
     Moho::IMessageReceiver *mReceivers[256];
 
     void PushReceiver(unsigned int lower, unsigned int upper, Moho::IMessageReceiver *rec); // 0x0047C360

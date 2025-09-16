@@ -4,6 +4,7 @@
 #include "gpgcore/streams/Stream.h"
 #include "boost/weak_ptr.hpp"
 #include <winsock.h>
+#include <map>
 #include <string>
 
 
@@ -30,8 +31,8 @@ class INetConnection : public Moho::CMessageDispatcher
 public:
     DWORD v259;
     
-    virtual int GetAddr() = 0;
-    virtual int GetPort() = 0;
+    virtual u_long GetAddr() = 0;
+    virtual u_short GetPort() = 0;
     virtual float GetPing() = 0;
     virtual float GetTime() = 0;
     virtual void Write(struct_DataSpan *data) = 0;
@@ -49,13 +50,13 @@ public:
     virtual Moho::ENetProtocol GetProtocol() = 0;
     virtual int GetLocalPort() = 0;
     virtual Moho::INetConnection *Connect(u_long addr, u_short port) = 0;
-    virtual bool Func2(OUT u_long &addr, OUT u_short &port) = 0;
+    virtual bool FindNextAddr(__out u_long &addr, __out u_short &port) = 0;
     virtual Moho::INetConnection *Accept(u_long, u_short) = 0;
     virtual void Reject(u_long, u_short) = 0;
     virtual void Pull() = 0;
     virtual void Push() = 0;
     virtual void SelectEvent(HANDLE) = 0;
-    virtual void *Debug(); // 0x0047EAD0
+    virtual void Debug(); // 0x0047EAD0
     virtual void *Func3() = 0;
 };
 
@@ -68,7 +69,7 @@ public:
     Moho::ENetProtocol GetProtocol() override; // 0x0047EB30
     int GetLocalPort() override; // 0x0047EB40
     Moho::INetConnection *Connect(u_long, u_short) override; // 0x0047EB50
-    bool Func2(u_long &addr, u_short &port) override; // 0x0047EB60
+    bool FindNextAddr(u_long &addr, u_short &port) override; // 0x0047EB60
     Moho::INetConnection *Accept(u_long, u_short) override; // 0x0047EB70
     void Reject(u_long, u_short) override; // 0x0047EB80
     void Pull() override; // 0x0047EB90
@@ -92,7 +93,7 @@ public:
 class INetDatagramHandler
 {
 public:
-    virtual void Pull(Moho::CMessage *buf, Moho::INetDatagramSocket *, u_long, u_short) = 0;
+    virtual void Pull(Moho::CMessage *msg, Moho::INetDatagramSocket *, u_long, u_short) = 0;
 };
 
 // 0x00E03EE8
@@ -103,7 +104,7 @@ public:
     SOCKET mSocket;
     HANDLE mEvent;
 
-    ~CNetDatagramSocketImpl() override;
+    ~CNetDatagramSocketImpl() override; // 0x0047F050
     void SendDefault(Moho::CMessage *, u_short) override; // 0x0047F0D0
     void Send(Moho::CMessage *, u_long addr, u_short port) override; // 0x0047F0F0
     void Pull() override; // 0x0047F190
@@ -140,27 +141,44 @@ public:
 // 0x00E3D740
 class INetNATTraversalProvider
 {
-
+public:
+    virtual void SetHandler(int port, boost::shared_ptr<Moho::INetNATTraversalHandler> *handler) = 0;
+    virtual void ReceivePacket(u_long addr, u_short port, const char *dat, size_t size) = 0;
 };
 
 // 0x00E060C8
 class INetNATTraversalHandler
 {
 public:
+    virtual void Func1(Moho::CMessage *) = 0;
+    virtual void ReceivePacket(u_long addr, u_short port, void *dat, size_t size) = 0;
 };
 
-Moho::INetConnector *NET_MakeConnector(unsigned short, Moho::ENetProtocol, boost::weak_ptr<Moho::INetNATTraversalProvider> *natTravProv); // 0x0047EBF0
+Moho::INetConnector *NET_MakeConnector(u_short, Moho::ENetProtocol, boost::weak_ptr<Moho::INetNATTraversalProvider> *natTravProv); // 0x0047EBF0
 std::string NET_GetProtocolName(Moho::ENetProtocol netproto); // 0x0047EC90
 Moho::ENetProtocol NET_ProtocolFromString(const char *str); // 0x0047ED50
 Moho::INetDatagramSocket *NET_OpenDatagramSocket(unsigned short hostshort, Moho::INetDatagramHandler *datagramHandler); // 0x0047F360
 bool NET_Init(); // 0x0047F5A0
 const char *NET_GetWinsockErrorString(); // 0x0047F5F0
-std::string NET_GetHostName(unsigned long hostlong); // 0x0047FEE0
-bool NET_GetAddrInfo(const char *str, unsigned short unk, bool isTCP, unsigned int &addr, unsigned short &port); // 0x0047FF10
+std::string NET_GetHostName(u_long hostlong); // 0x0047FEE0
+bool NET_GetAddrInfo(const char *str, unsigned short unk, bool isTCP, u_long &addr, u_short &port); // 0x0047FF10
 std::string NET_GetDottedOctetFromUInt32(unsigned int octets); // 0x004801C0
 int Moho::NET_GetUInt32FromDottedOcted/*sic*/(std::string octet); // 0x00480200
 
-Moho::INetConnector *NET_MakeTCPConnector(unsigned short); // 0x004849A0
-Moho::INetConnector *NET_MakeUDPConnector(unsigned short, boost::weak_ptr<Moho::INetNATTraversalProvider> *); // 0x0048BBE0
-
 }
+
+struct struct_Host : Moho::TDatListItem<struct_Host, void>
+{
+    std::string mName;
+    int mVal;
+};
+
+struct struct_HostManager
+{
+    boost::mutex mLock;
+    std::map<unsigned int, struct_Host> mHosts;
+    Moho::TDatList<struct_Host, void> mHostList;
+};
+
+struct_HostManager *func_GetHostManager(); // 0x0047F990
+std::string func_NET_GetHostName(struct_HostManager *, u_long addr); // 0x0047FBE0

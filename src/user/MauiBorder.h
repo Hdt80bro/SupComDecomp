@@ -21,7 +21,7 @@ public:
     gpg::RType *GetClass() const override; // 0x00784860
     gpg::RRef GetDerivedObjectRef() override; // 0x00784880
     ~CMauiBorder() override; // 0x00784B20
-    void Draw(Moho::CD3DPrimBatcher *batcher, int renderPass) override; // 0x00784F50
+    void DoRender(Moho::CD3DPrimBatcher *batcher, unsigned int renderPass) override; // 0x00784F50
     void Dump() override; // 0x00784D00
 
     void SetTextures(

@@ -1,12 +1,12 @@
 #include "core/MessageReceiver.h"
 #include "core/NetConnector.h"
 #include "core/ScriptObject.h"
-#include "core/TDatListItem.h"
+#include "core/TDatList.h"
 #include <string>
 #include <vector>
 
 
-struct struct_NetworkPlayer : Moho::TDatListItem<struct_NetworkPlayer>
+struct struct_NetworkPlayer : Moho::TDatListItem<struct_NetworkPlayer, void>
 {
     std::string mPlayerName;
     int mUID;
@@ -38,11 +38,17 @@ public:
     int mHasNAT;
     std::string mPlayerName;
     int mLocalUID;
-    Moho::TDatListItem<struct_NetworkPlayer> mPlayers;
+    Moho::TDatList<struct_NetworkPlayer, void> mPlayers;
     bool v36;
     int v37;
     int v38;
     int v39;
+
+    static gpg::RType *StaticGetClass(); // 0x007C0760
+    gpg::RType *GetClass() const override; // 0x007C0780
+    gpg::RRef GetDerivedObjectRef() override; // 0x007C07A0
+    ~CLobby() override; // 0x007C0C60
+    // ...
 };
 
 }

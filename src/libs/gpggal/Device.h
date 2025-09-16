@@ -10,6 +10,10 @@
 #include "gpggal/VertexFormat.h"
 
 
+class gpg::gal::Device;
+
+static gpg::gal::Device *sDeviceD3D; // 0x00F8E284
+
 namespace gpg::gal {
 
 // 0x00D420B4
@@ -17,7 +21,7 @@ class DeviceContext
 {
 public:
     int mDeviceType;
-    bool v16;
+    bool mValidate;
     UINT mAdapter;
     bool mVSync;
     bool mHWBasedInstancing;
@@ -97,7 +101,6 @@ public:
     virtual void EndTechnique() = 0;
 };
 
+gpg::gal::Device *func_CreateDeviceD3D(gpg::gal::DeviceContext *); // 0x008E6B60
+
 }
-
-
-static gpg::gal::Device *sDeviceD3D; // 0x00F8E284

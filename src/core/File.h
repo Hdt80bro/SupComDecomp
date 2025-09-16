@@ -14,10 +14,10 @@ std::string FILE_DirPrefix(gpg::StrArg filename); // 0x00410A10
 std::string FILE_Dir(gpg::StrArg filename); // 0x00410C60
 std::string FILE_Base(gpg::StrArg filename, bool removeExt); // 0x004111C0
 bool FILE_Wild(gpg::StrArg dir, gpg::StrArg pattern, bool, char); // 0x00411320
-std::string FILE_CollapsePath(IN gpg::StrArg filename, OUT bool *success); // 0x004115A0
+std::string FILE_CollapsePath(__in gpg::StrArg filename, __out bool *success); // 0x004115A0
 std::string FILE_GetErrorFromErrno(int err); // 0x00411A20
 
-bool URI_Split(IN gpg::StrArg uri, OUT std::string &scheme, OUT std::string &authority, OUT std::string &path, OUT std::string &query, OUT std::string &fragment); // 0x0048E0C0
+bool URI_Split(__in gpg::StrArg uri, __out std::string &scheme, __out std::string &authority, __out std::string &path, __out std::string &query, __out std::string &fragment); // 0x0048E0C0
 
 }
 

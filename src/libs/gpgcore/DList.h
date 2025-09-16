@@ -1,13 +1,15 @@
 
 namespace gpg {
 
-template<class T>
+template<class T, class U>
 struct DListItem
 {
     using type = T;
+    using unk_t = U;
+    using item_t = gpg::DListItem<type, unk_t>;
 
-    gpg::DListItem<type> *mPrev;
-    gpg::DListItem<type> *mNext;
+    item_t *mPrev;
+    item_t *mNext;
 
     DListItem() :
         mPrev{this},
@@ -47,6 +49,45 @@ struct DListItem
     bool HasNext() {
         return this->mPrev != this->mNext;
     } // inline
+};
+
+template<class T, class U>
+struct DList : gpg::DListItem<T, U>
+{
+    using type = T;
+    using unk_t = U;
+    using item_t = gpg::DListItem<type, unk_t>;
+
+    struct iterator
+    {
+        item_t *pos;
+
+        iterator(item_t *pos) : pos{pos} {}
+
+        iterator &operator++() {
+            this->pos = this->pos->mNext;
+            return *this;
+        }
+        type *operator*() {
+            return this->pos.Get();
+        }
+        void *operator->() {
+            return &**this;
+        }
+        bool operator==(const iterator that&) {
+            return this->pos == that.pos;
+        }
+        bool operator!=(const iterator that&) {
+            return ! (*this == that);
+        }
+    };
+
+    iterator begin() {
+        return this->mNext;
+    }
+    iterator end() {
+        return this;
+    }
 };
 
 }

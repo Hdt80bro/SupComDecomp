@@ -1,17 +1,22 @@
-#include <string>
-#include <vector>
-#include "boost/shared_ptr.hpp"
-#include "LuaPlus.h"
-#include "Wm3AxisAlignedBox3.h"
-#include "Wm3Quaternion.h"
-#include "Wm3Vector3.h"
-#include "core/Intel.h"
-#include "core/ScriptObject.h"
-#include "core/SndParams.h"
-#include "core/Task.h"
 #include "sim/ColPrimitive.h"
 #include "sim/PhysBody.h"
 #include "sim/Sim.h"
+#include "core/blueprints/EntityBlueprint.h"
+#include "core/resources/ModelResource.h"
+#include "core/IArmy.h"
+#include "core/Intel.h"
+#include "core/ColMain.h"
+#include "core/Math.h"
+#include "core/ScriptObject.h"
+#include "core/SndParams.h"
+#include "core/Task.h"
+#include "LuaPlus.h"
+#include "Wm3AxisAlignedBox3.h"
+#include "Wm3Vector3.h"
+#include "Wm3Quaternion.h"
+#include "boost/shared_ptr.hpp"
+#include <string>
+#include <vector>
 
 namespace Moho {
 
@@ -118,7 +123,7 @@ class Entity :
 {
 public:
     Moho::EEntityType mType;
-    Moho::TDatListItem<unk_t> mTarget;
+    Moho::TDatList<unk_t, void> mTarget;
     Moho::SSTIEntityConstantData mConstDat;
     int gap;
     Moho::SSTIEntityVariableData mVarDat;
@@ -128,7 +133,7 @@ public:
     Moho::PositionHistory *mPositionHistory;
     float mLastImpactSomething;
     int v6;
-    Moho::CColPrimitive *mCollisionShape;
+    Moho::CColPrimitiveBase *mCollisionShape;
     std::vector<Moho::Entity *> mAttachedEntities;
     Moho::SEntAttachInfo parent_p1;
     bool v3a;

@@ -1,4 +1,4 @@
-#include "core/TDatListItem.h"
+#include "core/TDatList.h"
 #include "boost/function.hpp"
 
 namespace Moho {
@@ -39,14 +39,14 @@ public:
 
 struct CTaskStage
 {
-    Moho::TDatListItem<Moho::CTaskThread> mThreads;
+    Moho::TDatList<Moho::CTaskThread, void> mThreads;
     Moho::CTaskThread *mPrev;
     Moho::CTaskThread *mNext;
     bool v5;
 };
 
 
-struct CTaskThread : Moho::TDatListItem<Moho::CTaskThread>
+struct CTaskThread : Moho::TDatListItem<Moho::CTaskThread, void>
 {
     int unk;
     Moho::CTaskStage *mStage;

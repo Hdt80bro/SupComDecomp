@@ -19,7 +19,7 @@ struct Timer
     float ElapsedSeconds(); // 0x004A3560
     float ElapsedMilliSeconds() {
         return gpg::time::CyclesToMilliseconds(this->ElapsedCycles());
-    } // inline & implied
+    } // 0x00461A90
 };
 
 LONGLONG GetTime(); // 0x00955400

@@ -1,10 +1,10 @@
-#include "Stream.h"
-#include "gpgcore/DListItem.h"
+#include "gpgcore/streams/Stream.h"
+#include "gpgcore/DList.h"
 #include "boost/thread/condition.hpp"
 #include "boost/thread/mutex.hpp"
 
-struct struct_stream_buffer :
-    gpg::DListItem<struct_stream_buffer>
+struct struct_StreamBuffer :
+    gpg::DListItem<struct_StreamBuffer>
 {
     char mData[4096];
 
@@ -26,7 +26,7 @@ public:
     boost::mutex mLock;
     bool mClosed;
     boost::condition mSemaphore;
-    gpg::DListItem<struct_stream_buffer> mBuff;
+    gpg::DList<struct_StreamBuffer> mBuff;
 
     ~PipeStream() override; // 0x00956A90
     size_t VirtRead(char *buff, size_t len) override; // 0x00956A50

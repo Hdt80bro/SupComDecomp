@@ -1,4 +1,4 @@
-#include "core/TDatListItem.h"
+#include "core/TDatList.h"
 #include "gpgcore/reflection/reflection.h"
 #include "gpgcore/containers/fastvector.h"
 #include "LuaPlus.h"
@@ -7,7 +7,7 @@ namespace Moho {
 
 // 0x00E0926C
 class CScriptObject :
-    public Moho::TDatListItem<Moho::CScriptObject>
+    public Moho::TDatListItem<Moho::CScriptObject, void>
 {
 public:
     LuaPlus::LuaObject mCObj;
@@ -33,6 +33,48 @@ public:
             return fn(LuaPlus::LuaObject{args}...);
         }
     }
+    template<class... Ts>
+    bool RunScriptBool(const char *name, Ts... args) {
+        LuaPlus::LuaObject script = this->FindScript(name);
+        if (! script.IsNil()) {
+            LuaPlus::LuaFunction fn{script};
+            return fn(LuaPlus::LuaObject{args}...);
+        }
+        return false;
+    }
 };
+
+template<class T>
+class CScriptLazyVar
+{
+public:
+    LuaPlus::LuaObject mObj;
+
+    CScriptLazyVar(LuaPlus::LuaState *state) {
+
+    }
+
+    operator LuaPlus::LuaObject&() {
+        return this->mObj;
+    }
+    operator T() {
+
+    }
+    void operator=(T val) {
+
+    }
+};
+
+
+/*
+template<>
+class CScriptLazyVar<float>
+{
+public:
+    CSCriptLazyVar(LuaPlus::LuaState *); // 0x007836E0
+    operator float(); // 0x00783840
+    void operator=(float val); // 0x007839E0
+}
+*/
 
 }

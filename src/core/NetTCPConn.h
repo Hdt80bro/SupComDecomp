@@ -1,5 +1,5 @@
 #include "core/NetConnector.h"
-#include "core/TDatListItem.h"
+#include "core/TDatList.h"
 #include "gpgcore/streams/PipeStream.h"
 #include "gpgcore/Timer.h"
 
@@ -9,6 +9,7 @@ struct struct_TCPConnLL
     struct_TCPConnLL *mNext;
 
     void *GetPtr(); // 0x00485830
+    ~struct_TCPConnLL(); // inline 0x00484BD5
 };
 
 namespace Moho {
@@ -18,7 +19,7 @@ class CNetTCPConnector;
 // 0x00E049F8
 class CNetTCPConnection :
     public Moho::INetConnection,
-    public Moho::TDatListItem<Moho::CNetTCPConnection>
+    public Moho::TDatListItem<Moho::CNetTCPConnection, void>
 {
 public:
     Moho::CNetTCPConnector *mConnector;
@@ -44,8 +45,8 @@ public:
     bool v842d;
     int v843;
     
-    int GetAddr() override; // 0x004835B0
-    int GetPort() override; // 0x004835C0
+    u_long GetAddr() override; // 0x004835B0
+    u_short GetPort() override; // 0x004835C0
     float GetPing() override; // 0x004835D0
     float GetTime() override; // 0x00484520
     void Write(struct_DataSpan* data) override; // 0x00484540
@@ -55,7 +56,7 @@ public:
 
     CNetTCPConnection(Moho::CNetTCPConnector *connector, SOCKET s, u_long addr, u_short port, int a7); // 0x00483650
     void Push(); // 0x004838D0
-    void Pull(Moho::TDatListItem<Moho::SPartialConnection> *); // 0x00483A60
+    void Pull(Moho::TDatListItem<Moho::SPartialConnection, void> *); // 0x00483A60
 };
 
 // 0x00E049C0
@@ -66,8 +67,8 @@ class CNetTCPConnector :
 public:
     struct_TCPConnLL mll;
     SOCKET mSocket;
-    Moho::TDatListItem<Moho::CNetTCPConnection> mConnections;
-    Moho::TDatListItem<Moho::SPartialConnection> mPartialConns;
+    Moho::TDatList<Moho::CNetTCPConnection, void> mConnections;
+    Moho::TDatList<Moho::SPartialConnection, void> mPartialConns;
     HANDLE mHandle;
 
     ~CNetTCPConnector() override; // 0x00484AE0
@@ -75,7 +76,7 @@ public:
     Moho::ENetProtocol GetProtocol() override; // 0x00483610
     int GetLocalPort() override; // 0x00484C20
     Moho::INetConnection *Connect(u_long addr, u_short port) override; // 0x00484C50
-    bool Func2(OUT u_long &addr, OUT u_short &port) override; // 0x00484EA0
+    bool FindNextAddr(__out u_long &addr, __out u_short &port) override; // 0x00484EA0
     Moho::INetConnection *Accept(u_long, u_short) override; // 0x00484F00
     void Reject(u_long, u_short) override; // 0x00485050
     void Pull() override; // 0x004838D0
@@ -145,5 +146,6 @@ public:
 
 Moho::INetTCPSocket *NET_TCPConnect(u_long addr, u_short port); // 0x004830A0
 Moho::INetTCPServer *NET_CreateTCPServer(u_long addr, u_short port); // 0x00483390
+Moho::INetConnector *NET_MakeTCPConnector(u_short); // 0x004849A0
 
 }

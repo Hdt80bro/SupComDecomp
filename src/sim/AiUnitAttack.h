@@ -50,7 +50,7 @@ class IAiAttacker
 
 class CAiAttackerImpl :
     public Moho::IAiAttacker, // 0x00E1E9CC
-    public Moho::TDatListItem<Moho::CAiAttackerImpl>,
+    public Moho::TDatListItem<Moho::CAiAttackerImpl, void>,
     public Moho::CScriptObject // 0x00E1EA44
 {
 public:

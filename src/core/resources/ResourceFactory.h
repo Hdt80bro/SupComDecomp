@@ -25,8 +25,8 @@ public:
 
 public:
     void Init() override {
-        this->mType = type::StaticGetClass();
-        this->mPreloadType = preload_t::StaticGetClass();
+        this->mType = func_GetType<type>();
+        this->mPreloadType = func_GetType<preload_t>();
     }
     boost::shared_ptr<type> Load(const char *filename) override {
         return this->LoadImpl(filename);
@@ -54,8 +54,8 @@ public:
     using preload_t = P;
 
     void Init() override {
-        this->mType = type::StaticGetClass();
-        this->mPreloadType = preload_t::StaticGetClass();
+        this->mType = func_GetType<type>();
+        this->mPreloadType = func_GetType<preload_t>();
     }
     boost::shared_ptr<type> Load(const char *filename) override {
         return this->LoadImpl(filename);

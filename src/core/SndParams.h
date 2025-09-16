@@ -12,9 +12,9 @@ struct CSndParams
     std::string mBank;
     Moho::CSndVar *mLODCutoff;
     Moho::CSndVar *mVar2;
-    int v1;
-    __int16 mCueId;
-    __int16 mBankId;
+    int mMode;
+    XACTINDEX mCueId;
+    XACTINDEX mBankId;
     boost::shared_ptr<Moho::AudioEngine> mAudioEngine;
 };
 

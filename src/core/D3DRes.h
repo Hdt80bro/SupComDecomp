@@ -112,7 +112,10 @@ class CD3DDynamicTextureSheet
 // 0x00E02A84
 class CD3DBatchTexture
 {
-
+public:
+    virtual ~CD3DBatchTexture() = default; // 0x00447170
+    virtual void Func() = 0;
+    virtual float GetAlphaAt() = 0;
 };
 
 // 0x00E02A9C

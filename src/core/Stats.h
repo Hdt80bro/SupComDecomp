@@ -49,7 +49,7 @@ public:
     boost::mutex mLock;
 
     virtual ~StatItem(); // 0x00408840
-    virtual void ToLua(int dead, OUT LuaPlus::LuaObject &); // 0x00418BD0
+    virtual void ToLua(int dead, __out LuaPlus::LuaObject &); // 0x00418BD0
 
     void Release(int val); // 0x004151E0
     void SetValue(std::string &disp);

@@ -424,16 +424,16 @@ int func_Dispatch(Moho::CTaskThread *thrd) {
 }
 
 void func_UserFrame(Moho::CTaskStage *stage) {
-    Moho::TDatListItem<Moho::CTaskThread> *v2; // ecx
-    Moho::TDatListItem<Moho::CTaskThread> *next; // esi
+    Moho::TDatListItem<Moho::CTaskThread, void> *v2; // ecx
+    Moho::TDatListItem<Moho::CTaskThread, void> *next; // esi
     int v4; // eax
-    Moho::TDatListItem<Moho::CTaskThread> *v5; // edi
-    Moho::TDatListItem<Moho::CTaskThread> *prev; // eax
-    Moho::TDatListItem<Moho::CTaskThread> v7; // [esp+8h] [ebp-18h] BYREF
+    Moho::TDatListItem<Moho::CTaskThread, void> *v5; // edi
+    Moho::TDatListItem<Moho::CTaskThread, void> *prev; // eax
+    Moho::TDatListItem<Moho::CTaskThread, void> v7; // [esp+8h] [ebp-18h] BYREF
     int v8; // [esp+1Ch] [ebp-4h]
 
     v2 = &v7;
-    Moho::TDatListItem<Moho::CTaskThread> v7;
+    Moho::TDatListItem<Moho::CTaskThread, void> v7;
     next = stage->mThreads.mNext;
     if (next != &stage->mThreads) {
         do {

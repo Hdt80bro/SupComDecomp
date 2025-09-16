@@ -1,9 +1,10 @@
-#include "core/TDatListItem.h"
+#include "core/Task.h"
+#include "core/TDatList.h"
 #include "core/WeakPtr.h"
 
 namespace Moho {
 
-struct STaskEventLinkage : Moho::TDatListItem<Moho::STaskEventLinkage>
+struct STaskEventLinkage : Moho::TDatListItem<Moho::STaskEventLinkage, void>
 {
     int v1;
     Moho::WeakPtr<Moho::CTaskThread> mThread;
@@ -14,7 +15,7 @@ class CTaskEvent
 {
 public:
     bool v1;
-    Moho::TDatListItem<Moho::STaskEventLinkage> v2;
+    Moho::TDatList<Moho::STaskEventLinkage, void> mLinks;
 };
 
 }

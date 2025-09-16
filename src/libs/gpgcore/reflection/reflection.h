@@ -2,6 +2,7 @@
 
 #include "gpgcore/streams/WriteArchive.h"
 #include "gpgcore/streams/ReadArchive.h"
+#include "gpgcore/DList.h"
 #include <typeinfo>
 #include <vector>
 
@@ -42,6 +43,9 @@ struct RRef {
     gpg::RRef GetField(int ind) const; // gpgcore.dll
     const char *GetFieldName(int ind) const; // gpgcore.dll
     void Delete(); // 0x008D8800
+
+    template<class T>
+    RRef(T *);
 };
 
 // 0x00D4145C
@@ -56,14 +60,10 @@ public:
 
 #define DEFINE_ROBJECT_COMMON(clazz)\
 gpg::RType *clazz::StaticGetClass() {\
-    static gpg::RType *sType;\
-    if (sType == nullptr) {\
-        sType = gpg::LookupRType(&typeid(clazz));\
-    }\
-    return sType;\
+    return func_GetType<clazz>();\
 }\
 gpg::RType *clazz::GetClass() const {\
-    return clazz::StaticGetClass();\
+    return func_GetType<clazz>();\
 }\
 gpg::RRef clazz::GetDerivedObjectRef() {\
     return gpg::RRef{this, this->GetClass()};\
@@ -155,14 +155,14 @@ public:
     template<class T>
     gpg::RField *AddField(const char *name, int offset) {
         GPG_ASSERT(!mInitFinished); // if (this->mInitFinished) { gpg::HandleAssertFailure("!mInitFinished", 734, "c:\\work\\rts\\main\\code\\src\\libs\\gpgcore/reflection/reflection.h"); }
-        gpg::RField f{T::StaticGetClass(), name, offset};
+        gpg::RField f{func_GetType<T>(), name, offset};
         this->mFields.push_back(f);
         return this->mFields.back();
     }
 
     template<class T, class B>
     void AddBase() {
-        gpg::RType *type = B::StaticGetClass();
+        gpg::RType *type = func_GetType<B>();
         this->AddBase(gpg::RField{
             type->GetName(),
             type,
@@ -214,7 +214,7 @@ public:
     ~RPointerType() override = default;
     const char *GetName() override {
         static std::string sName{
-            std::string{type::StaticGetClass()->GetName()} + "*"
+            std::string{func_GetType<type>()->GetName()} + "*"
         };
         return sName.c_str();
     }
@@ -238,7 +238,7 @@ public:
     }
     void AssignPointer(void *void_pptr, const gpg::RRef &ref) const override {
         GPG_ASSERT(void_pptr); // if (void_pptr == nullptr) { gpg::HandleAssertFailure("void_pptr", 663, "c:\\work\\rts\\main\\code\\src\\libs\\gpgcore/reflection/reflection.h"); }
-        gpg::RType *type = T::StaticGetClass();
+        gpg::RType *type = func_GetType<T>();
         void *up = gpg::REF_UpcastPtr(ref, type)->mObj;
         if (ref->mObj != nullptr && up == nullptr) {
             throw gpg::BadRefCast{"type error"};
@@ -427,6 +427,46 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+///  DList Type
+////////////////////////////////////////////////////////////////////////////////
+
+template<class T, class U>
+class RDListType : public gpg::RType
+{
+public:
+    using type = T;
+    using unk_t = U;
+
+public:
+    ~RDListType() override = default;
+    const char *GetName() override {
+        static std::string sName{gpg::STR_Printf("DList<%s, %s>",
+            func_GetType<type>()->GetName(),
+            func_GetType<unk_t>()->GetName()
+        )};
+        return sName.c_str();
+    }
+    std::string GetLexical(const gpg::RRef &ref) const override {
+        return gpg::STR_Printf("%s", this->gpg::RType::GetLexical(ref).c_str());
+    }
+    void Init() override {
+        this->mSize = sizeof(gpg::DList<type>);
+        this->mVersion = 1;
+        this->mSerLoadFunc = &this->Load;
+        this->mSerSaveFunc = &this->Save;
+    }
+    void Load() {
+
+    }
+    void Save() {
+
+    }
+};
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
 ///  List Type
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -440,7 +480,7 @@ public:
     ~RListType() override = default;
     const char *GetName() override {
         static std::string sName{
-            gpg::STR_Printf("list<%s>", type::StaticGetClass()->GetName())
+            gpg::STR_Printf("list<%s>", func_GetType<type>()->GetName())
         };
         return sName.c_str();
     }
@@ -470,8 +510,8 @@ public:
     ~RMapType() override = default;
     const char *GetName() override {
         static std::string sName{gpg::STR_Printf("map<%s, %s>",
-            key_t::StaticGetClass()->GetName(),
-            value_t::StaticGetClass()->GetName()
+            func_GetType<key_t>()->GetName(),
+            func_GetType<value_t>()->GetName()
         )};
         return sName.c_str();
     }
@@ -501,8 +541,8 @@ public:
     ~RMultiMapType() override = default;
     const char *GetName() override {
         static std::string sName{gpg::STR_Printf("multimap<%s, %s>",
-            key_t::StaticGetClass()->GetName(),
-            value_t::StaticGetClass()->GetName()
+            func_GetType<key_t>()->GetName(),
+            func_GetType<value_t>()->GetName()
         )};
         return sName.c_str();
     }
@@ -531,7 +571,7 @@ public:
     ~RVectorType() override = default;
     const char *GetName() override {
         static std::string sName{
-            gpg::STR_Printf("vector<%s>", type::StaticGetClass()->GetName())
+            gpg::STR_Printf("vector<%s>", func_GetType<type>()->GetName())
         };
         return sName.c_str();
     }
@@ -572,7 +612,7 @@ public:
     ~RFastVectorType() override = default;
     const char *GetName() override {
         static std::string sName{
-            gpg::STR_Printf("fastvector<%s>", type::StaticGetClass()->GetName())
+            gpg::STR_Printf("fastvector<%s>", func_GetType<type>()->GetName())
         };
         return sName.c_str();
     }
@@ -599,10 +639,18 @@ public:
 
 } // gpg
 
+template<class T>
+gpg::RType *func_GetType() {
+    static gpg::RType *sType;
+    if (sType == nullptr) {
+        sType = gpg::LookupRType(&typeid(T));
+    }
+    return sType;
+}
 
 template<class T>
-gpg::RRef func_RRef(void *ptr) {
-    gpg::RType *type = T::StaticGetClass();
+gpg::RRef::RRef(T *ptr) {
+    gpg::RType *type = func_GetType<T>();
     if (ptr == nullptr || *typeid(ptr) == *typeid(T)) {
         this->mObj = ptr;
         this->mType = type;

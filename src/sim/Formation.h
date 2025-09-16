@@ -1,6 +1,6 @@
 #include "sim/Sim.h"
 #include "core/Counted.h"
-#include "core/TDatListItem.h"
+#include "core/TDatList.h"
 #include "gpgcore/containers/fastvector.h"
 #include "Wm3Quaternion.h"
 #include "LuaPlus.h"
@@ -23,7 +23,7 @@ enum EFormationdStatus/*sic*/
 
 class IFormationInstance :
     public Moho::CountedObject,
-    public Moho::TDatListItem<Moho::IFormationInstance>
+    public Moho::TDatListItem<Moho::IFormationInstance, void>
 {
 public:
     ~IFormationInstance() override = default; // 0x00565CA0

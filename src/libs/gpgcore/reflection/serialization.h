@@ -39,7 +39,7 @@ public:
     deserialize_func_t mSerialize;
 
     void Init() override {
-        gpg::RType *type = type::StaticGetClass();
+        gpg::RType *type = func_GetType<type>();
         GPG_ASSERT(!type->mSerLoadFunc); /* if (type->mSerLoadFunc) { gpg::HandleAssertFailure("!type->mSerLoadFunc", 84, "c:\\work\\rts\\main\\code\\src\\libs\\gpgcore/reflection/serialization.h"); } */
         type->mSerLoadFunc = this->mDeserialize;
 
@@ -70,7 +70,7 @@ public:
     deconstruct_func_t mDeconstruct;
     
     void Init() override {
-        gpg::RType *type = type::StaticGetClass();
+        gpg::RType *type = func_GetType<type>();
         GPG_ASSERT(!type->mSerConstructFunc); /* if (type->mSerConstructFunc) { gpg::HandleAssertFailure("!type->mSerConstructFunc", 231, "c:\\work\\rts\\main\\code\\src\\libs\\gpgcore/reflection/serialization.h"); } */
         type->mSerConstructFunc = this->mConstruct;
         type->mDelete = this->mDeconstruct;
@@ -89,7 +89,7 @@ public:
     construct_func_t mConstruct;
 
     void Init() override {
-        gpg::RType *type = type::StaticGetClass();
+        gpg::RType *type = func_GetType<type>();
         GPG_ASSERT(!type->mSerSaveConstructArgsFunc); /* if (type->mSerSaveConstructArgsFunc) { gpg::HandleAssertFailure("!type->mSerSaveConstructArgsFunc", 189, "c:\\work\\rts\\main\\code\\src\\libs\\gpgcore/reflection/serialization.h"); } */
         type->mSerSaveConstructArgsFunc = this->mSerialize;
     }

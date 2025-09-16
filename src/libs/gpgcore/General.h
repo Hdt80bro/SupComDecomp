@@ -1,6 +1,6 @@
 
-#define GPG_ERROR(msg) gpg::HandleAssertFailure(msg, __LINE__, __FILE__);
-#define GPG_UNREACHABLE(x) GPG_ERROR("Reached the supposably unreachable.");
+#define GPG_ERROR(msg) gpg::HandleAssertFailure(msg, __LINE__, __FILE__)
+#define GPG_UNREACHABLE() GPG_ERROR("Reached the supposably unreachable.")
 #define GPG_ASSERT(x) do {\
     if (! (x)) { GPG_ERROR(#x); }\
 } while (false)

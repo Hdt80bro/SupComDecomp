@@ -170,7 +170,7 @@ std::wstring gpg::STR_Utf8ToWide(gpg::StrArg str) {
 }
 
 // 0x00938CB0
-bool gpg::STR_GetToken(IN OUT gpg::StrArg &find, IN const char *str, OUT std::string &dest) {
+bool gpg::STR_GetToken(__inout gpg::StrArg &find, __in const char *str, __out std::string &dest) {
     int c = *find;
     while (c && strchr(str, c) != 0) {
         c = *++find;
@@ -193,7 +193,7 @@ bool gpg::STR_GetToken(IN OUT gpg::StrArg &find, IN const char *str, OUT std::st
 }
 
 // 0x00938F40
-void gpg::STR_GetTokens(IN OUT gpg::StrArg find, IN const char *str, OUT std::vector<std::string> &vec) {
+void gpg::STR_GetTokens(__inout gpg::StrArg find, __in const char *str, __out std::vector<std::string> &vec) {
     std::string token{};
     while (gpg::STR_GetToken(find, str, token)) {
         vec.push_back(token);
