@@ -1,3 +1,4 @@
+#include "core/NetConnector.h"
 #include "core/WinApp.h"
 #include "gpgcore/Timer.h"
 #include "gpggal/Device.h"
@@ -17,23 +18,6 @@ public:
     bool v94d;
 };
 
-struct struct_RollingFrameRates
-{
-    float mVals[10];
-    int mStart;
-    int mEnd;
-
-    void roll(float in) {
-        int nextEnd = (this->mEnd + 1) % 10;
-        if (nextEnd == this->mStart) {
-            this->mStart = (this->mStart + 1) % 10;
-        }
-        this->mVals[this->mStart] = in;
-        this->mEnd = nextEnd;
-    } // inline
-    float median(); // 0x008D4B20
-};
-
 // 0x00E4F6C0
 class CScApp : public Moho::IWinApp
 {
@@ -46,7 +30,7 @@ public:
     WSupComFrame *mFrame2;
     bool v21;
     gpg::time::Timer mCurTime;
-    struct_RollingFrameRates mFrameRates;
+    struct_RollingFloat<10> mFrameRates;
 
     ~CScApp() override = default; // 0x008D1CB0
     bool AppInit() override; // 0x008CEDE0

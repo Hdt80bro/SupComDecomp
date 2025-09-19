@@ -1,4 +1,5 @@
 #include "core/TDatList.h"
+#include "boost/thread.hpp"
 #include <string>
 #include <vector>
 
@@ -12,7 +13,7 @@ struct SDiskWatchEvent
 struct CDiskWatch : Moho::TDatListItem<Moho::CDiskWatch, void>
 {
     int mVal;
-    struct_SharedLock mLock;
+    boost::recurive_mutex mLock;
 
     bool EnablePrivileges() const; // 0x00462F80
     bool EnablePrivilege(const std::string &, bool) const; // 0x00463180

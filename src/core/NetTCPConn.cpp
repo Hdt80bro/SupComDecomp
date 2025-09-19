@@ -97,14 +97,14 @@ void Moho::CNetTCPConnection::Push() {
                     if (amt >= avail ) {
                         amt = avail;
                     }
-                    this->mPipestream2.Read(&this->mBuf[this->mSize], amt);
+                    this->mPipestream2.Read(&this->mBuff[this->mSize], amt);
                     this->mSize += amt;
                 }
             }
             if (! this->mSize) {
                 break;
             }
-            int res = ::send(this->mSocket, this->mBuf, this->mSize, 0);
+            int res = ::send(this->mSocket, this->mBuff, this->mSize, 0);
             if (res == SOCKET_ERROR) {
                 if (::WSAGetLastError() != 10035) {
                     gpg::Logf("CNetTCPConnection::Push: send() failed: %s", Moho::NET_GetWinsockErrorString());
@@ -116,7 +116,7 @@ void Moho::CNetTCPConnection::Push() {
                 return;
             }
             if (res < this->mSize) {
-                memmov(this->mBuf, &this->mBuf[res], this->mSize - res);
+                memmov(this->mBuff, &this->mBuff[res], this->mSize - res);
             }
             this->mSize -= res;
         }
@@ -266,7 +266,7 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection, 
             p_a3 = (struct_Datagram *)&a3;
             this->v266 = 3;
             Moho::CMessage v10{0, p_a3, (char)v56};
-            this->mPipestream1.Write(v10->mBuf.mStart, v10->mBuf.Size());
+            this->mPipestream1.Write(v10->mBuff.mStart, v10->mBuff.Size());
             pos = (DWORD *)v76.pos;
             if ((DWORD *)v76.pos != v79) {
                 delete[]((void *)v76.pos);
@@ -685,8 +685,8 @@ void Moho::CNetTCPConnector::SelectEvent(HANDLE ev) {
 }
 
 // 0x00483620
-void *Moho::CNetTCPConnector::Func3() {
-    return nullptr; // unknown type;
+struct_a3 Moho::CNetTCPConnector::Func3(LONGLONG since) {
+    return struct_a3{};
 }
 
 // 0x004853D0
@@ -733,8 +733,8 @@ void Moho::SPartialConnection::Pull() {
     }
     while (res != 0) {
         this->mStream.Write(buf, res);
-        if (this->mBuf.Read(&this->mStream)) {
-            Moho::CMessageStream msg{&this->mBuf};
+        if (this->mBuff.Read(&this->mStream)) {
+            Moho::CMessageStream msg{&this->mBuff};
             gpg::BinaryReader v10{&msg};
             v10.Read(&v10.mPort, 2);
             this->mConnector->ReadFromStream(this->mSocket, this->mAddr, v10.mPort, &this->mStream);

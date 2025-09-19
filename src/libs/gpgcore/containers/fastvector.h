@@ -32,6 +32,8 @@ struct fastvector
 template<class T, int N>
 struct fastvector_n : public fastvector<T>
 {
+    // also stores the original capacity at [0] when not in use
+    // (i.e. the zeroeth index in the inline vec)
     T *mOriginalVec;
     T mInlineVec[N];
 
@@ -46,6 +48,15 @@ struct fastvector_n : public fastvector<T>
             delete[](this->mStart);
             this->mStart = this->mOriginalVec;
         }
+    }
+
+    void Clear() {
+        if (this->mStart != this->mOriginalVec) {
+            delete[](this->mStart);
+            this->mStart = this->mOriginalVec;
+            this->mCapacity = *this->mOriginalVec;
+        }
+        this->mEnd = this->mStart;
     }
 
     void Grow(unsigned int newSize) {
@@ -114,13 +125,24 @@ struct fastvector_n : public fastvector<T>
         for (T *i = this->mStart; i != this->mEnd; ++i) // ?
             ;
         if (this->mStart == this->mOriginalVec) {
-            *this->mOriginalVec = this->mCapacity; // ?
+            *this->mOriginalVec = this->mCapacity;
         } else {
             delete[](this->mStart);
         }
         this->mStart = newArr;
         this->mEnd = newEnd;
         this->mCapacity = &newArr[size];
+    }
+    
+    void Append(T &o) {
+        if (this->mEnd == this->mCapacity) {
+            this->InsertAt(this->mEnd, &o, &o + 1);
+        } else {
+            if (this->mEnd != nullptr) {
+                *this->mEnd = o;
+            }
+            ++this->mEnd;
+        }
     }
 
 };

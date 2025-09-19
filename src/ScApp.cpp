@@ -8,16 +8,6 @@
 #include <string>
 #include <vector>
 
-// 0x008D4B20
-float struct_RollingFrameRates::median() {
-    float arr[10];
-    int pos = 0;
-    for (int k = this->mStart; k != this->mEnd; k = (k + 1) % 10) {
-        arr[pos++] = this->mVals[k];
-    }
-    std::sort(arr, &arr[pos]);
-    return arr[pos / 2];
-}
 
 // 0x008CEDE0
 bool CScApp::AppInit() {

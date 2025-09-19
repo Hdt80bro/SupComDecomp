@@ -74,10 +74,10 @@ struct DList : gpg::DListItem<T, U>
         void *operator->() {
             return &**this;
         }
-        bool operator==(const iterator that&) {
+        bool operator==(const iterator &that) {
             return this->pos == that.pos;
         }
-        bool operator!=(const iterator that&) {
+        bool operator!=(const iterator &that) {
             return ! (*this == that);
         }
     };

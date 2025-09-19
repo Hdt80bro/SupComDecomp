@@ -7,6 +7,68 @@
 #include <map>
 #include <string>
 
+template<int N>
+struct struct_RollingFloat
+{
+    float mVals[N];
+    int mStart;
+    int mEnd;
+
+    // N = 25, 0x0048BEC0
+    void roll(float in) {
+        int nextEnd = (this->mEnd + 1) % N;
+        if (nextEnd == this->mStart) {
+            this->mStart = (this->mStart + 1) % N;
+        }
+        this->mVals[this->mStart] = in;
+        this->mEnd = nextEnd;
+    } // inline
+    
+    // N = 25, 0x0048BF00
+    // N = 10, 0x008D4B20
+    float median() {
+        float arr[10];
+        int pos = 0;
+        for (int k = this->mStart; k != this->mEnd; k = (k + 1) % N) {
+            arr[pos++] = this->mVals[k];
+        }
+        std::sort(arr, &arr[pos]);
+        return arr[pos / 2];
+    }
+
+    // N = 25, 0x0048BF60
+    float jitter(float center) {
+        float arr[10];
+        int pos = 0;
+        for (int k = this->mStart; k != this->mEnd; k = (k + 1) % N) {
+            arr[pos++] = abs(this->mVals[k] - center);
+        }
+        std::sort(arr, &arr[pos]);
+        return arr[pos / 2];
+    }
+};
+
+struct struct_a2
+{
+    DWORD v0;
+    DWORD v1;
+    LONGLONG mTime;
+    size_t mSize;
+    DWORD v4;
+};
+
+struct struct_a3
+{
+    std::vector<struct_a2> mVec;
+    LONGLONG mDuration;
+    LONGLONG mEndTime;
+
+    struct_a3(LONGLONG dur, LONGLONG end) :
+        mVec{},
+        mDuration{dur},
+        mEndTime{end}
+    {} // inline e.g. 0x0047D1D0
+};
 
 struct struct_DataSpan
 {
@@ -16,7 +78,18 @@ struct struct_DataSpan
 
 namespace Moho {
 
-int net_DebugLevel;
+static bool net_DebugCrash; // 0x010A6380
+static bool net_LogPackets; // 0x010A6381
+static int net_DebugLevel; // 0x010A6384
+static int net_AckDelay; // 0x00F58DE0
+static int net_SendDelay; // 0x00F58DE4
+static int net_MinResendDelay; // 0x00F58DE8
+static int net_MaxResendDelay; // 0x00F58DEC
+static int net_MaxSendRate; // 0x00F58DF0
+static int net_MaxBacklog; // 0x00F58DF4
+static int net_CompressionMethod; // 0x00F58DF8
+static float net_ResendPingMultiplier; // 0x00F58DFC
+static int new_ResendDelayBias; // 0x00F58E00
 
 enum ENetProtocol
 {
@@ -57,7 +130,7 @@ public:
     virtual void Push() = 0;
     virtual void SelectEvent(HANDLE) = 0;
     virtual void Debug(); // 0x0047EAD0
-    virtual void *Func3() = 0;
+    virtual struct_a3 Func3(LONGLONG since) = 0;
 };
 
 // 0x00E03CE8

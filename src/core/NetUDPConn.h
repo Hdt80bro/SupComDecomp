@@ -1,41 +1,50 @@
 #include "core/NetConnector.h"
+#include "gpgcore/MD5.h"
 #include "gpgcore/Timer.h"
 #include "gpgcore/streams/PipeStream.h"
 #include "gpgcore/streams/ZLibStream.h"
+#include "boost/thread.hpp"
 #include <deque>
+#include <vector>
 
 namespace Moho {
+
+static const char *sPacketStateString[] ; // 0x00DFFB68
+static const char *sUDPStateStrings[]; // 0x00DFFB8C
     
-enum EPacketState
+enum EPacketState : char
 {
-    CONNECT,
-    ANSWER,
-    RESETSERIAL,
-    DATA,
-    ACK,
-    KEEPALIVE,
-    GOODBYE,
-    NATTRAVERSAL,
+    CONNECT = 0,
+    ANSWER = 1,
+    RESETSERIAL = 2,
+    SERIALRESET = 3,
+    DATA = 4,
+    ACK = 5,
+    KEEPALIVE = 6,
+    GOODBYE = 7,
+    NATTRAVERSAL = 8
 };
+
+struct Moho::SPacket;
 
 struct SPacketHeader
 {
-    Moho::TDatList<Moho::SPacketHeader, void> mList;
+    Moho::TDatList<Moho::SPacket, void> mList;
     __int64 mSentTime;
     int mResendCount;
     int mSize;
 };
 
-struct __unaligned SPacketData
+struct /*__unaligned*/ SPacketData
 {
-    char mState;
+    Moho::EPacketState mState;
     int mEarlyMask;
     unsigned __int16 mSerialNumber;
     unsigned __int16 mInResponseTo;
     unsigned __int16 mSequenceNumber;
     unsigned __int16 mExpectedSequenceNumber;
     unsigned __int16 mPayloadLength;
-    int mVar;
+    int mProtocol;
     __int64 mTime;
     char mCompMethod;
     char mDat1[32];
@@ -43,9 +52,14 @@ struct __unaligned SPacketData
     char gap[420]; // until size is 0x200
 };
 
+
+
 struct SPacket : Moho::SPacketHeader, Moho::SPacketData
 {
     std::string ToString(); // 0x00488BC0
+    Moho::SPacketData *Data() {
+        return static_cast<Moho::SPacketData *>(this);
+    }
 };
 
 struct struct_ReceivePacket
@@ -61,20 +75,19 @@ struct struct_PacketTime
     gpg::time::Timer mTime;
 };
 
-struct struct_a2
-{
-    DWORD v0;
-    DWORD v1;
-    FILETIME mTime;
-    DWORD mSize;
-    DWORD v4;
-};
-
+// likely related to `struct_RollingFloat`
 struct struct_a1
 {
     struct_a2 mDat[4096];
-    int mEnd;
     int mStart;
+    int mEnd;
+
+    void Add(int, LONGLONG time, int); // 0x0047D0A0
+    struct_a3 GetBetween(LONGLONG start, LONGLONG end); // 0x0047D110
+    void Append(struct_a2 *obj); // 0x0047D630
+    struct_a2 &Get(size_t ind) {
+        return this->mDat[(this->mStart + ind) % 4096];
+    }
 };
 
 
@@ -85,29 +98,30 @@ class CNetUDPConnector :
 public:
     enum State
     {
-        Pending,
-        Connecting,
-        Answering,
-        Establishing,
-        TimedOut,
-        Errored,
+        Pending = 0,
+        Connecting = 1,
+        Answering = 2,
+        Establishing = 3,
+        TimedOut = 4,
+        Errored = 5,
     };
 
 public:
-    struct_SharedLock mLock;
+    boost::recursive_mutex mLock;
     SOCKET mSocket;
     HANDLE mEventObject;
     boost::weak_ptr<Moho::INetNATTraversalHandler *> mNatTravProv;
     Moho::TDatList<Moho::CNetUDPConnection, void> mConnections;
     Moho::TDatList<Moho::SPacket, void> mPacketList;
     int mPacketPoolSize;
-    _FILETIME v14;
+    __int64 mInitTime;
     gpg::time::Timer mTimer;
     __int64 mCurTime;
-    bool v25a;
-    bool v25b;
-    std::deque<struct_ReceivePacket> mPackets1;
-    std::deque<struct_ReceivePacket> mPackets2;
+    bool mClosed;
+    bool mIsPulling;
+    std::deque<struct_ReceivePacket*> mPackets1;
+    std::deque<struct_ReceivePacket*> mPackets2;
+    HANDLE mSelectedEvent;
     struct_a1 mBuff;
     FILE *mFile;
     int gap;
@@ -124,19 +138,22 @@ public:
     void Push() override; // 0x0048B7F0
     void SelectEvent(HANDLE) override; // 0x0048B9A0
     void Debug() override; // 0x0048B8E0
-    void *Func3() override; // 0x0048B9E0
+    struct_a3 Func3(LONGLONG since) override; // 0x0048B9E0
     void Func1(Moho::CMessage *msg) override; // 0x0048BA80
     void ReceivePacket(u_long addr, u_short port, void *dat, size_t size) override; // 0x0048BAE0
     
-    CNetUDPConnector(SOCKET sock, boost::weak_ptr<Moho::INetNATTraversalProvider> *prov); // 0x004896F0
-    void AddPacket(); // 0x00489ED0
+    void ReceiveTime(Moho::SPacket *pack); // 0x00488220
+    CNetUDPConnector(SOCKET sock, boost::weak_ptr<Moho::INetNATTraversalProvider> &prov); // 0x004896F0
+    Moho::SPacket *NewPacket(); // 0x00489E80
+    void DisposePacket(Moho::SPacket *packet); // 0x00489ED0
     __int64 GetTime(); // 0x00489F30
     void Entry(boost::shared_ptr<void>); // 0x00489F90
-    __int64 ReceiveData(); // 0x0048A280
+    void ReceiveData(); // 0x0048A280
     void ProcessConnect(Moho::SPacket *pack, u_long addr, u_short port); // 0x0048AA40
+    int SendData(); // 0x0048AC40
 };
 
-enum enum_NetCompressionMethod
+enum ENetCompressionMethod
 {
     NETCOMP_None = 0x0,
     NETCOMP_Deflate = 0x1,
@@ -149,7 +166,12 @@ class CNetUDPConnection : public Moho::INetConnection
 public:
     enum State
     {
-
+        Pending = 0,
+        Connecting = 1,
+        Answering = 2,
+        Establishing = 3,
+        TimedOut = 4,
+        Errored = 5,
     };
 
 public:
@@ -157,7 +179,7 @@ public:
     u_long mAddr;
     u_short mPort;
     WORD gap1;
-    enum_NetCompressionMethod compressionMethod;
+    ENetCompressionMethod mCompressionMethod;
     int mCompMet;
     Moho::CNetUDPConnection::State mState;
     gpg::time::Timer mLastSend;
@@ -176,28 +198,27 @@ public:
     unsigned __int16 mRemoteExpectedSequenceNumber;
     unsigned __int16 mExpectedSequenceNumber;
     unsigned __int16 v1;
-    gpg::PipeStream mOutputData;
+    gpg::PipeStream mPendingOutputData;
     gpg::ZLibOutputFilterStream *mOutputFilterStream;
-    _BYTE gap500[4];
-    DWORD mFlushedOutputData;
+    bool mHasWritten;
+    int mFlushedOutputData;
     bool mOutputShutdown;
     bool mSentShutdown;
-    _WORD gap50E;
     Moho::TDatList<Moho::SPacket, void> mUnackedPayloads;
     struct_PacketTime mTimings[128];
-    struct_Speeds mPings;
+    struct_RollingFloat<25> mPings;
     float mPingTime;
     Moho::TDatList<Moho::SPacket, void> mEarlyPackets;
-    DWORD gapD94;
+    unsigned int mMask;
     gpg::PipeStream mInputBuffer;
     gpg::ZLibOutputFilterStream *mFilterStream;
     bool mReceivedEndOfInput;
     bool mDispatchedEndOfInput;
     Moho::CMessage mMessage;
     DWORD v866;
-    bool  mScheduleDestroy;
-    bool v867b;
-    bool  mClosed;
+    bool mScheduleDestroy;
+    bool mDestroyed;
+    bool mClosed;
     __int64 mTotalBytesQueued;
     __int64 mTotalBytesSent;
     __int64 mTotalBytesReceived;
@@ -216,28 +237,41 @@ public:
     std::string ToString() override; // 0x004894C0
     void ScheduleDestroy() override; // 0x00489660
     
-    CNetUDPConnection(); // 0x00485D30
+    CNetUDPConnection(Moho::CNetUDPConnector *connector, u_long addr, u_short port, State state); // 0x00485D30
     ~CNetUDPConnection(); // 0x00486150
     bool ProcessConnect(Moho::SPacket *pack); // 0x00486380
     void ProcessAnswer(Moho::SPacket *pack); // 0x004865E0
     void CreateFilterStream(); // 0x00486910
     bool ProcessAck(Moho::SPacket *pack); // 0x00486B10
     void ProcessData(Moho::SPacket *pack); // 0x00486DB0
-    void ProcessKeepAlive(Moho::SPacket *pack); // 0x00487310
-    void ProcessGoodbye(Moho::SPacket *pack); // 0x00487340
-    void ProcessNATTraversal(Moho::SPacket *pack); // 0x00487370
+    void ProcessAcknowledge(Moho::SPacket *pack); // 0x00487310
+    void ProcessKeepAlive(Moho::SPacket *pack); // 0x00487340
+    void ProcessGoodbye(Moho::SPacket *pack); // 0x00487370
+    void RecordPacket(Moho::SPacket *pack); // 0x004874C0
+    void FlushInput(); // 0x00487590
+    void DispatchFromInput(); // 0x004876A0
+    bool FlushOutput(); // 0x004879E0
+    void Debug(); // 0x00487B90
     __int64 CalcResendDelay(Moho::SPacket *pack); // 0x00488170
-    int GetSentTime(__int64 time); // 0x00488260
+    int TimeSince(LONGLONG time); // 0x004881F0
+    void ReceiveTime(Moho::SPacket *pack); // 0x00488220
+    int GetBacklog(__int64 time); // 0x00488260
+    bool GetBacklogTimeout(LONGLONG time, __out int &timeout); // 0x004882C0
     int SendData(); // 0x00488300
     bool HasPacketWaiting(__int64 time); // 0x00488730
-    Moho::SPacket *NextPacket_0(); // 0x00488810
-    Moho::SPacket *NextPacket_1(); // 0x004888C0
+    Moho::SPacket *NewConnectionPacket(); // 0x00488810
+    Moho::SPacket *NewAnswerPacket(); // 0x004888C0
     Moho::SPacket *ReadPacket(); // 0x00488980
-    Moho::SPacket *NextPacket_7(); // 0x00488AA0
-    Moho::SPacket *NextPacket(char state, int size, bool inherit); // 0x00488B20
+    Moho::SPacket *NewGoodbyePacket(); // 0x00488AA0
+    Moho::SPacket *NewPacket(char state, int size, bool inherit); // 0x00488B20
     void SendPacket(Moho::SPacket *pack); // 0x00488D80
 };
 
 Moho::INetConnector *NET_MakeUDPConnector(u_short, boost::weak_ptr<Moho::INetNATTraversalProvider> *); // 0x0048BBE0
 
 }
+
+
+int func_ChooseTimeout(int old, int choice); // 0x00488150
+std::string func_FileTimeToString(LONGLONG time); // 0x00485CB0
+

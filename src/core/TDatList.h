@@ -65,6 +65,9 @@ struct TDatList : Moho::TDatListItem<T, U>
 
         iterator(item_t *pos) : pos{pos} {}
         
+        operator item_t*() {
+            return this->pos;
+        }
         iterator &operator++() {
             this->pos = this->pos->mNext;
             return *this;
@@ -75,10 +78,10 @@ struct TDatList : Moho::TDatListItem<T, U>
         void *operator->() {
             return &**this;
         }
-        bool operator==(const iterator that&) {
+        bool operator==(const iterator &that) {
             return this->pos == that.pos;
         }
-        bool operator!=(const iterator that&) {
+        bool operator!=(const iterator &that) {
             return ! (*this == that);
         }
     };

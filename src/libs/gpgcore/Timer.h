@@ -15,9 +15,9 @@ struct Timer
     void Reset(); // 0x009556D0 or 0x009556F0
     LONGLONG ElapsedCyclesAndReset(); // 0x00955710
     LONGLONG ElapsedCycles(); // 0x00955700
-    float ElapsedMicroseconds(); // 0x00485A40
+    LONGLONG ElapsedMicroseconds(); // 0x00485A40
     float ElapsedSeconds(); // 0x004A3560
-    float ElapsedMilliSeconds() {
+    float ElapsedMilliseconds() {
         return gpg::time::CyclesToMilliseconds(this->ElapsedCycles());
     } // 0x00461A90
 };

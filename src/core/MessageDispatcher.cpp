@@ -31,3 +31,13 @@ void Moho::CMessageDispatcher::RemoveLinkage(Moho::SMsgReceiverLinkage *linkage)
     }
     delete(linkage);
 }
+
+// 0x0047C4D0
+bool Moho::CMessageDispatcher::Dispatch(Moho::CMessage *msg) {
+    Moho::IMessageReceiver *recr = this->mReceivers[msg->GetType()];
+    if (recr == nullptr) {
+        return false;
+    }
+    recr->Receive(msg, this);
+    return true;
+}

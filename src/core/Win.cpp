@@ -24,7 +24,7 @@ void Moho::WIN_ShowCrashDialog(const char *arg0, const char *a4, _EXCEPTION_POIN
     std::stringstream strm{};
     strm << a4 << "\n\n";
     WCHAR filename[512];
-    if (GetModuleFileNameW(0, filename, sizeof(filename)) != nullptr) {
+    if (::GetModuleFileNameW(0, filename, sizeof(filename)) != nullptr) {
         strm << "Program : " << gpg::STR_WideToUtf8(filename) << "\n";
     } else {
         strm << "Program : <unknown>\n";
@@ -49,11 +49,11 @@ void Moho::WIN_ShowCrashDialog(const char *arg0, const char *a4, _EXCEPTION_POIN
     strm << Moho::LOG_GetRecentLines();
     std::string v23 = strm.str();
     HMODULE v21;
-    GetModuleHandleExW(6u, (LPCWSTR)DialogFunc, &v21);
+    ::GetModuleHandleExW(6u, (LPCWSTR)DialogFunc, &v21);
     HMODULE phModule[3];
     phModule[1] = v23.c_str();
     phModule[0] = arg0;
-    if (DialogBoxParamW(v21, (LPCWSTR)0x7A, 0, DialogFunc, (LPARAM)phModule) == -1) {
+    if (::DialogBoxParamW(v21, (LPCWSTR)0x7A, 0, DialogFunc, (LPARAM)phModule) == -1) {
         gpg::Logf("DialogBoxParam failed: %s", Moho::WIN_GetLastError().c_str());
     }
 }
@@ -75,11 +75,11 @@ void Moho::WIN_AppExecute(Moho::IWinApp *app) {
     sWindowHook = SetWindowsHookExW(
         WH_KEYBOARD_LL,
         func_WindowHook,
-        GetModuleHandleW(nullptr),
+        ::GetModuleHandleW(nullptr),
         0
     );
     HMODULE phModule;
-    GetModuleHandleExW(
+    ::GetModuleHandleExW(
         GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT|GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
         (LPCWSTR)func_WindowHook,
         &phModule
@@ -93,7 +93,7 @@ void Moho::WIN_AppExecute(Moho::IWinApp *app) {
         Moho::PLAT_CatchStructuredExceptions();
         sWakeupTimer = gpg::time::Timer{};
         if (! app->AppInit()) {
-            TerminateProcess(GetCurrentProcess(), 1);
+            ::TerminateProcess(::GetCurrentProcess(), 1);
         }
         _controlfp(_PC_24, _MCW_PC);
 
@@ -103,7 +103,7 @@ void Moho::WIN_AppExecute(Moho::IWinApp *app) {
         //wxTheApp->MainLoop();
         wxTheApp->m_keepGoing = true;
         while (true) {
-            SleepEx(0, true);
+            ::SleepEx(0, true);
             func_UserFrame(Moho::WIN_GetBeforeEventsStage());
             bool success = true;
             while (success) {
@@ -143,7 +143,7 @@ void Moho::WIN_AppExecute(Moho::IWinApp *app) {
             wxApp::CleanUp();
         }
         if (sWindowHook != NULL) {
-            UnhookWindowsHookEx(sWindowHook);
+            ::UnhookWindowsHookEx(sWindowHook);
         }
         Moho::RES_Exit();
     } else {
@@ -212,16 +212,16 @@ void Moho::WIN_SetMainWindow(wxWindow *wind) {
 std::string Moho::WIN_GetClipboardText() {
     std::string ret;
     HWND handle = func_GetMainWindowHandle();
-    if (IsClipboardFormatAvailable(CF_UNICODETEXT) && OpenClipboard(handle)) {
-        HANDLE clipboardData = GetClipboardData(CF_UNICODETEXT);
+    if (::IsClipboardFormatAvailable(CF_UNICODETEXT) && ::OpenClipboard(handle)) {
+        HANDLE clipboardData = ::GetClipboardData(CF_UNICODETEXT);
         if (clipboardData) {
-            auto dat = (const wchar_t *) GlobalLock(clipboardData);
+            auto dat = (const wchar_t *) ::GlobalLock(clipboardData);
             if (dat != nullptr) {
                 ret = gpg::STR_WideToUtf8(dat);
-                GlobalUnlock(clipboardData);
+                ::GlobalUnlock(clipboardData);
             }
         }
-        CloseClipboard();
+        ::CloseClipboard();
     }
     return ret;
 }
@@ -229,22 +229,22 @@ std::string Moho::WIN_GetClipboardText() {
 // 0x004F2730
 bool Moho::WIN_CopyToClipboard(const wchar_t *str) {
     size_t len = wcslen(str);
-    HGLOBAL globStr = GlobalAlloc(GMEM_DDESHARE|GHND, 2 * (len + 1));
+    HGLOBAL globStr = ::GlobalAlloc(GMEM_DDESHARE|GHND, 2 * (len + 1));
     bool succ = false;
     if (globStr != nullptr) {
-        wchar_t *locked = (wchar_t *)GlobalLock(globStr);
+        wchar_t *locked = (wchar_t *) ::GlobalLock(globStr);
         memcpy(locked, str, 2 * len);
         locked[len] = '\0';
-        GlobalUnlock(globStr);
-        if (OpenClipboard(func_GetMainWindowHandle())) {
-            if (EmptyClipboard()) {
-                succ = SetClipboardData(CF_UNICODETEXT, globStr);
+        ::GlobalUnlock(globStr);
+        if (::OpenClipboard(func_GetMainWindowHandle())) {
+            if (::EmptyClipboard()) {
+                succ = ::SetClipboardData(CF_UNICODETEXT, globStr);
             }
-            CloseClipboard();
+            ::CloseClipboard();
         }
     }
     if (! succ) {
-        GlobalFree(globStr);
+        ::GlobalFree(globStr);
     }
     return succ;
 }
@@ -254,7 +254,7 @@ void Moho::WIN_OkBox(const char *caption, const char *text) {
     HWND handle = func_GetMainWindowHandle();
     std::string wideText = gpg::STR_Utf8ToWide(text);
     std::string wideCaption = gpg::STR_Utf8ToWide(caption);
-    MessageBoxW(handle, wideText.c_str(), wideCaption.c_str(), MB_YESNO);
+    ::MessageBoxW(handle, wideText.c_str(), wideCaption.c_str(), MB_YESNO);
 }
 
 // 0x004F2900
@@ -262,14 +262,14 @@ bool Moho::WIN_YesNoBox(const char *caption, const char *text) {
     HWND handle = func_GetMainWindowHandle();
     std::string wideText = gpg::STR_Utf8ToWide(text);
     std::string wideCaption = gpg::STR_Utf8ToWide(caption);
-    return MessageBoxW(handle, wideText.c_str(), wideCaption.c_str(), MB_TOPMOST|MB_YESNO) == IDYES;
+    return ::MessageBoxW(handle, wideText.c_str(), wideCaption.c_str(), MB_TOPMOST|MB_YESNO) == IDYES;
 }
 
 // 0x004F2A00
 std::string Moho::WIN_GetLastError() {
-    int lastError = GetLastError();
+    int lastError = ::GetLastError();
     LPWSTR buffer;
-    int res = FormatMessageW(
+    int res = ::FormatMessageW(
         FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_ALLOCATE_BUFFER,
         0, lastError,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
@@ -279,7 +279,7 @@ std::string Moho::WIN_GetLastError() {
         return gpg::STR_Printf("Unknown error 0x%08x", lastError);
     } else {
         std::string ret = gpg::STR_WideToUtf8(buffer);
-        LocalFree(buffer);
+        ::LocalFree(buffer);
         return ret;
     }
 }
@@ -308,7 +308,7 @@ void Moho::WINX_InitSplash(gpg::StrArg filename) {
     if (bm.LoadFile(wxString{filename})) {
         wxSize size{1024, 768};
         tagRECT rect;
-        if (GetWindowRect(0, &rect)) {
+        if (::GetWindowRect(0, &rect)) {
             size.x = min(1600, rect.right - rect.left);
             size.y = min(1200, rect.top - rect.bottom);
         }
@@ -489,7 +489,7 @@ bool func_HasCorrectPlatform() {
     _OSVERSIONINFOW info;
     ZeroMemory(&info, sizeof(info));
     info.dwOSVersionInfoSize = sizeof(info);
-    return ! (GetVersionExW(&info) && info.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS);
+    return ! (::GetVersionExW(&info) && info.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS);
 }
 
 // 0x004F2050
@@ -501,6 +501,6 @@ LRESULT func_WindowHook(int code, WPARAM wParam, DWORD *lParam) {
     ) {
         return 1;
     } else {
-        return CallNextHookEx(sWindowHook, code, wParam, (LPARAM)lParam);
+        return ::CallNextHookEx(sWindowHook, code, wParam, (LPARAM)lParam);
     }
 }

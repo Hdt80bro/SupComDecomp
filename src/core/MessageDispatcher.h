@@ -10,6 +10,7 @@ struct CMessageDispatcher
 
     void PushReceiver(unsigned int lower, unsigned int upper, Moho::IMessageReceiver *rec); // 0x0047C360
     void RemoveLinkage(Moho::SMsgReceiverLinkage *); // 0x0047C450
+    bool Dispatch(Moho::CMessage *msg); // 0x0047C4D0
 };
 
 }

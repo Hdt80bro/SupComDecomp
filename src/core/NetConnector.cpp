@@ -3,6 +3,20 @@
 #include "core/NetUDPConn.h"
 
 
+bool Moho::net_DebugCrash; // 0x010A6380
+bool Moho::net_LogPackets; // 0x010A6381
+int Moho::net_DebugLevel; // 0x010A6384
+int Moho::net_AckDelay = 25; // 0x00F58DE0
+int Moho::net_SendDelay = 25; // 0x00F58DE4
+int Moho::net_MinResendDelay = 100; // 0x00F58DE8
+int Moho::net_MaxResendDelay = 1'000; // 0x00F58DEC
+int Moho::net_MaxSendRate = 0x800; // 0x00F58DF0
+int Moho::net_MaxBacklog = 0x800; // 0x00F58DF4
+int Moho::net_CompressionMethod = NETCOMP_Deflate; // 0x00F58DF8
+float Moho::net_ResendPingMultiplier = 1.0; // 0x00F58DFC
+int Moho::new_ResendDelayBias = 25; // 0x00F58E00
+
+
 // 0x0047EAD0
 void Moho::INetConnector::Debug() {}
 

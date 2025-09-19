@@ -37,7 +37,7 @@ LONGLONG gpg::time::Timer::ElapsedCycles() {
 }
 
 // 0x00485A40
-float gpg::time::Timer::ElapsedMicroseconds() {
+LONGLONG gpg::time::Timer::ElapsedMicroseconds() {
     return gpg::time::CyclesToMicroseconds(this->ElapsedCycles());
 }
 

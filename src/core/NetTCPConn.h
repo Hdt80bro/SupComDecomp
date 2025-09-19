@@ -31,7 +31,7 @@ public:
     gpg::time::Timer mTimer1;
     gpg::PipeStream mPipestream1;
     gpg::PipeStream mPipestream2;
-    char mBuf[2048];
+    char mBuff[2048];
     int mSize;
     bool mHasShutdown;
     bool v819b;
@@ -82,7 +82,7 @@ public:
     void Pull() override; // 0x004838D0
     void Push() override; // 0x00485610
     void SelectEvent(HANDLE) override; // 0x00485640
-    void *Func3() override; // 0x00483620
+    struct_a3 Func3(LONGLONG since) override; // 0x00483620
 
     CNetTCPConnector(SOCKET sock); // 0x00484AB0
     bool ReadFromStream(SOCKET s, u_long addr, u_short port, gpg::PipeStream *strm); // 0x004853D0
