@@ -11,7 +11,7 @@ size_t gpg::Stream::VirtTell(gpg::Stream::Mode) {
 }
 
 // 0x00956F90
-size_t gpg::Stream::VirtSeek(gpg::Stream::Mode, gpg::Stream::SeekOrigin, size_t) {
+size_t gpg::Stream::VirtSeek(gpg::Stream::Mode, gpg::Stream::SeekOrigin, __int64) {
     throw gpg::Stream::UnsupportedOperation{};
 }
 
@@ -51,8 +51,8 @@ void gpg::Stream::Write(const char *buf, size_t size) {
     if (size > this->LeftToWrite()) {
         this->VirtWrite(buf, size);
     } else {
-        memcpy(this->mWriteHead, buf, size);
-        this->mWriteHead += size;
+        memcpy(this->mWritePtr, buf, size);
+        this->mWritePtr += size;
     }
 }
 
@@ -67,8 +67,8 @@ size_t gpg::Stream::Read(char *buf, size_t size) {
     if (size > this->LeftToRead()) {
         size = this->VirtRead(buf, size);
     } else if (size) {
-        memcpy(buf, this->mReadHead, size);
-        this->mReadHead += size;
+        memcpy(buf, this->mReadPtr, size);
+        this->mReadPtr += size;
     }
     return size;
 }

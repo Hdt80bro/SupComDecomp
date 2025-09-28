@@ -11,44 +11,44 @@ struct DListItem
     item_t *mPrev;
     item_t *mNext;
 
-    DListItem() :
+    DListItem() : // inline
         mPrev{this},
         mNext{this}
-    {} // inline
-    ~DListItem() {
+    {}
+    ~DListItem() { // inline 
         this->Reset();
-    } // inline
-    void ListUnlink() {
+    }
+    void ListUnlink() { // inline
         this->mPrev->mNext = this->mNext;
         this->mNext->mPrev = this->mPrev;
         this->mNext = this;
         this->mPrev = this;
-    } // inline
-    void ListLinkBefore(type *that) {
+    }
+    void ListLinkBefore(item_t *that) { // inline
         this->ListUnlink();
         this->mPrev = that->mPrev;
         this->mNext = that;
         that->mPrev = this;
         this->mPrev->mNext = this;
-    } // inline
-    void ListLinkAfter(type *that) {
+    }
+    void ListLinkAfter(item_t *that) { // inline
         this->ListUnlink();
         this->mPrev = that;
         this->mNext = that->mNext;
         that->mNext->mPrev = this;
         this->mPrev->mNext = this;
-    } // inline
-    bool ListIsUnlinked() {
+    }
+    bool ListIsUnlinked() { // inline
         return this->mNext == this;
-    } // inline
+    }
 
     
-    type *Get() {
+    type *Get() { // inline
         return static_cast<type *>(this);
-    } // inline
-    bool HasNext() {
+    }
+    bool HasNext() { // inline
         return this->mPrev != this->mNext;
-    } // inline
+    }
 };
 
 template<class T, class U>

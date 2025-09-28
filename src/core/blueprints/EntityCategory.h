@@ -31,9 +31,6 @@ struct EntityCategoryHelper
     Moho::RRuleGameRules *mRules;
 };
 
-struct BVIntSet : BVSet<unsigned int, unsigned int>
-{};
-
 using EntityCategory = Moho::BVSet<const Moho::RBlueprint *, Moho::EntityCategoryHelper>;
 using EntityCategorySet = Moho::BVSet<const Moho::EntId, Moho::EntIdUniverse>;
 

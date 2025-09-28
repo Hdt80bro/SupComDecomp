@@ -17,6 +17,12 @@ struct fastvector
         delete[](this->mStart);
     }
 
+    T *begin() { return this->mStart; }
+    T *end() { return this->mEnd; }
+
+    bool Empty() const {
+        return this->mStart == this->mEnd;
+    }
     size_t Size() const {
         return (this->mEnd - this->mStart) / sizeof(T);
     }
@@ -24,7 +30,7 @@ struct fastvector
         return (this->mCapacity - this->mStart) / sizeof(T);
     }
 
-    T &operator[](int idx) {
+    T &operator[](size_t idx) {
         return &this->mStart[idx];
     }
 };

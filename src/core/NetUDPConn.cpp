@@ -118,7 +118,7 @@ Moho::ENetProtocol Moho::CNetUDPConnector::GetProtocol() {
 }
 
 // 0x0048B250
-int Moho::CNetUDPConnector::GetLocalPort() {
+u_short Moho::CNetUDPConnector::GetLocalPort() {
     boost::recursive_mutex::scoped_lock lock{this->mLock};
     sockaddr_in sockaddr;
     int namelen = sizeof(sockaddr);
@@ -347,7 +347,6 @@ void Moho::CNetUDPConnector::DisposePacket(Moho::SPacket *packet) {
             delete(packet);
         }
     } else {
-        packet->mList.ListUnlink();
         packet->mList.ListLinkBefore(&this->mPacketList);
         ++this->mPacketPoolSize;
     }
@@ -423,7 +422,6 @@ void Moho::CNetUDPConnector::ReceiveData() {
         Moho::SPacket *pack = list.ListGetNext();
         if (list.ListEmpty()) {
             pack = this->NewPacket();
-            pack->mList.ListUnlink();
             pack->mList.ListLinkBefore(&list);
         }
         Moho::SPacketData *packDat = pack->Data();
@@ -450,7 +448,7 @@ void Moho::CNetUDPConnector::ReceiveData() {
             gpg::Debugf("%s:                     recv %s:%d, %s%s",
                     timeStr.c_str(), hostStr.c_str(), port, packStr.c_str(), "");
         }
-        if (size > 0 && packDat->mState == 8) {
+        if (size > 0 && packDat->mState == NATTRAVERSAL) {
             boost::shared_ptr<Moho::INetNATTraversalProvider> prov{&this->mNatTravProv};
             if (prov) {
                 pack->mList.ListUnlink();
@@ -469,7 +467,7 @@ void Moho::CNetUDPConnector::ReceiveData() {
                     port
                 );
             }
-        } else if (packDat->mState >= 9) {
+        } else if (packDat->mState >= Moho::EPacketState::NumStates) {
             if (Moho::net_DebugLevel != 0) {
                 gpg::Logf("CNetUDPConnector<%d>::ReceiveData(): ignoring unknown packet type (%d) from %s:%d",
                     this->GetLocalPort(),
@@ -489,7 +487,7 @@ void Moho::CNetUDPConnector::ReceiveData() {
                     port
                 );
             }
-        } else if (packDat->mState != 0) {
+        } else if (packDat->mState != CONNECT) {
             bool skip = false;
             for (auto i = this->mConnections.begin(); i != this->mConnections.end(); ++i) {
                 Moho::CNetUDPConnection *conn = *i;
@@ -587,7 +585,7 @@ void Moho::CNetUDPConnector::ProcessConnect(Moho::SPacket *pack, u_long addr, u_
             Moho::CNetUDPConnection *conn = *i;
             if (conn->GetAddr() == addr
                 && conn->GetPort() == port
-                && conn->mState < 5
+                && conn->mState < Errored
                 && conn->ProcessConnect(pack)
             ) {
                 skip = true;
@@ -780,7 +778,7 @@ bool Moho::CNetUDPConnection::ProcessConnect(Moho::SPacket *pack) {
         return true;
     }
     this->mLastRecv = pack->mSentTime;
-    if (pack->mCompMethod > NETCOMP_Deflate) {
+    if (pack->mCompMethod >= Moho::ENetCompressionMethod::NETCOMP_Count) {
         if (Moho::net_DebugLevel != 0) {
             std::string thisStr = this->ToString();
             int port = this->mConnector->GetLocalPort();
@@ -794,25 +792,25 @@ bool Moho::CNetUDPConnection::ProcessConnect(Moho::SPacket *pack) {
         return true;
     }
     switch (this->mState) {
-        case 0:
-        case 2: {
+        case Pending:
+        case Answering: {
             qmemcpy(this->mDat2, pack->mDat1, sizeof(this->mDat2));
             this->mTime1 = pack->mTime;
             this->mCompMet = pack->mCompMethod;
             this->ReceiveTime(pack);
             return true;
         }
-        case 1: {
+        case Connecting: {
             qmemcpy(this->mDat2, pack->mDat1, sizeof(this->mDat2));
             this->mTime1 = pack->mTime;
             this->mCompMet = pack->mCompMethod;
             this->ReceiveTime(pack);
-            this->mState = 2;
+            this->mState = Answering;
             return true;
         }
-        case 3:
-        case 4: {
-            this->mState = 5;
+        case Establishing:
+        case TimedOut: {
+            this->mState = Errored;
             this->mReceivedEndOfInput = true;
             this->mInputBuffer.VirtClose(gpg::Stream::Mode::ModeSend);
             if (this->mConnector->mSelectedEvent != nullptr) {
@@ -856,7 +854,7 @@ void Moho::CNetUDPConnection::ProcessAnswer(Moho::SPacket *pack) {
         }
         return;
     }
-    if (pack->mCompMethod > NETCOMP_Deflate) {
+    if (pack->mCompMethod >= Moho::ENetCompressionMethod::NETCOMP_Count) {
         if (Moho::net_DebugLevel != 0) {
             std::string thisStr = this->ToString();
             u_short port = this->mConnector->GetLocalPort();
@@ -900,14 +898,14 @@ void Moho::CNetUDPConnection::ProcessAnswer(Moho::SPacket *pack) {
 // 0x00486910
 void Moho::CNetUDPConnection::CreateFilterStream() {
     this->mState = Establishing;
-    Moho::CMessage a3{0, 201};
-    int len = a3.mBuff.mEnd - a3.mBuff.mStart;
-    this->mInputBuffer.Write(a3.mBuff.mStart, len);
-    if (this->mCompM == 0) {
+    Moho::CMessage msg{0, MSGOP_Msg2};
+    int len = msg.mBuff.Size();
+    this->mInputBuffer.Write(msg.mBuff.begin(), len);
+    if (this->mCompMet == Moho::ENetCompressionMethod::NETCOMP_None) {
         gpg::Logf("NET: using no compression for receives from %s", this->ToString().c_str());
-    } else if (this->mCompM == 1) {
+    } else if (this->mCompMet == Moho::ENetCompressionMethod::NETCOMP_Deflate) {
         gpg::Logf("NET: using deflate compression for receives from %s", this->ToString().c_str());
-        auto filter = new gpg::ZLibOutputFilterStream{&this->mInputBuffer, 0};
+        auto filter = new gpg::ZLibOutputFilterStream{&this->mInputBuffer, gpg::ZLibOutputFilterStream::OP_Deflate};
         gpg::ZLibOutputFilterStream *old = this->mFilterStream;
         this->mFilterStream = filter;
         delete(old);
@@ -1007,7 +1005,7 @@ void Moho::CNetUDPConnection::ProcessData(Moho::SPacket *pack) {
                 std::string thisStr = this->ToString();
                 int port = this->mConnector->GetLocalPort();
                 gpg::Logf(
-                "CNetUDPConnection<%d,%s>::ProcessData(): ignoring DATA from too far in the furture (seqno=%d, expected=%d, delta=%d)",
+                    "CNetUDPConnection<%d,%s>::ProcessData(): ignoring DATA from too far in the furture (seqno=%d, expected=%d, delta=%d)",
                     port,
                     thisStr.c_str(),
                     pack->mSequenceNumber,
@@ -1036,7 +1034,6 @@ void Moho::CNetUDPConnection::ProcessData(Moho::SPacket *pack) {
                     break;
                 }
             }
-            pack->mList.ListUnlink();
             pack->mList.ListLinkBefore(&this->mEarlyPackets);
             this->mLastRecv = pack->mSentTime;
             bool select = false;
@@ -1159,7 +1156,7 @@ void Moho::CNetUDPConnection::DispatchFromInput() {
         return;
     }
     while (this->mMessage.Read(&this->mInputBuffer)) {
-        if (this->mMessage.GetType() != -55) {
+        if (this->mMessage.GetType() != MSGOP_Msg2) {
             size_t len = this->mMessage.mBuff.Size();
             this->mTotalBytesDispatched += len;
             this->mTotalBytesDispatchedMD5.Update(&this->mMessage.mBuff[0], len);
@@ -1199,9 +1196,9 @@ void Moho::CNetUDPConnection::DispatchFromInput() {
     if (this->mInputBuffer.LeftToRead() == 0 && this->mInputBuffer.VirtAtEnd()) {
         this->mDispatchedEndOfInput = true;
         if (this->mState == 5) {
-            this->Dispatch(&Moho::CMessage{0, 202});
+            this->Dispatch(&Moho::CMessage{0, MSGOP_Msg3});
         } else {
-            this->Dispatch(&Moho::CMessage{0, 203});
+            this->Dispatch(&Moho::CMessage{0, MSGOP_Msg4});
         }
     }
 }
@@ -1543,7 +1540,6 @@ void Moho::CNetUDPConnection::SendPacket(Moho::SPacket *pack) {
                 break;
             }
         }
-        pack->mList.ListUnlink();
         pack->mList.ListLinkBefore(i);
     } else {
         this->mConnector->DisposePacket(pack);

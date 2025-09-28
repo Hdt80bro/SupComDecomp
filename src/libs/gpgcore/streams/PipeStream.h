@@ -3,8 +3,11 @@
 #include "boost/thread/condition.hpp"
 #include "boost/thread/mutex.hpp"
 
-struct struct_StreamBuffer :
-    gpg::DListItem<struct_StreamBuffer>
+
+namespace gpg {
+    
+struct PipeStreamBuffer :
+    gpg::DListItem<gpg::PipeStreamBuffer, void>
 {
     char mData[4096];
 
@@ -16,9 +19,6 @@ struct struct_StreamBuffer :
     }
 };
 
-
-namespace gpg {
-
 // 0x00D495F0
 class PipeStream : public gpg::Stream
 {
@@ -26,7 +26,7 @@ public:
     boost::mutex mLock;
     bool mClosed;
     boost::condition mSemaphore;
-    gpg::DList<struct_StreamBuffer> mBuff;
+    gpg::DList<gpg::PipeStreamBuffer, void> mBuff;
 
     ~PipeStream() override; // 0x00956A90
     size_t VirtRead(char *buff, size_t len) override; // 0x00956A50

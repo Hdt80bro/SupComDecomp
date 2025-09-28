@@ -26,7 +26,7 @@ public:
     SOCKET mSocket;
     u_long mAddr;
     u_short mPort;
-    int v266;
+    int mState;
     int v267;
     gpg::time::Timer mTimer1;
     gpg::PipeStream mPipestream1;
@@ -57,6 +57,7 @@ public:
     CNetTCPConnection(Moho::CNetTCPConnector *connector, SOCKET s, u_long addr, u_short port, int a7); // 0x00483650
     void Push(); // 0x004838D0
     void Pull(Moho::TDatListItem<Moho::SPartialConnection, void> *); // 0x00483A60
+    void SelectSocket(HANDLE hndl); // 0x00484640
 };
 
 // 0x00E049C0
@@ -74,12 +75,12 @@ public:
     ~CNetTCPConnector() override; // 0x00484AE0
     void Destroy() override; // 0x00483600
     Moho::ENetProtocol GetProtocol() override; // 0x00483610
-    int GetLocalPort() override; // 0x00484C20
+    u_short GetLocalPort() override; // 0x00484C20
     Moho::INetConnection *Connect(u_long addr, u_short port) override; // 0x00484C50
     bool FindNextAddr(__out u_long &addr, __out u_short &port) override; // 0x00484EA0
     Moho::INetConnection *Accept(u_long, u_short) override; // 0x00484F00
     void Reject(u_long, u_short) override; // 0x00485050
-    void Pull() override; // 0x004838D0
+    void Pull() override; // 0x00485190
     void Push() override; // 0x00485610
     void SelectEvent(HANDLE) override; // 0x00485640
     struct_a3 Func3(LONGLONG since) override; // 0x00483620
@@ -90,7 +91,7 @@ public:
 };
 
 
-struct SPartialConnection : Moho::TDatListItem<Moho::SPartialConnection>
+struct SPartialConnection : Moho::TDatListItem<Moho::SPartialConnection, void>
 {
     Moho::CNetTCPConnector *mConnector;
     SOCKET mSocket;

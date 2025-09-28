@@ -64,7 +64,7 @@ struct MemBuffer
     type *end() {
         rerturn this->mEnd;
     }
-    type &operator[](int ind) {
+    type &operator[](size_t ind) {
         return &this->mBegin[ind];
     }
 };

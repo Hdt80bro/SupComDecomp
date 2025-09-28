@@ -1,5 +1,11 @@
 #include "user/UserUnit.h"
+#include "core/Math.h"
+#include "core/ScriptEvent.h"
+#include "core/STIMap.h"
 #include "gpgcore/containers/fastvector.h"
+#include "Wm3AxisAlignedBox3.h"
+#include "Wm3Vector2.h"
+#include "Wm3Vector3.h"
 #include <string>
 #include <vector>
 
@@ -143,7 +149,7 @@ struct RCamManager
 {
     std::vector<Moho::RCamCamera> cams;
 
-    std::vector<Moho::RCamCamera> GetAllCameras() asm("0x007AAB60");
+    std::vector<Moho::RCamCamera> GetAllCameras(); // 0x0x007AAB60
 };
 
 Moho::RCamManager *GetCamManager(); // 0x007AAC00

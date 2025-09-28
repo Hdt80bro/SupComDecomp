@@ -22,7 +22,8 @@ enum EPacketState : char
     ACK = 5,
     KEEPALIVE = 6,
     GOODBYE = 7,
-    NATTRAVERSAL = 8
+    NATTRAVERSAL = 8,
+    NumStates = 9,
 };
 
 struct Moho::SPacket;
@@ -46,7 +47,7 @@ struct /*__unaligned*/ SPacketData
     unsigned __int16 mPayloadLength;
     int mProtocol;
     __int64 mTime;
-    char mCompMethod;
+    Moho::ENetCompressionMethod mCompMethod : 8;
     char mDat1[32];
     char mDat2[32];
     char gap[420]; // until size is 0x200
@@ -129,7 +130,7 @@ public:
     ~CNetUDPConnector() override; // 0x004899E0
     void Destroy() override; // 0x00489D20
     Moho::ENetProtocol GetProtocol() override; // 0x00485CA0
-    int GetLocalPort() override; // 0x0048B250
+    u_short GetLocalPort() override; // 0x0048B250
     Moho::INetConnection *Connect(u_long addr, u_short port) override; // 0x0048B2B0
     bool FindNextAddr(__out u_long &addr, __out u_short &port) override; // 0x0048B410
     Moho::INetConnection *Accept(u_long, u_short) override; // 0x0048B4F0
@@ -157,6 +158,7 @@ enum ENetCompressionMethod
 {
     NETCOMP_None = 0x0,
     NETCOMP_Deflate = 0x1,
+    NETCOMP_Count = 0x2
 };
 
 
@@ -180,7 +182,7 @@ public:
     u_short mPort;
     WORD gap1;
     ENetCompressionMethod mCompressionMethod;
-    int mCompMet;
+    ENetCompressionMethod mCompMet;
     Moho::CNetUDPConnection::State mState;
     gpg::time::Timer mLastSend;
     __int64 mSendTime;

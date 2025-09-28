@@ -1,6 +1,8 @@
 // known file
 
 #include "reflection.h"
+#include "gpgcore/General.h"
+#include <algorithm>
 
 // 0x008DF4A0
 void gpg::RType::Finish() {

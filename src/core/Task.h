@@ -37,6 +37,14 @@ public:
     void TaskResume(int a2, bool interrupt); // 0x00408DB0
 };
 
+template<class T>
+class CPushTask : public Moho::CTask
+{};
+
+template<class T>
+class CPullTask : public Moho::CTask
+{};
+
 struct CTaskStage
 {
     Moho::TDatList<Moho::CTaskThread, void> mThreads;

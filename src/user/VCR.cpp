@@ -76,7 +76,7 @@ std::auto_ptr<gpg::Stream> Moho::VCR_CreateReplay(const Moho::SWldSessionInfo *a
     std::vector_string *v77; // eax
     char *v78; // edx
     unsigned int v79; // ecx
-    Moho::SSyncFilter_Subobj1 *v80; // edi
+    Moho::BVIntSet *v80; // edi
     int i; // ebx
     char *v82; // ecx
     char *v83; // ecx
@@ -409,7 +409,7 @@ std::auto_ptr<gpg::Stream> Moho::VCR_CreateReplay(const Moho::SWldSessionInfo *a
                         memcpy(v78, p_ebx0, (size_t)v87[0]);
                         v37->writeStart += (unsigned int)v75;
                     }
-                    v80 = (Moho::SSyncFilter_Subobj1 *)(v93 + *((_DWORD *)v71 + 18));
+                    v80 = (Moho::BVIntSet *)(v93 + *((_DWORD *)v71 + 18));
                     for (i = sub_4017B0(-1, v80);
                          i != 32 * (v80->v0 + v80->vec._M_finish - v80->vec._M_start);
                          i = sub_4017B0(i, v80)

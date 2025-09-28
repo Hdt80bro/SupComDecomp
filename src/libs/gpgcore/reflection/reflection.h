@@ -46,6 +46,7 @@ struct RRef {
 
     template<class T>
     RRef(T *);
+    RRef(void *ptr, gpg::RType *type) : mObj{ptr}, mType{type} {}
 };
 
 // 0x00D4145C

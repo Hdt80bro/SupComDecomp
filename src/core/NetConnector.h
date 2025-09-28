@@ -98,6 +98,56 @@ enum ENetProtocol
     NETPROTO_UDP = 0x2,
 };
 
+enum EMessageOp
+{
+    MSGOP_Advance = 0x0,
+    MSGOP_SetCommandSource = 0x1,
+    MSGOP_CommandSourceTerminated = 0x2,
+    MSGOP_VerifyChecksum = 0x3,
+    MSGOP_RequestPause = 0x4,
+    MSGOP_Resume = 0x5,
+    MSGOP_SingleStep = 0x6,
+    MSGOP_CreateUnit = 0x7,
+    MSGOP_CreateProp = 0x8,
+    MSGOP_DestroyEntity = 0x9,
+    MSGOP_WarpEntity = 0xA,
+    MSGOP_ProcessInfoPair = 0xB,
+    MSGOP_IssueCommand = 0xC,
+    MSGOP_IssueFactoryCommand = 0xD,
+    MSGOP_IncreaseCommandCount = 0xE,
+    MSGOP_DecreaseCommandCount = 0xF,
+    MSGOP_SetCommandTarget = 0x10,
+    MSGOP_SetCommandType = 0x11,
+    MSGOP_SetCommandCells = 0x12,
+    MSGOP_RemoveCommandFromQueue = 0x13,
+    MSGOP_DebugCommand = 0x14,
+    MSGOP_ExecuteLuaInSim = 0x15,
+    MSGOP_LuaSimCallback = 0x16,
+    MSGOP_EndGame = 0x17,
+
+    MSGOP_Dispatch = 0x33,
+    MSGOP_Available = 0x34,
+    MSGOP_Ready = 0x35,
+    MSGOP_Eject = 0x36,
+    MSGOP_ReceiveChat = 0x37,
+    MSGOP_AdjustSpeed = 0x38,
+
+    MSGOP_ConnectionEstablished = 0x64,
+    MSGOP_KickPeer = 0x65,
+    MSGOP_PeerJoined = 0x66,
+    MSGOP_67 = 0x67,
+    MSGOP_PeerDisconnected = 0x68,
+    MSGOP_LobbyPull = 0x69,
+    MSGOP_BroadcastScript = 0x6A,
+    MSGOP_SendScript = 0x6B,
+    MSGOP_6C = 0x6C,
+    MSGOP_6D = 0x6D,
+    MSGOP_LobbyJoin = 0x6E,
+    MSGOP_LobbyWave = 0x6F,
+
+    MSGOP_Msg1 = 0xC9,
+};
+
 // 0x00E0499C
 class INetConnection : public Moho::CMessageDispatcher
 {
@@ -121,7 +171,7 @@ public:
     virtual ~INetConnector() = default; // 0x0047EAE0
     virtual void Destroy() = 0;
     virtual Moho::ENetProtocol GetProtocol() = 0;
-    virtual int GetLocalPort() = 0;
+    virtual u_short GetLocalPort() = 0;
     virtual Moho::INetConnection *Connect(u_long addr, u_short port) = 0;
     virtual bool FindNextAddr(__out u_long &addr, __out u_short &port) = 0;
     virtual Moho::INetConnection *Accept(u_long, u_short) = 0;
@@ -140,7 +190,7 @@ public:
     ~CNetNullConnector() override = default; // 0x0047EAE0
     void Destroy() override; // 0x0047EB20
     Moho::ENetProtocol GetProtocol() override; // 0x0047EB30
-    int GetLocalPort() override; // 0x0047EB40
+    u_short GetLocalPort() override; // 0x0047EB40
     Moho::INetConnection *Connect(u_long, u_short) override; // 0x0047EB50
     bool FindNextAddr(u_long &addr, u_short &port) override; // 0x0047EB60
     Moho::INetConnection *Accept(u_long, u_short) override; // 0x0047EB70
@@ -148,7 +198,7 @@ public:
     void Pull() override; // 0x0047EB90
     void Push() override; // 0x0047EBA0
     void SelectEvent(HANDLE) override; // 0x0047EBA0
-    void *Func3() override; // 0x0047EBC0
+    struct_a3 Func3(LONGLONG since) override; // 0x0047EBC0
 };
 
 // 0x00E03ED0
@@ -204,7 +254,7 @@ class INetTCPServer
 {
 public:
     virtual ~INetTCPServer() = default; // 0x00482750
-    virtual unsigned short GetLocalPort() = 0;
+    virtual u_short GetLocalPort() = 0;
     virtual Moho::INetTCPSocket *Accept() = 0;
     virtual void CloseSocket() = 0;
 
@@ -243,13 +293,19 @@ int Moho::NET_GetUInt32FromDottedOcted/*sic*/(std::string octet); // 0x00480200
 struct struct_Host : Moho::TDatListItem<struct_Host, void>
 {
     std::string mName;
-    int mVal;
+    std::map<u_long, struct_Host>::iterator mNode;
+
+    struct_Host(const std::string &name) : // 0x0047F8A0
+        Moho::TDatListItem<struct_Host, void>{},
+        mName{name},
+        mNode{}
+    {}
 };
 
 struct struct_HostManager
 {
     boost::mutex mLock;
-    std::map<unsigned int, struct_Host> mHosts;
+    std::map<u_long, struct_Host> mHosts;
     Moho::TDatList<struct_Host, void> mHostList;
 };
 

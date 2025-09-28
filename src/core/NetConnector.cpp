@@ -1,6 +1,8 @@
 #include "NetConnector.h"
 #include "core/NetTCPConn.h"
 #include "core/NetUDPConn.h"
+#include "gpgcore/General.h"
+#include "gpgcore/String.h"
 
 
 bool Moho::net_DebugCrash; // 0x010A6380
@@ -28,7 +30,7 @@ void Moho::CNetNullConnector::Destroy() {
 
 // 0x0047EB30
 Moho::ENetProtocol Moho::CNetNullConnector::GetProtocol() {
-    return Moho::NETPROTO_None;
+    return Moho::ENetProtocol::NETPROTO_None;
 }
 
 // 0x0047EB40
@@ -64,8 +66,8 @@ void Moho::CNetNullConnector::Push() {}
 void Moho::CNetNullConnector::SelectEvent(HANDLE) {}
 
 // 0x0047EBC0
-void *Moho::CNetNullConnector::Func3() {
-    return nullptr; // unknown type;
+struct_a3 Moho::CNetNullConnector::Func3(LONGLONG since) {
+    return struct_a3{0, 0};
 }
 
 
@@ -89,11 +91,11 @@ void Moho::CNetDatagramSocketImpl::Send(Moho::CMessage *dat, u_long addr, u_shor
     to.sin_family = AF_INET;
     to.sin_port = ::htons(port);
     to.sin_addr.S_un.S_addr = ::htonl(addr);
-    int res = ::sendto(this->mSocket, dat->mBuf.mStart, dat->mBuf.Size(), 0, (SOCKADDR *) &to, sizeof(to));
+    int res = ::sendto(this->mSocket, dat->mBuff.begin(), dat->mBuff.Size(), 0, (SOCKADDR *) &to, sizeof(to));
     if (res == SOCKET_ERROR) {
         gpg::Logf("CNetDatagramSocketImpl::Send: send() failed: %s", Moho::NET_GetWinsockErrorString());
-    } else if (res < dat->mBuf.Size()) {
-        gpg::Logf("CNetDatagramSocketImpl::Send: msg truncated, only %d of %d bytes sent.", res, dat->mBuf.Size());
+    } else if (res < dat->mBuff.Size()) {
+        gpg::Logf("CNetDatagramSocketImpl::Send: msg truncated, only %d of %d bytes sent.", res, dat->mBuff.Size());
     }
 }
 
@@ -113,7 +115,7 @@ void Moho::CNetDatagramSocketImpl::Pull() {
         }
 
         Moho::CMessage dat{sizeof(buf), 0};
-        memcpy(dat.mBuf.mStart, buf, res);
+        memcpy(dat.mBuff.begin(), buf, res);
         u_short port = ::ntohs(from.sin_port);
         u_long addr = ::ntohl(from.sin_addr.S_un.S_addr);
         this->mDatagramHandler->Pull(&dat, this, addr, port);
@@ -125,7 +127,7 @@ void Moho::CNetDatagramSocketImpl::Pull() {
 
 // 0x0047F330
 HANDLE Moho::CNetDatagramSocketImpl::CreateEvent() {
-    if (! this->mEvent) {
+    if (this->mEvent == nullptr) {
         this->mEvent = ::WSACreateEvent();
         ::WSAEventSelect(this->mSocket, this->mEvent, FD_READ);
     }
@@ -146,7 +148,7 @@ Moho::INetConnector *Moho::NET_MakeConnector(u_short host, Moho::ENetProtocol pr
     switch (prot) {
         case NETPROTO_TCP: return Moho::NET_MakeTCPConnector(host);
         case NETPROTO_UDP: return Moho::NET_MakeUDPConnector(host, prov);
-        default: return new CNetNullConnector{};
+        default: return new Moho::CNetNullConnector{};
     }
 }
 
@@ -199,7 +201,7 @@ Moho::INetDatagramSocket *Moho::NET_OpenDatagramSocket(unsigned short hostshort,
     name.sin_family = AF_INET;
     name.sin_port = ::htons(hostshort);
     name.sin_addr.S_un.S_addr = ::htonl(0);
-    if (bind(sock, (SOCKADDR *) &name, sizeof(name)) == SOCKET_ERROR) {
+    if (::bind(sock, (SOCKADDR *) &name, sizeof(name)) == SOCKET_ERROR) {
         gpg::Logf("NET_OpenDatagramSocket: bind() failed: %s", Moho::NET_GetWinsockErrorString());
         ::closesocket(sock);
         return nullptr;
@@ -211,8 +213,8 @@ Moho::INetDatagramSocket *Moho::NET_OpenDatagramSocket(unsigned short hostshort,
 bool Moho::NET_Init() {
     static bool sWinsockInitialized = false;
     if (! sWinsockInitialized) {
-        WSAData WSAData;
-        if (::WSAStartup(MAKEWORD(1, 1), &WSAData)) {
+        WSAData data;
+        if (::WSAStartup(MAKEWORD(1, 1), &data)) {
             gpg::Logf("Net_Init(): WSAStartup failed: %s", Moho::NET_GetWinsockErrorString());
         } else {
             sWinsockInitialized = true;
@@ -234,67 +236,47 @@ struct_HostManager *func_GetHostManager() {
 
 // 0x0047FBE0
 std::string func_NET_GetHostName(struct_HostManager *mgr, u_long addr) {
-    
-    boost::mutex::do_lock(&mgr->mLock);
+    boost::mutex::scoped_lock lock{mgr->mLock};
     auto node = mgr->mHosts.find(addr);
-    if (node == mgr->mHosts._Myhead) {
-        boost::mutex::unlock(&mgr->mLock);
-        Moho::NET_Init();
-        sockaddr_in sockaddr;
-        ZeroMemory(sockaddr, sizeof(sockaddr));
-        sockaddr.sin_family = AF_INET;
-        sockaddr.sin_port = ::htons(0);
-        sockaddr.sin_addr.S_un.S_addr = ::htonl(addr);
-        std::string str1{};
-        char pServiceBuffer[32];
-        CHAR pNodeBuffer[1036];
-        if (::getnameinfo((SOCKADDR *) &sockaddr, 16, pNodeBuffer, 0x401u, pServiceBuffer, 0x20u, 8) ) {
-            gpg::Logf("NET_GetHostName: getnameinfo() failed: %s", Moho::NET_GetWinsockErrorString());
-            str1.assign(Moho::NET_GetDottedOctetFromUInt32(addr));
-        } else {
-            str1.assign(pNodeBuffer);
-        }
-        auto inited = new struct_Host{&str1};
-        boost::mutex::do_lock(&mgr->mLock);
-        v12 = sub_4803F0(&mgr->mHosts, (int)v27, (unsigned int *)&v21);
-        v13 = *(std::map_uint_Host::_Node **)v12;
-        v18 = *(std::map_uint_Host::_Node **)v12;
-        if (*(_BYTE *)(v12 + 4)) {
-            mNext = (struct_Host *)inited->mNext;
-            inited->mVal = (int)v13;
-            inited->mPrev->mNext = mNext;
-            inited->mNext->mPrev = inited->mPrev;
-            inited->mNext = inited;
-            inited->mPrev = &mgr->mHostList;
-            v15 = mgr->mHostList.mNext;
-            inited->mNext = v15;
-            v15->mPrev = inited;
-            mPrev = inited->mPrev;
-            inited->mPrev->mNext = inited;
-            if (mgr->mHosts._Mysize > 0x4C) {
-                    sub_4804A0(mPrev, (int)&mgr->mHosts, &v21, (int)mgr->mHostList.mPrev.mVal);
-            }
-        } else if (inited) {
-            sub_47FB50((void **)&inited->mPrev);
-        }
-        out->_Myres = 15;
-        out->_Mysize = 0;
-        out->_Bx._Buf[0] = 0;
-        out.assign(str1);
-    } else {
-        val = node->_Myval.val;
-        val->mPrev->mNext = val->mNext;
-        val->mNext->mPrev = val->mPrev;
-        val->mNext = val;
-        val->mPrev = &mgr->mHostList;
-        v4 = mgr->mHostList.mNext;
-        val->mNext = v4;
-        v4->mPrev = val;
-        val->mPrev->mNext = val;
-        out.assign(node->_Myval.val->mName);
+    if (node != mgr->mHosts.begin()) {
+        struct_Host &host = node->second;
+        host.ListLinkBefore(&mgr->mHostList);
+        return host.mName;
     }
-    boost::mutex::unlock(&mgr->mLock);
-    return out;
+    lock.unlock();
+    Moho::NET_Init();
+    sockaddr_in sockaddr;
+    ZeroMemory(sockaddr, sizeof(sockaddr));
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = ::htons(0);
+    sockaddr.sin_addr.S_un.S_addr = ::htonl(addr);
+    std::string str1{};
+    char serviceBuffer[32];
+    CHAR nodeBuffer[1036];
+    if (::getnameinfo((SOCKADDR *) &sockaddr, sizeof(sockaddr),
+        nodeBuffer, sizeof(nodeBuffer),
+        serviceBuffer, sizeof(serviceBuffer),
+        NI_NUMERICSERV
+    )) {
+        gpg::Logf("NET_GetHostName: getnameinfo() failed: %s", Moho::NET_GetWinsockErrorString());
+        str1.assign(Moho::NET_GetDottedOctetFromUInt32(addr));
+    } else {
+        str1.assign(nodeBuffer);
+    }
+    auto host = new struct_Host{str1};
+    auto item = std::make_pair(addr, host);
+    lock.lock();
+    auto res = mgr->mHosts.insert(item);
+    if (res.second) {
+        host->mNode = res.first;
+        host->ListLinkBefore(&mgr->mHostList);
+        if (mgr->mHosts.size() > 76) {
+            mgr->mHosts.erase(mgr->mHostList.ListGetPrev()->mNode);
+        }
+    } else if (host != nullptr) {
+        delete(host);
+    }
+    return str1;
 }
 
 
@@ -304,15 +286,15 @@ bool Moho::NET_GetAddrInfo(const char *str, unsigned short unk, bool isTCP, u_lo
     static WCHAR sMessageFormatBuffer[0x200];
 
     Moho::NET_Init();
-    std::string nodeName;
-    std::string serviceName;
+    std::string nodeName{};
+    std::string serviceName{};
     const char *last = strrchr(str, ':');
     if (last != nullptr) {
         nodeName = std::string{str, last};
         serviceName.append(last + 1, strlen(last + 1));
     } else {
         nodeName = std::string{str, strlen(str)};
-        serviceName.assign(gpg::STR_Printf("%d", unk), 0);
+        serviceName.assign(gpg::STR_Printf("%d", unk));
     }
     ADDRINFOA hints;
     ZeroMemory(&hints, sizeof(hints));
@@ -351,8 +333,8 @@ std::string Moho::NET_GetDottedOctetFromUInt32(unsigned int octets) {
 int Moho::NET_GetUInt32FromDottedOcted(std::string octet) {
     int val = 0;
     const char *cOctet = octet.c_str();
-    std::string token;
-    while (gpg::STR_GetToken(&cOctet, ".", &token)) {
+    std::string token{};
+    while (gpg::STR_GetToken(cOctet, ".", token)) {
         val = atoi(token.c_str()) | (val << 8);
     }
     return val;

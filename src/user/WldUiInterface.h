@@ -1,14 +1,8 @@
+#include "user/GpgNet.h"
 #include "gpgcore/MemBuffer.h"
 #include "gpgcore/String.h"
 
 namespace Moho {
-
-struct SClientBottleneckInfo
-{
-    int mType;
-    int v2;
-    Moho::SSyncFilter_Subobj1 v3;
-};
 
 
 class IClientMgrUIInterface

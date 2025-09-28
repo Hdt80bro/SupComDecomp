@@ -3,7 +3,8 @@
 #include "gpgcore/streams/ReadArchive.h"
 #include "gpgcore/streams/WriteArchive.h"
 #include "gpgcore/reflection/reflection.h"
-#include "gpgcore/DListItem.h"
+#include "gpgcore/DList.h"
+#include "gpgcore/General.h"
 #include "boost/shared_ptr.hpp"
 
 namespace gpg {
@@ -20,7 +21,7 @@ enum TrackedPointerState
 
 // 0x00D48B90
 class SerHelperBase :
-    public gpg::DListItem<gpg::SerHelperBase>
+    public gpg::DListItem<gpg::SerHelperBase, void>
 {
 public:
     virtual void Init() = 0;

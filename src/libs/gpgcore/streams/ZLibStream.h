@@ -2,13 +2,19 @@
 #include "zlib.h"
 
 namespace gpg {
+    
+enum EFilterOperation
+{
+    FLOP_Inflate = 0,
+    FLOP_Deflate = 1,
+};
 
 // 0x00D496F0
 class ZLibOutputFilterStream : public gpg::Stream
 {
 public:
     gpg::PipeStream *mPipeStream;
-    int mOperation;
+    gpg::EFilterOperation mOperation;
     z_stream mZStream;
     char mBuff[1024];
     bool mEnded;
@@ -19,7 +25,7 @@ public:
     void VirtFlush() override; // 0x00957810
     void VirtClose(gpg::Stream::Mode mode) override; // 0x009578B0
 
-    ZLibOutputFilterStream(gpg::PipeStream *str, int op); // 0x00957360
+    ZLibOutputFilterStream(gpg::PipeStream *str, gpg::EFilterOperation op); // 0x00957360
     void DoWrite(const char *str, size_t len, int flush); // 0x00957500
 };
 
