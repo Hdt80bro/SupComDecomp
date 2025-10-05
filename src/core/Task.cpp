@@ -1,8 +1,8 @@
 #include "Task.h"
 
+// 0x00408C90
 Moho::CTask::~CTask() {
-    if (this->mTaskThread) {
-        this->mTaskThread->val1 = 0;
+    if (this->mTaskThread != nullptr) {
         this->TaskResume(0, true);
         Moho::CTask **i;
         for (i = &this->mTaskThread->mTask; *i != this; i = &(*i)->mSubtask)
@@ -33,16 +33,17 @@ Moho::CTask::CTask(Moho::CTaskThread *thread, bool owning) :
 
 // 0x00408D70
 void Moho::CTask::TaskInterruptSubtasks() {
-    if (this->mTaskThread != nullptr) {
-        while (this->mTaskThread->mTask != this) {
-            Moho::CTask *task = taskThread->mTask;
-            if (task != nullptr) {
-                taskThread->task = task->mSubtask;
-                task->mSubtask = nullptr;
-                task->mTaskThread = nullptr;
-                if (! task->mIsOwning) {
-                    delete(task);
-                }
+    if (this->mTaskThread == nullptr) {
+        return;
+    }
+    while (this->mTaskThread->mTask != this) {
+        Moho::CTask *task = this->mTaskThread->mTask;
+        if (task != nullptr) {
+            this->mTaskThread->mTask = task->mSubtask;
+            task->mSubtask = nullptr;
+            task->mTaskThread = nullptr;
+            if (! task->mIsOwning) {
+                delete(task);
             }
         }
     }
@@ -62,14 +63,7 @@ void Moho::CTask::TaskResume(int a2, bool interrupt) {
 // 0x004093E0
 void Moho::CTaskThread::Stage() {
     if (! this->mStaged) {
-        this->mPrev->next = this->mNext;
-        this->mNext->prev = this->mPrev;
-        this->mPrev = this;
-        this->mNext = this;
-        this->mPrev = this->mStage->mThreads.mPrev;
-        this->mNext = this->mStage;
-        this->mStage->mThreads.mPrev = this;
-        this->mPrev->mNext = this;
+        this->ListLinkBefore(&this->mState->mThreads);
         this->mStaged = true;
     }
 }
@@ -77,14 +71,7 @@ void Moho::CTaskThread::Stage() {
 // inline e.g. 0x004091C0
 void Moho::CTaskThread::Unstage() {
     if (this->mStaged) {
-        this->mPrev->next = this->mNext;
-        this->mNext->prev = this->mPrev;
-        this->mPrev = this;
-        this->mNext = this;
-        this->mPrev = this->mStage->mThreads.mPrev;
-        this->mNext = this->mStage;
-        this->mStage->mThreads.mPrev = this;
-        this->mPrev->mNext = this;
+        this->ListLinkBefore(&this->mState->mThreads);
         this->mStaged = false;
     }
 }

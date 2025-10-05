@@ -7,6 +7,7 @@ namespace Moho {
 
 // 0x00E0926C
 class CScriptObject :
+    public gpg::RObject,
     public Moho::TDatListItem<Moho::CScriptObject, void>
 {
 public:
@@ -14,9 +15,7 @@ public:
     LuaPlus::LuaObject mLuaObj;
 
     static gpg::RType *StaticGetClass(); // 0x004C7BE0
-    virtual gpg::RType *GetClass() const = 0;
-    virtual gpg::RRef GetDerivedObjectRef() = 0;
-    virtual ~CScriptObject(); // 0x004C6FF0
+    ~CScriptObject() override; // 0x004C6FF0
     virtual std::string GetErrorDescription(); // 0x004C70A0
 
     void CreateLuaObject(const LuaPlus::LuaObject &, const LuaPlus::LuaObject &, const LuaPlus::LuaObject &, const LuaPlus::LuaObject &); // 0x004C70D0

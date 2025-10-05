@@ -45,7 +45,7 @@ float Moho::CNetTCPConnection::GetTime() {
 }
 
 // 0x00484540
-void Moho::CNetTCPConnection::Write(struct_DataSpan *data) {
+void Moho::CNetTCPConnection::Write(Moho::SDataView *data) {
     this->mPipestream2.Write(data->mStart, data->mEnd - data->mStart);
 }
 

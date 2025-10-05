@@ -90,7 +90,8 @@ public:
     void Write(gpg::fastvector<char> &vec) { // inline
         this->Write(vec.mStart, vec.Size());
     }
-
+    void Write(const std::string &str); // 0x006E5A10
+    void Write(const char *str); // 0x004CCD80
 };
 
 }

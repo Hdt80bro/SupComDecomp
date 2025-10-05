@@ -107,6 +107,11 @@ public:
 
     CMessageStream(Moho::CMessage *msg); // 0x0047BFE0
     CMessageStream(Moho::CMessage *msg, ReadOnlyTag); // 0x0047C060
+
+    template<class T>
+    void Write(T val) { // inline
+        this->Write((const char *) &val, sizeof(val));
+    }
 };
 
 

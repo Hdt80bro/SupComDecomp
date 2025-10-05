@@ -19,16 +19,21 @@ enum ETaskState
 
 class CTaskThread;
 
-// 0x00E0031C
-class CTask
+// likely doesn't exist and everyone inherits `CTask`, but I need
+// a base for all of the tasks so I can give them all distinctly named `Execute` methods
+struct ITask
 {
-public:
     int v1;
     bool *mDestroyed;
     Moho::CTaskThread *mTaskThread;
     Moho::CTask *mSubtask;
     bool mIsOwning;
+};
 
+// 0x00E0031C
+class CTask : public Moho::ITask
+{
+public:
     virtual ~CTask(); // 0x00408C90
     virtual int Execute() = 0;
 
@@ -38,12 +43,20 @@ public:
 };
 
 template<class T>
-class CPushTask : public Moho::CTask
-{};
+class CPushTask : public Moho::ITask
+{
+public:
+    virtual ~CPushTask();
+    virtual int Push() = 0;
+};
 
 template<class T>
-class CPullTask : public Moho::CTask
-{};
+class CPullTask : public Moho::ITask
+{
+public:
+    virtual ~CPullTask();
+    virtual int Pull() = 0;
+};
 
 struct CTaskStage
 {

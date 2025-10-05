@@ -70,12 +70,6 @@ struct struct_a3
     {} // inline e.g. 0x0047D1D0
 };
 
-struct struct_DataSpan
-{
-    char *mStart;
-    char *mEnd;
-};
-
 namespace Moho {
 
 static bool net_DebugCrash; // 0x010A6380
@@ -98,54 +92,10 @@ enum ENetProtocol
     NETPROTO_UDP = 0x2,
 };
 
-enum EMessageOp
+struct SDataView
 {
-    MSGOP_Advance = 0x0,
-    MSGOP_SetCommandSource = 0x1,
-    MSGOP_CommandSourceTerminated = 0x2,
-    MSGOP_VerifyChecksum = 0x3,
-    MSGOP_RequestPause = 0x4,
-    MSGOP_Resume = 0x5,
-    MSGOP_SingleStep = 0x6,
-    MSGOP_CreateUnit = 0x7,
-    MSGOP_CreateProp = 0x8,
-    MSGOP_DestroyEntity = 0x9,
-    MSGOP_WarpEntity = 0xA,
-    MSGOP_ProcessInfoPair = 0xB,
-    MSGOP_IssueCommand = 0xC,
-    MSGOP_IssueFactoryCommand = 0xD,
-    MSGOP_IncreaseCommandCount = 0xE,
-    MSGOP_DecreaseCommandCount = 0xF,
-    MSGOP_SetCommandTarget = 0x10,
-    MSGOP_SetCommandType = 0x11,
-    MSGOP_SetCommandCells = 0x12,
-    MSGOP_RemoveCommandFromQueue = 0x13,
-    MSGOP_DebugCommand = 0x14,
-    MSGOP_ExecuteLuaInSim = 0x15,
-    MSGOP_LuaSimCallback = 0x16,
-    MSGOP_EndGame = 0x17,
-
-    MSGOP_Dispatch = 0x33,
-    MSGOP_Available = 0x34,
-    MSGOP_Ready = 0x35,
-    MSGOP_Eject = 0x36,
-    MSGOP_ReceiveChat = 0x37,
-    MSGOP_AdjustSpeed = 0x38,
-
-    MSGOP_ConnectionEstablished = 0x64,
-    MSGOP_KickPeer = 0x65,
-    MSGOP_PeerJoined = 0x66,
-    MSGOP_67 = 0x67,
-    MSGOP_PeerDisconnected = 0x68,
-    MSGOP_LobbyPull = 0x69,
-    MSGOP_BroadcastScript = 0x6A,
-    MSGOP_SendScript = 0x6B,
-    MSGOP_6C = 0x6C,
-    MSGOP_6D = 0x6D,
-    MSGOP_LobbyJoin = 0x6E,
-    MSGOP_LobbyWave = 0x6F,
-
-    MSGOP_Msg1 = 0xC9,
+    char *mStart;
+    char *mEnd;
 };
 
 // 0x00E0499C
@@ -158,7 +108,7 @@ public:
     virtual u_short GetPort() = 0;
     virtual float GetPing() = 0;
     virtual float GetTime() = 0;
-    virtual void Write(struct_DataSpan *data) = 0;
+    virtual void Write(Moho::SDataView *data) = 0;
     virtual void Close() = 0;
     virtual std::string ToString() = 0;
     virtual void ScheduleDestroy() = 0;
@@ -216,7 +166,7 @@ public:
 class INetDatagramHandler
 {
 public:
-    virtual void Pull(Moho::CMessage *msg, Moho::INetDatagramSocket *, u_long, u_short) = 0;
+    virtual void HandleMessage(Moho::CMessage *msg, Moho::INetDatagramSocket *sock, u_long addr, u_short port) = 0;
 };
 
 // 0x00E03EE8
@@ -286,7 +236,7 @@ const char *NET_GetWinsockErrorString(); // 0x0047F5F0
 std::string NET_GetHostName(u_long hostlong); // 0x0047FEE0
 bool NET_GetAddrInfo(const char *str, unsigned short unk, bool isTCP, u_long &addr, u_short &port); // 0x0047FF10
 std::string NET_GetDottedOctetFromUInt32(unsigned int octets); // 0x004801C0
-int Moho::NET_GetUInt32FromDottedOcted/*sic*/(std::string octet); // 0x00480200
+int NET_GetUInt32FromDottedOcted/*sic*/(std::string octet); // 0x00480200
 
 }
 

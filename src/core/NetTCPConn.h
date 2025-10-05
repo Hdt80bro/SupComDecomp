@@ -49,7 +49,7 @@ public:
     u_short GetPort() override; // 0x004835C0
     float GetPing() override; // 0x004835D0
     float GetTime() override; // 0x00484520
-    void Write(struct_DataSpan* data) override; // 0x00484540
+    void Write(Moho::SDataView* data) override; // 0x00484540
     void Close() override; // 0x00484590
     std::string ToString() override; // 0x004845B0
     void ScheduleDestroy() override; // 0x004835E0

@@ -669,7 +669,7 @@ float Moho::CNetUDPConnection::GetTime() {
 }
 
 // 0x00489130
-void Moho::CNetUDPConnection::Write(struct_DataSpan *data) {
+void Moho::CNetUDPConnection::Write(Moho::SDataView *data) {
     boost::recursive_mutex::scoped_lock lock{this->mConnector->mLock};
     if (this->mOutputFilterStream != nullptr) {
         gpg::Stream *out = this->mOutputFilterStream;

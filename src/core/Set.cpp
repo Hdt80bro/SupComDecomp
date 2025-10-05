@@ -17,15 +17,15 @@ void Moho::BVIntSet::AddFrom(Moho::BVIntSet *from, unsigned int lower, unsigned 
     if (k == end) {
         unsigned int mask = (0xFFFFFFFF << beginShift) & ((1 << endShift) - 1);
         if (mask != 0) {
-            this->mUsed[k] |= from->mUsed[k - offset] & mask;
+            this->mBuckets[k] |= from->mBuckets[k - offset] & mask;
         }
     } else {
-        this->mUsed[k] |= from->mUsed[k - offset] & (0xFFFFFFFF << beginShift);
+        this->mBuckets[k] |= from->mBuckets[k - offset] & (0xFFFFFFFF << beginShift);
         while (++k < end) {
-            this->mUsed[k] |= from->mUsed[k - offset];
+            this->mBuckets[k] |= from->mBuckets[k - offset];
         }
         if (endShift != 0) {
-            this->mUsed[end] |= from->mUsed[end - offset] & ((1 << endShift) - 1);
+            this->mBuckets[end] |= from->mBuckets[end - offset] & ((1 << endShift) - 1);
         }
     }
 }
@@ -38,15 +38,15 @@ Moho::BVIntSetIndex Moho::BVIntSet::ClearRange(Moho::BVIntSetIndex lower, Moho::
     unsigned int endMask = upper.mVal & 0x1F;
     if (start == end) {
         if (startMask != endMask) {
-            this->mUsed[start] &= ((1 << startMask) - 1) | (0xFFFFFFFF << endMask);
+            this->mBuckets[start] &= ((1 << startMask) - 1) | (0xFFFFFFFF << endMask);
         }
     } else {
-        this->mUsed[start] &= (1 << startMask) - 1;
+        this->mBuckets[start] &= (1 << startMask) - 1;
         for (int k = start + 1; k < end; ++k) {
-            this->mUsed[k] = 0;
+            this->mBuckets[k] = 0;
         }
         if (endMask != 0) {
-            this->mUsed[end] &= 0xFFFFFFFF << endMask;
+            this->mBuckets[end] &= 0xFFFFFFFF << endMask;
         }
     }
     this->Finalize();
@@ -57,16 +57,16 @@ Moho::BVIntSetIndex Moho::BVIntSet::ClearRange(Moho::BVIntSetIndex lower, Moho::
 unsigned int Moho::BVIntSet::GetNext(unsigned int val) const {
     val = std::min(val + 1, this->Min());
     unsigned int bucket = std::min(this->BucketFor(val), this->Buckets());
-    unsigned int used = this->mUsed[bucket] >> (val & 0x1F);
-    while (used == 0) {
+    unsigned int uses = this->mBuckets[bucket] >> (val & 0x1F);
+    while (uses == 0) {
         if (++bucket >= this->Buckets()) {
             return this->Max();
         }
-        used = this->mUsed[bucket];
+        uses = this->mBuckets[bucket];
         val = this->FromBucket(bucket);
     }
-    while ((used & 1) == 0) {
-        used >>= 1;
+    while ((uses & 1) == 0) {
+        uses >>= 1;
         ++val;
     }
     return val;
@@ -77,30 +77,30 @@ void Moho::BVIntSet::Finalize() {
     int lower = 0;
     int upper = this->Buckets();
     if (upper != 0) {
-        while (this->mUsed[lower] == 0) {
+        while (this->mBuckets[lower] == 0) {
             if (++lower >= upper) {
                 break;
             }
         }
         if (lower < upper) {
-            while (this->mUsed[upper - 1] == 0) {
+            while (this->mBuckets[upper - 1] == 0) {
                 --upper;
             }
         }
     }
     if (upper != this->Buckets()) {
         if (lower == upper) {
-            this->mUsed.Clear();
+            this->mBuckets.Clear();
             this->mStart = 0;
         } else {
-            unsigned int *begin = &this->mUsed[lower];
-            unsigned int *end = &this->mUsed[upper];
+            unsigned int *begin = &this->mBuckets[lower];
+            unsigned int *end = &this->mBuckets[upper];
             size_t size = end - begin;
             if (size > 0) {
-                memmove_s(this->mUsed.begin(), 4 * size, begin, 4 * size);
+                memmove_s(this->mBuckets.begin(), 4 * size, begin, 4 * size);
             }
             unsigned int fill = 0;
-            this->mUsed.Resize(upper - lower, &fill);
+            this->mBuckets.Resize(upper - lower, &fill);
             this->mStart += lower;
         }
     }
@@ -110,11 +110,11 @@ void Moho::BVIntSet::Finalize() {
 void Moho::BVIntSet::EnsureBounds(unsigned int lower, unsigned int upper) {
     unsigned int start = lower >> 5;
     unsigned int end = (upper + 31) >> 5;
-    if (this->mUsed.Empty()) {
+    if (this->mBuckets.Empty()) {
         if (start < end) {
             this->mStart = start;
             unsigned int fill = 0;
-            this->mUsed.Resize(end - start, &fill);
+            this->mBuckets.Resize(end - start, &fill);
         }
     } else {
         size_t oldSize = this->Buckets();
@@ -128,13 +128,13 @@ void Moho::BVIntSet::EnsureBounds(unsigned int lower, unsigned int upper) {
         if (dec != 0 || inc != 0) {
             size_t newSize = dec + inc + this->Buckets();
             unsigned int fill = 0;
-            this->mUsed.Resize(newSize, &fill);
+            this->mBuckets.Resize(newSize, &fill);
             if (dec != 0) {
                 int blocks = (4 * oldSize) >> 2;
                 if (blocks > 0) {
-                    memmove_s(&this->mUsed[oldSize + dec - blocks], 4 * blocks, this->mUsed.begin(), 4 * blocks);
+                    memmove_s(&this->mBuckets[oldSize + dec - blocks], 4 * blocks, this->mBuckets.begin(), 4 * blocks);
                 }
-                for (unsigned int *k = this->mUsed.begin(); k != &this->mUsed[dec]; ++k) {
+                for (unsigned int *k = this->mBuckets.begin(); k != &this->mBuckets[dec]; ++k) {
                     *k = 0;
                 }
                 this->mStart = start;
@@ -152,8 +152,8 @@ void Moho::BVIntSet::AddAllFrom(Moho::BVIntSet *from) {
 Moho::BVIntSetAddResult Moho::BVIntSet::Add(unsigned int val) {
     this->EnsureBounds(val, val + 1);
     unsigned int bucket = this->BucketFor(val);
-    unsigned int old = this->mUsed[bucket];
+    unsigned int old = this->mBuckets[bucket];
     unsigned int shift = val & 0x1F;
-    this->mUsed[bucket] = old | (1 << shift);
+    this->mBuckets[bucket] = old | (1 << shift);
     return Moho::BVIntSetAddResult{this, val, ((old >> shift) & 1) == 0};
 }

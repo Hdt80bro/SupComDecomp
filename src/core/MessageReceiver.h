@@ -11,7 +11,7 @@ class IMessageReceiver
 public:
     Moho::TDatList<Moho::IMessageReceiver, void> mReceiverList;
 
-    virtual void Receive(Moho::CMessage *, Moho::CMessageDispatcher *) = 0;
+    virtual void ReceiveMessage(Moho::CMessage *, Moho::CMessageDispatcher *) = 0;
 
     ~IMessageReceiver(); // 0x0047C4F0
 };

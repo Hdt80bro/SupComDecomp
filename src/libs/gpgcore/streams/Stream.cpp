@@ -72,3 +72,13 @@ size_t gpg::Stream::Read(char *buf, size_t size) {
     }
     return size;
 }
+
+// 0x006E5A10
+void gpg::Stream::Write(const std::string &str) {
+    this->Write(str.data(), str.length());
+}
+
+// 0x004CCD80
+void gpg::Stream::Write(const char *str) {
+    this->Write(str, strlen(str) + 1);
+}

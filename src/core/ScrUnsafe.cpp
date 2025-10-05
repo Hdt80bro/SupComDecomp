@@ -61,7 +61,7 @@ MOHO_LUA_FUNC(Moho::scr_UnsafeInits, SHGetFolderPath, "(name, create?) -- Interf
     for (auto itr = &sUnsafePaths[0]; itr->first != nullptr; ++itr) {
         if (strcmp(arg1, itr->first) == 0) {
             static wchar_t sPathBuff[260]; // 0x01103CD8
-            int result = SHGetFolderPathW(0, itr->second, 0, 0, &sPathBuff);
+            int result = ::SHGetFolderPathW(0, itr->second, 0, 0, &sPathBuff);
             if (result != 0) {
                 state->Error("SHGetFolderPath failed: %x", result);
             }

@@ -19,10 +19,10 @@ struct BVIntSet
 {
     unsigned int mStart;
     unsigned int unk;
-    gpg::fastvector_n<unsigned int, 2> mUsed;
+    gpg::fastvector_n<unsigned int, 2> mBuckets;
 
     size_t Buckets() const {
-        return this->mUsed.Size();
+        return this->mBuckets.Size();
     }
     size_t BucketFor(unsigned int val) const {
         return (val >> 5) - this->mStart;

@@ -37,6 +37,7 @@ struct TDatListItem
         this->mPrev->mNext = this;
     }
     void ListLinkAfter(item_t *that) {
+        this->ListUnlink();
         this->mPrev = that;
         this->mNext = that->mNext;
         that->mNext->mPrev = this;
