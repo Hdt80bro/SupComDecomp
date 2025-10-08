@@ -1,5 +1,5 @@
 #include "core/Message.h"
-#include "core/MessageDispatcher.h"
+#include "core/TDatList.h"
 #include "gpgcore/containers/fastvector.h"
 #include "gpgcore/streams/Stream.h"
 #include "boost/weak_ptr.hpp"
@@ -90,6 +90,18 @@ enum ENetProtocol
     NETPROTO_None = 0x0,
     NETPROTO_TCP = 0x1,
     NETPROTO_UDP = 0x2,
+};
+
+
+enum EConnectionState
+{
+    Pending = 0,
+    Connecting = 1,
+    Answering = 2,
+    Established = 3,
+    TimedOut = 4,
+    Errored = 5,
+    NumStates = 6,
 };
 
 struct SDataView
@@ -197,6 +209,7 @@ public:
     virtual u_short GetPeerPort() = 0;
 
     INetTCPSocket() = default; // 0x004827E0
+    INetTCPSocket(SOCKET sock) : mSocket{sock} {} // inline
 };
 
 // 0x00E0451C

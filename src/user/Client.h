@@ -1,5 +1,7 @@
-#include "core/MessageReceiver.h"
+#include "user/LaunchInfo.h"
+#include "core/Message.h"
 #include "core/Set.h"
+#include "core/NetConnector.h"
 #include "gpgcore/streams/PipeStream.h"
 #include "boost/thread.hpp"
 #include <string>
@@ -110,7 +112,7 @@ class CNetClient :
     public Moho::IMessageReceiver // 0x00E16D38
 {
 public:
-    int mRemote;
+    Moho::INetConnection *mRemote;
 };
 
 }

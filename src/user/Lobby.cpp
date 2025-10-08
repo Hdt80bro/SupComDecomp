@@ -1,6 +1,9 @@
 // known file
 
 #include "Lobby.h"
+#include "user/Wld.h"
+#include "core/Localization.h"
+#include "core/Set.h"
 #include "gpgcore/General.h"
 #include "gpgcore/streams/BinaryReader.h"
 #include "LuaPlus.h"
@@ -127,16 +130,16 @@ void Moho::CLobby::ReceiveMessage(Moho::CMessage *msg, Moho::CMessageDispatcher 
             this->DataReceived(msg, conn);
             break;
         }
-        case MSGOP_ConnectionFailed: {
+        case CONMSG_ConnectionFailed: {
             this->ConnectionFailed(conn);
             break;
         }
-        case MSGOP_ConnectionMade: {
+        case CONMSG_ConnectionMade: {
             this->ConnectionMade(conn);
             break;
         }
-        case MSGOP_Msg3:
-        case MSGOP_Msg4: {
+        case CONMSG_2:
+        case CONMSG_3: {
             this->Reconnect(conn);
             break;
         }
@@ -149,7 +152,7 @@ void Moho::CLobby::ReceiveMessage(Moho::CMessage *msg, Moho::CMessageDispatcher 
 
 // 0x007C5840
 void Moho::CLobby::HandleMessage(Moho::CMessage *msg, Moho::INetDatagramSocket *, u_long addr, u_short port) {
-    if (msg->GetType() != MSGOP_LobbyJoin) {
+    if (msg->GetType() != DISCOVERMSG_Request) {
         gpg::Logf(
             "LOBBY: ignoring unexpected message type (%d) from %s:%d",
             msg->GetType(),
@@ -159,7 +162,7 @@ void Moho::CLobby::HandleMessage(Moho::CMessage *msg, Moho::INetDatagramSocket *
     }
     gpg::Logf("LOBBY: received discovery request from %s:%d", Moho::NET_GetHostName(addr).c_str(), port);
     LuaPlus::LuaObject obj = this->RunScript("GameConfigRequested");
-    Moho::CMessage reply{0, MSGOP_LobbyWave};
+    Moho::CMessage reply{0, DISCOVERMSG_Response};
     Moho::CMessageStream strm{&reply};
     strm.Write<char>(11);
     strm.Write<char>(1);
@@ -329,7 +332,204 @@ LuaPlus::LuaObject Moho::CLobby::GetPeers(LuaPlus::LuaState *state) {
 
 // 0x007C38C0
 void Moho::CLobby::LaunchGame(const LuaPlus::LuaObject &dat) {
+    LuaPlus::LuaObject gameOptions = dat["GameOptions"];
+    std::string scenFile{gameOptions["ScenarioFile"].GetString()};
+    LuaPlus::LuaObject scenInfo = Moho::WLD_LoadScenarioInfo(scenFile, Moho::USER_GetLuaState());
+    if (scenInfo.IsNil()) {
+        this->RunScript("LaunchFailed", "");
+        return;
+    }
 
+    scenInfo.SetObject("Options", gameOptions);
+    std::auto_ptr<Moho::LaunchInfoNew> launchInfo = new Moho::LaunchInfoNew{};
+    launchInfo->mGameMods = Moho::SCR_ToString(dat["GameMods"]);
+    launchInfo->mScenarioInfo = Moho::SCR_ToString(scenInfo);
+    launchInfo->mInitSeed = this->mTime1;
+    LuaPlus::LuaObject cheats = gameOptions["CheatsEnabled"];
+    if (cheats && cheats.IsString() && strcmp(cheats.GetString(), "true") == 0) {
+        launchInfo->mCheatsEnabled = true;
+    }
+
+    std::vector<std::string> armyNames{};
+    LuaPlus::LuaObject teams = scenInfo.Lookup("Configurations.standard.teams");
+    if (teams.IsNil()) {
+        this->RunScript("LaunchFailed", "NoConfig");
+        return;
+    }
+
+    for (LuaPlus::LuaTableIterator itr{teams}; itr; ++itr) {
+        LuaPlus::LuaObject cur = itr.GetValue();
+        if (stricmp("FFA", cur["name"].GetString()) == 0) {
+            for (LuaPlus::LuaTableIterator arm{cur["armies"]}; itr; ++itr) {
+                armyNames.push_back(std::string{arm.GetValue().GetString()});
+            }
+            break;
+        }
+    }
+    std::vector<LuaPlus::LuaObject> players{};
+    LuaPlus::LuaObject playerOpts = dat["PlayerOptions"];
+    if (! playerOpts.IsNil()) {
+        for (LuaPlus::LuaTableIterator itr{playerOpts}; itr; ++itr) {
+            int ind = itr.GetKey().GetInteger() - 1;
+            if (ind >= 0 && ind < armyNames.size() ) {
+                itr.GetValue().SetString("ArmyName", armyNames[ind].c_str());
+            }
+            players.push_back(itr.GetValue());
+        }
+    }
+    if (players.size() > armyNames.size()) {
+        this->RunScript("LaunchFailed", "StartSpots");
+        return;
+    }
+
+    players.shrink_to_fit();
+    launchInfo->mCommandSources.mOriginalSource = -1;
+    auto obj = new struct_1{};
+    obj->mIsNet = this->mConnector->GetProtocol() != NETPROTO_None;
+    int numTimeouts = -1;
+    if (obj->mIsNet) {
+        LuaPlus::LuaObject timeouts = gameOptions["Timeouts"];
+        if (timeouts.IsString()) {
+            numTimeouts = atoi(timeouts.GetString());
+        }
+    }
+    if (! players.empty()) {
+        LuaPlus::LuaObject defPlyr = Moho::RULE_GetDefaultPlayerOptions(Moho::USER_GetLuaState());
+        defPlyr.SetString("PlayerName", "default");
+        defPlyr.SetString("ArmyName", "default");
+        defPlyr.SetBoolean("Human", false);
+        players.push_back(defPlyr);
+    }
+
+    LuaPlus::LuaObject civAlly = gameOptions["CivilianAlliance"];
+    if (civAlly && civAlly.IsString()) {
+        const char *ally = civAlly.GetString();
+        if (stricmp(ally, "none") != 0) {
+            LuaPlus::LuaObject extras = scenInfo.Lookup("Configurations.standard.customprops.ExtraArmies");
+            if (extras.IsString()) {
+                std::vector<std::string> exVec{};
+                gpg::STR_GetTokens(extras.GetString(), " ", exVec);
+                for (int k = 0; k < exVec.size(); ++k) {
+                    LuaPlus::LuaObject civ = Moho::RULE_GetDefaultPlayerOptions(Moho::USER_GetLuaState());
+                    civ.SetString("PlayerName", "civilian");
+                    civ.SetString("ArmyName", exVec[k].c_str());
+                    civ.SetBoolean("Civilian", true);
+                    civ.SetBoolean("Human", false);
+                    players.push_back(civ);
+                }
+            }
+        }
+    }
+
+    int curSrc = 0;
+    int local = -1;
+    for (int k = 0; k < players.size(); ++k) {
+        Moho::BVIntSet v122{};
+        if (players[k].GetBoolean()) {
+            int id = atoi(players[k].GetString());
+            if (this->mLocalUID == id) {
+                launchInfo->mCommandSources.mOriginalSource = k;
+            }
+            const char *name = players[k]["PlayerName"].GetString();
+            this->AssignClientIndex(id, name, curSrc, local);
+            int source = this->AssignCommandSource(
+                numTimeouts,
+                id,
+                obj->mSource,
+                &launchInfo->mCommandSources
+            );
+            if (source != 255) {
+                v122.Add(source);
+            }
+        }
+        launchInfo.mStrVec.push_back(Moho::SCR_ToString(players[k]));
+        launchInfo->mArmyLaunchInfo.push_back(v122);
+    }
+    LuaPlus::LuaObject obj = dat["Observers"];
+    for (LuaPlus::LuaTableIterator itr{obj}; itr; ++itr) {
+        LuaPlus::LuaObject cur = itr.GetValue();
+        int id = atoi(cur["OwnerID"].GetString());
+        this->AssignClientIndex(id, cur["PlayerName"].GetString(), curSrc, local);
+        LuaPlus::LuaObject::~LuaObject(&obj);
+        this->AssignCommandSource(
+            obj->mIsNet ? 0 : - 1,
+            id,
+            &launchInfo->mCommandSources,
+            obj->mSource
+        );
+    }
+
+    int speed = 0;
+    bool adjustableSpeed = false;
+    LuaPlus::LuaObject gameSpeed = gameOptions["GameSpeed"];
+    if (gameSpeed.IsString()) {
+        const char *speedStr = gameSpeed.GetString();
+        if (stricmp(speedStr, "fast") == 0) {
+            speed = 4;
+        } else if (stricmp(speedStr, "adjustable") == 0) {
+            adjustableSpeed = true;
+        }
+    }
+    this->mConnector->SelectEvent(NULL);
+    Moho::IClientManager *manager = Moho::CLIENT_CreateClientManager(armyNames.size(), this->mConnector, speed, adjustableSpeed);
+    Moho::IClientManager *old = obj->mClientManager;
+    if (manager != old && old != nullptr) {
+        delete(old);
+    }
+    obj->mClientManager = manager;
+    this->mConnector = nullptr;
+    obj->mClientManager->CreateLocalClient(
+        this->mPlayerName.c_str(),
+        players.size(),
+        this->mLocalUID,
+        obj->mSource
+    );
+    Moho::SWldSessionInfo *sess = ?;
+    for (auto i = this->mPlayers.begin(); i != this->mPlayers.end(); ++i) {
+        Moho::SNetPeer *cur = *i;
+        if (cur->mClientInd == -1) {
+            continue;
+        }
+        if (cur->mState == PS_Established) {
+            this->RemoveLinkage(cur->mPeerConnection->Find(200, 210, this));
+            this->RemoveLinkage(cur->mPeerConnection->Find(100, 120, this));
+            sess->mClientManager->CreateNetClient(
+                cur->mPlayerName.c_str(),
+                cur->mClientInd,
+                cur->mUID,
+                cur->mCmdSource,
+                cur->mPeerConnection
+            );
+            cur->mPeerConnection = nullptr;
+        } else {
+            sess->mClientManager->CreateNullClient(
+                cur->mPlayerName.c_str(),
+                cur->mClientInd,
+                cur->mUID,
+                cur->mCmdSource
+            );
+        }
+    }
+    while (! this->mPlayers.empty()) {
+        Moho::SNetPeer *cur = *this->mPlayer.begin();
+        if (cur->mClientInd != -1 && cur->mState != PS_Established) {
+            this->mClientManager->GetClient(cur->mClientInd)->Eject();
+        }
+        if (cur->mPeerConnection != nullptr) {
+            cur->mPeerConnection->ScheduleDestroy();
+        }
+        delete(cur);
+    }
+    sess->mMapName = ??["map"].GetString();
+    sess->mLaunchInfo = boost::shared_ptr{launchInfo};
+    this->RunScript("GameLaunched");
+    if (sSessionInfo != sess) {
+        if (sSessionInfo != nullptr) {
+            delete(sSessionInfo);
+        }
+    }
+    sSessionInfo = sess;
+    sWldFrameAction = FRAME_ACTION_PRELOAD;
 }
 
 // 0x007C4E80
@@ -505,24 +705,142 @@ void Moho::CLobby::Reconnect(Moho::INetConnection *conn) {
 
 // 0x007C64C0
 void Moho::CLobby::PeerJoined(Moho::CMessage *msg, Moho::INetConnection *conn) {
-
+    Moho::CMessageStream strm{msg};
+    gpg::BinaryReader reader{&strm};
+    std::string name;
+    int id;
+    reader.Read(name);
+    reader.Read<int>(id);
+    Moho::SNetPeer *peer = nullptr;
+    for (auto i = this->mPlayers.begin(); i != this->mPlayers.end(); ++i) {
+        if ((*i)->mPeerConnection == conn) {
+            peer = *i;
+            break;
+        }
+    }
+    if (peer->mState != PS_WaitingJoin) {
+        gpg::Logf("LOBBY: ignoring unexpected join (name=\"%s\", uid=%d) from %s", name.c_str(), id, peer->ToString().c_str());
+        return;
+    }
+    gpg::Logf("LOBBY: Got join (name=\"%s\", uid=%d) from %s", name.c_str(), id, conn->ToString().c_str());
+    if (this->mPeerConnection == nullptr) {
+        int k = 0;
+        for (auto i = this->mPlayers.begin(); i != this->mPlayers.end(); ++i) {
+            if ((*i)->mState == PS_Established) {
+                ++k;
+            }
+        }
+        if (k >= this->mMaxConnections) {
+            Moho::CMessage fullMsg{0, LOBMSG_KickPeer};
+            Moho::CMessageStream fullStrm{&fullMsg};
+            fullStrm.Write("LobbyFull");
+            conn->Write(fullMsg);
+            conn->ScheduleDestroy();
+            delete(peer);
+            return;
+        }
+    }
+    peer->mState = PS_Established;
+    this->mReady = 1;
+    if (peer->mUID == -1) {
+        peer->mUID = this->mNextId++;
+        gpg::Logf("LOBBY: assigning uid %d", peer->mUID);
+    }
+    Moho::CMessage joinMsg{0, LOBMSG_PeerJoined};
+    if (this->mPeerConnection != nullptr) {
+        std::string valName = this->MakeValidPlayerName(name, peer->mUID);
+        peer->mPlayerName = valName;
+        Moho::CMessageStream joinStrm{&joinMsg};
+        joinStrm.Write(this->mPlayerName);
+        joinStrm.Write(this->mLocalUID);
+        joinStrm.Write(peer->mUID);
+        joinStrm.Write(peer->mPlayerName);
+        joinStrm.Write(this->mTime1);
+    }
+    conn->Write(&joinMsg);
+    this->SystemMessage(
+        Moho::Loc(this->mLuaObj.GetActiveState(), "<LOC Engine0004>Connection to %s established.").c_str(),
+        peer->mPlayerName.c_str()
+    );
+    if (this->mPeerConnection == nullptr && this->mHasNAT) {
+        for (auto i = this->mPlayers.begin(); i != this->mPlayers.end(); ++i) {
+            auto cur = *i;
+            if (cur->mState == PS_Established && cur != peer) {
+                cur->SendInfoTo(conn);
+                peer->SendInfoTo(cur->mPeerConnection);
+            }
+        }
+    }
 }
 
 // 0x007C6AD0
 void Moho::CLobby::Ejected(Moho::CMessage *msg) {
-
+    Moho::CMessageStream strm{msg};
+    gpg::BinaryReader reader{&strm};
+    std::string name;
+    reader.Read(name);
+    this->RunScript("Ejected", name.c_str());
 }
 
 // 0x007C6BD0
 void Moho::CLobby::Joined(Moho::CMessage *msg, Moho::INetConnection *conn) {
-
+    Moho::SNetPeer *peer = nullptr;
+    for (auto i = this->mPlayers.begin(); i != this->mPlayers.end(); ++i) {
+        if ((*i)->mPeerConnection == conn) {
+            peer = *i;
+            break;
+        }
+    }
+    if (peer->mState != PS_Connected) {
+        gpg::Logf("LOBBY: ignoring unexpected welcome message.");
+        return;
+    }
+    peer->mState = PS_Established;
+    this->mReady = true;
+    if (this->mPeerConnections == conn) {
+        Moho::CMessageStream strm{msg};
+        gpg::BinaryReader reader{&strm};
+        std::string name;
+        int hostid, myId;
+        std::string myName;
+        int time;
+        reader.Read(name);
+        reader.Read(hostid);
+        reader.Read(myId);
+        reader.Read(myName);
+        reader.Read(time);
+        this->mTime1 = time;
+        if (peer->mUID == -1) {
+            peer->mPlayerName = name;
+            gpg::Logf("LOBBY: welcomed by host \"%s\" (uid=%d)", name.c_str(), hostid);
+        }
+        if (this->mLocalUID == -1) {
+            this->mLocalUID = myId;
+            gpg::Logf("LOBBY: assigned uid of %d by host", myId);
+        } else if (this->mLocalUID != myId) {
+            gpg::Logf("LOBBY: host thinks our uid is %d, but we think it is %d", myId, this->mLocalUID);
+        }
+        if (this->mPlayerName != myName) {
+            gpg::Logf("LOBBY: host renamed us to %s", myName.c_str());
+            this->mPlayerName = myName;
+        }
+        char idStr[16];
+        std::to_chars(peer->mUID, idStr);
+        char localStr[16];
+        std::to_chars(this->mLocalUID, localStr);
+        this->RunScript("ConnectionToHostEstablished", localStr, this->mPlayerName.c_str(), idStr);
+    }
+    this->SystemMessage(
+        Moho::Loc(this->mLuaObj.GetActiveState(), "<LOC Engine0004>Connection to %s established.").c_str(),
+        peer->mPlayerName.c_str()
+    );
 }
 
 // 0x007C6EE0
 void Moho::CLobby::DataReceived(Moho::CMessage *msg, Moho::INetConnection *conn) {
     Moho::CMessageStream strm{msg};
     LuaPlus::LuaObject obj = Moho::SCR_FromByteStream(&strm, this->mLuaObj.m_state);
-    Moho::INetConnection *peer = nullptr;
+    Moho::SNetPeer *peer = nullptr;
     for (auto i = this->mPlayers.begin(); i != this->mPlayers.end(); ++i) { 
         if ((*i)->mPeerConnection == peer) {
             peer = *i;
@@ -530,7 +848,7 @@ void Moho::CLobby::DataReceived(Moho::CMessage *msg, Moho::INetConnection *conn)
         }
     }
     char id[16];
-    std::to_chars(peer->mUID, id, 10);
+    std::to_chars(peer->mUID, id);
     obj.SetString("SenderID", id);
     obj.SetString("SenderName", peer->mPlayerName.c_str());
     this->RunScript("DataReceived, &obj");
@@ -538,12 +856,62 @@ void Moho::CLobby::DataReceived(Moho::CMessage *msg, Moho::INetConnection *conn)
 
 // 0x007C7010
 void Moho::CLobby::NewPeer(Moho::CMessage *msg, Moho::INetConnection *conn) {
-
+    if (this->mPeerConnection != conn) {    
+        gpg::Logf("LOBBY: ignoring NewPeer msg from %s.", conn->ToString().c_str());
+        return;
+    }
+    Moho::CMessageStream strm{msg};
+    gpg::BinaryReader reader{&strm};
+    std::string name;
+    u_long addr;
+    u_short port;
+    int uid;
+    reader.Read(name);
+    reader.Read<u_long>(addr);
+    reader.Read<u_short>(port);
+    reader.Read<int>(uid);
+    this->ConnectToPeer(addr, port, name.c_str(), uid);
 }
 
 // 0x007C7190
-void Moho::CLobby::ConnectToPeer(LuaPlus::LuaState *state, const char *, const char *name, int id) {
+void Moho::CLobby::ConnectToPeer(u_long addr, u_short port, const char *name, int id) {
+    for (auto i = this->mPlayers.begin(); i != this->mPlayers.end(); ++i) {
+        if ((*i)->mUID == id) {
+            throw std::runtime_error{std::string{gpg::STR_Printf("Attempting to redundently add peer uid=%d", uid).c_str()}};
+        }
+    }
+    if (this->mLocalUID == id) {
+        throw std::runtime_error{std::string{gpg::STR_Printf("Attempting to add peer uid=%d, but that is us.", id).c_str()}};
+    }
+    if (! Moho::lob_IgnoreNames.empty()) {
+        std::vector<std::string> ignoreNames = func_GetIgnoreNames(func_GetIgnoreNamesSeparators());
+        for (auto i = ignoreNames.begin(); i != ignoreNames.end(); ++i) {
+            if (*i == name) {
+                return;
+            }
+        }
+    }
 
+    Moho::INetConnection *conn;
+    Moho::EPeerState state;
+    if (id < this->mLocalUID && this->mPeerConnection != nullptr) {
+        conn = this->mConnector->Connect(addr, port);
+        state = PS_Connecting;
+    } else {
+        conn = this->mConnector->Accept(addr,port);
+        state = PS_Pending;
+    }
+    conn->PushReceiver(200, 210, this);
+    std::string nameStr{name};
+    std::string valName = this->MakeValidPlayerName(nameStr, id);
+    auto peer = new Moho::SNetPeer{valName.c_str(), id, addr, port, conn, state};
+    peer->ListLinkBefore(&this->mPlayers);
+    gpg::Logf("LOBBY: Adding peer %s", peer->ToString().c_str());
+    this->SystemMessage(
+        Moho::Loc(this->mLuaObj.GetActiveState(), "<LOC Engine0005>Connecting to %s...").c_str(),
+        this->mPlayerName.c_str()
+    );
+    return;
 }
 
 // 0x007C76A0
@@ -581,7 +949,7 @@ void Moho::CLobby::PeerDisconnected(Moho::SNetPeer *peer) {
     peer->mPeerConnection->ScheduleDestroy();
     peer->ListUnlink();
     char buff[10];
-    std::to_chars(peer->mUID, buff, 10);
+    std::to_chars(peer->mUID, buff);
     this->RunScript("PeerDisconnected", peer->mPlayerName.c_str(), buff);
     if (peer->mState == PS_Established || peer->mState == PS_Disconnected) {
         this->mReady = true;
@@ -665,10 +1033,10 @@ void Moho::CLobby::EstablishedPeers(Moho::CMessage *msg, Moho::INetConnection *c
     int k = 1;
     char buff[16];
     for (auto i = this->mConnectedTo.begin(); i != this->mConnectedTo.end(); ++i) {
-        std::to_chars(*i, buff, 10);
+        std::to_chars(*i, buff);
         obj.SetString(k++, buff);
     }
-    std::to_chars(peer->mUID, buff, 10);
+    std::to_chars(peer->mUID, buff);
     this->RunScript("EstablishedPeers", &buff, &obj);
 }
 
@@ -694,4 +1062,18 @@ std::string func_PeerStateToString(Moho::EPeerState state) {
     } else {
         return std::string{sPeerStateStrings[state]};
     }
+}
+
+// 0x007CBC40
+std::set<char> func_GetIgnoreNamesSeparators() {
+    constexpr const char *sep = ","; // 0x00E16724
+    return std::set<char>{sep, &sep[strlen(sep)]};
+}
+
+// 0x007CBC80
+std::vector<std::string> func_GetIgnoreNames(std::set<char> seps) {
+    // This is extremely messy and goes into the byzantine boost function
+    // system for some reason. Needless to say, we will be ignoring that
+    // and present the effects as follows:
+    return Moho::lob_IgnoreNames.split(seps);
 }

@@ -32,10 +32,10 @@ void func_SetMemHook(mem_hook_t hook); // 0x00957EF0
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, const char *cmdline, int nShowCmd) {
     gpg::time::Timer startTime{};
     if (Moho::CFG_GetArgOption("/waitfordebugger", 0, nullptr)) {
-        MessageBoxW(0, L"Attach the debugger and click OK.", L"Waiting", 0);
+        MessageBoxW(NULL, L"Attach the debugger and click OK.", L"Waiting", NULL);
     }
     if (Moho::CFG_GetArgOption("/aqtime", 0, nullptr)) {
-        func_SetAqtime(0);
+        func_SetAqtime(false);
     }
     std::vector<std::string> allocFilename;
     if (Moho::CFG_GetArgOption("/alloclog", 1, &allocFilename)) {
@@ -73,20 +73,20 @@ void func_MemHook(int isFreeing, int size, ...) {
     EnterCriticalSection(&sLogCritSection);
     if (! sFlushingAllocLog) {
         sFlushingAllocLog = true;
-        DWORD buffer = GetCurrentThreadId();
-        fwrite(&buffer, 4, 1, sAllocLog);
+        DWORD id = GetCurrentThreadId();
+        fwrite(&id, sizeof(id), 1, sAllocLog);
         LARGE_INTEGER performanceCount;
         QueryPerformanceCounter(&performanceCount);
-        fwrite(&performanceCount, 8, 1, sAllocLog);
-        fwrite(&isFreeing, 4, 1, sAllocLog);
-        fwrite(&size, 4, 1, sAllocLog);
-        fwrite(ptrs, 4, 1, sAllocLog);
+        fwrite(&performanceCount, sizeof(performanceCOunt), 1, sAllocLog);
+        fwrite(&isFreeing, sizeof(isFreeing), 1, sAllocLog);
+        fwrite(&size, sizeof(size), 1, sAllocLog);
+        fwrite(ptrs, sizeof(ptrs), 1, sAllocLog);
         // see Moho::PLAT_FormatCallStack
         unsigned int stack[64];
         unsigned int stackSize = Moho::PLAT_GetCallStack(0, 64, stack);
         unsigned int *addr = &stack[0];
         for ( ; stackSize != 0; --stackSize, ++addr) {
-            fwrite(addr, 4, 1, sAllocLog);
+            fwrite(addr, sizeof(addr), 1, sAllocLog);
             if (sub_8D4C10(addr).found) {
                 Moho::SPlatSymbolInfo info{};
                 std::string out{};
@@ -100,11 +100,11 @@ void func_MemHook(int isFreeing, int size, ...) {
                         info.mLineDis
                     );
                 }
-                fwrite(out.c_str(), 1, out.size() + 1, sAllocLog);
+                fwrite(out.c_str(), sizeof(decltype(out)::value_type), out.size() + 1, sAllocLog);
             }
         }
         int zero = 0;
-        fwrite(&zero, 4, 1, sAllocLog);
+        fwrite(&zero, sizeof(zero), 1, sAllocLog);
         sFlushingAllocLog = false;
     }
     LeaveCriticalSection(&sLogCritSection);
@@ -112,7 +112,7 @@ void func_MemHook(int isFreeing, int size, ...) {
 
 // 0x008D2140
 void func_CleanupAllocLoc() {
-    func_SetMemHook(0);
+    func_SetMemHook(nullptr);
     fclose(sAllocLog);
     sAllocLog = nullptr;
     DeleteCriticalSection(&SleepEx);
@@ -124,7 +124,7 @@ void func_AllocLog(const char *filename) {
     if (file != nullptr) {
         LARGE_INTEGER frequency;
         QueryPerformanceFrequency(&frequency);
-        fwrite(&frequency, 8, 1, file);
+        fwrite(&frequency, sizeof(frequency), 1, file);
         InitializeCriticalSection(&sLogCritSection);
         sAllocLog = file;
         atexit(func_CleanupAllocLoc);
@@ -164,7 +164,7 @@ bool func_CheckMediaCenter() {
         && GetSystemMetrics(SM_MEDIACENTER)
         && ExpandEnvironmentStringsW(L"%SystemRoot%\\ehome\\ehshell.exe", filename, sizeof(filename))
         && GetFileAttributesW(filename) != -1
-        && (int) ShellExecuteW(0, L"open", filename, 0, 0, true) > 32;
+        && (int) ShellExecuteW(NULL, L"open", filename, NULL, NULL, true) > 32;
 }
 
 // 0x009071C0

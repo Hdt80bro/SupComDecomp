@@ -97,17 +97,6 @@ class CNetUDPConnector :
     public Moho::INetNATTraversalHandler // 0x00E0610C
 {
 public:
-    enum State
-    {
-        Pending = 0,
-        Connecting = 1,
-        Answering = 2,
-        Establishing = 3,
-        TimedOut = 4,
-        Errored = 5,
-    };
-
-public:
     boost::recursive_mutex mLock;
     SOCKET mSocket;
     HANDLE mEventObject;
@@ -166,24 +155,14 @@ enum ENetCompressionMethod
 class CNetUDPConnection : public Moho::INetConnection
 {
 public:
-    enum State
-    {
-        Pending = 0,
-        Connecting = 1,
-        Answering = 2,
-        Establishing = 3,
-        TimedOut = 4,
-        Errored = 5,
-    };
-
-public:
+    Moho::TDatList<Moho::CNetUDPConnection, void> mConnList;
     Moho::CNetUDPConnector *mConnector;
     u_long mAddr;
     u_short mPort;
     WORD gap1;
     ENetCompressionMethod mCompressionMethod;
     ENetCompressionMethod mCompMet;
-    Moho::CNetUDPConnection::State mState;
+    Moho::EConnectionState mState;
     gpg::time::Timer mLastSend;
     __int64 mSendTime;
     __int64 mLastRecv;
@@ -239,7 +218,7 @@ public:
     std::string ToString() override; // 0x004894C0
     void ScheduleDestroy() override; // 0x00489660
     
-    CNetUDPConnection(Moho::CNetUDPConnector *connector, u_long addr, u_short port, State state); // 0x00485D30
+    CNetUDPConnection(Moho::CNetUDPConnector *connector, u_long addr, u_short port, Moho::EConnectionState state); // 0x00485D30
     ~CNetUDPConnection(); // 0x00486150
     bool ProcessConnect(Moho::SPacket *pack); // 0x00486380
     void ProcessAnswer(Moho::SPacket *pack); // 0x004865E0
@@ -265,7 +244,7 @@ public:
     Moho::SPacket *NewAnswerPacket(); // 0x004888C0
     Moho::SPacket *ReadPacket(); // 0x00488980
     Moho::SPacket *NewGoodbyePacket(); // 0x00488AA0
-    Moho::SPacket *NewPacket(char state, int size, bool inherit); // 0x00488B20
+    Moho::SPacket *NewPacket(Moho::EPacketState state, int size, bool inherit); // 0x00488B20
     void SendPacket(Moho::SPacket *pack); // 0x00488D80
 };
 
@@ -274,6 +253,7 @@ Moho::INetConnector *NET_MakeUDPConnector(u_short, boost::weak_ptr<Moho::INetNAT
 }
 
 
-int func_ChooseTimeout(int old, int choice); // 0x00488150
 std::string func_FileTimeToString(LONGLONG time); // 0x00485CB0
-
+void func_UDPPacketLog(Moho::SPacket *packet, const char *type, LONGLONG time); // 0x00487A30
+int func_ChooseTimeout(int old, int choice); // 0x00488150
+void func_LogPacket(Moho::CNetUDPConnector *conn, __int64 time, u_long addr, u_short port, Moho::SPacketData *dat, int, int); // 0x0048B040

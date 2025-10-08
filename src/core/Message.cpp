@@ -138,3 +138,65 @@ Moho::CMessageStream::CMessageStream(Moho::CMessage *msg, Moho::CMessageStream::
     this->mReadPtr = dat;
     this->mReadEnd = datEnd;
 }
+
+
+// 0x0047C360
+void Moho::CMessageDispatcher::PushReceiver(unsigned int lower, unsigned int upper, Moho::IMessageReceiver *rec) {
+    auto linkage = new Moho::SMsgReceiverLinkage{lower, upper, rec, this};
+    linkage->mReceiverLinkages.ListLinkBefore(&this->mLinkageList);
+    linkage->mReceivers.ListLinkBefore(&rec->mReceiverList);
+    if (lower < upper) {
+        for (int k = lower; k <= upper; ++k) {
+            this->mReceivers[k] = rec;
+        }
+    }
+}
+
+// 0x0047C450
+void Moho::CMessageDispatcher::RemoveLinkage(Moho::SMsgReceiverLinkage *linkage) {
+    int lower = linkage->mLower;
+    Moho::IMessageReceiver **cur = &this->mReceivers[lower];
+    while (lower < linkage->mUpper) {
+        if (*cur == linkage->mReceiver) {
+            *cur = nullptr;
+            for (auto i = linkage->mReceiverLinkages.begin(); i != linkage->mReceiverLinkages.end(); ++i) {
+                Moho::SMsgReceiverLinkage *msg = *i;
+                if (msg->mLower <= lower && lower < msg->mUpper) {
+                    *cur = msg->mReceiver;
+                }
+            }
+        }
+        ++lower;
+        ++cur;
+    }
+    delete(linkage);
+}
+
+// 0x0047C4D0
+bool Moho::CMessageDispatcher::Dispatch(Moho::CMessage *msg) {
+    Moho::IMessageReceiver *recr = this->mReceivers[msg->GetType()];
+    if (recr == nullptr) {
+        return false;
+    }
+    recr->ReceiveMessage(msg, this);
+    return true;
+}
+
+Moho::SMsgReceiverLinkage *Moho::CMessageDispatcher::Find(unsigned int lower, unsigned int upper, Moho::SMsgReceiverLinkage *recr) {
+    for (auto i = this->mLinkageList.begin(); i != this->mLinkageList.end(); ++i) {
+        if ((*i)->mLower == lower && (*i)->mUpper == upper && (*i)->mRec == recr) {
+            return *i;
+        }
+    }
+    GPG_UNREACHABLE(); // gpg::HandleAssertFailure("Reached the supposably unreachable.", 241, "c:\\work\\rts\\main\\code\\src\\core\\Message.cpp");
+}
+
+
+
+// 0x0047C4F0
+Moho::IMessageReceiver::~IMessageReceiver() {
+    while (! this->mReceiverList.ListEmpty()) {
+        auto linked = static_cast<Moho::SMsgReceiverLinkage *>(this->mReceiverList.ListGetNext());
+        linked->mDispatcher->RemoveLinkage(linked);
+    }
+}

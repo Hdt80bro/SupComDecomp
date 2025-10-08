@@ -1,3 +1,4 @@
+#include "core/TDatList.h"
 #include "gpgcore/containers/fastvector.h"
 
 namespace Moho {
@@ -29,32 +30,33 @@ enum EMessageOp : char
     MSGOP_LuaSimCallback = 22,
     MSGOP_EndGame = 23,
     // ...
-    MSGOP_Ack = 50,
-    MSGOP_Dispatch = 51,
-    MSGOP_Available = 52,
-    MSGOP_Ready = 53,
-    MSGOP_Eject = 54,
-    MSGOP_ReceiveChat = 55,
-    MSGOP_AdjustSpeed = 56,
+    CLIENTMSG_Ack = 50,
+    CLIENTMSG_Dispatch = 51,
+    CLIENTMSG_Available = 52,
+    CLIENTMSG_Ready = 53,
+    CLIENTMSG_Eject = 54,
+    CLIENTMSG_ReceiveChat = 55,
+    CLIENTMSG_AdjustSpeed = 56,
+    CLIENTMSG_7 = 57,
     // ...
-    MSGOP_ConnectionEstablished = 100,
-    MSGOP_KickPeer = 101,
-    MSGOP_PeerJoined = 102,
-    MSGOP_LobbyMsg1 = 103,
-    MSGOP_PeerDisconnected = 104,
-    MSGOP_LobbyPull = 105,
-    MSGOP_BroadcastScript = 106,
-    MSGOP_SendScript = 107,
+    LOBMSG_ConnectionEstablished = 100,
+    LOBMSG_KickPeer = 101,
+    LOBMSG_PeerJoined = 102,
+    LOBMSG_NewPeer = 103,
+    LOBMSG_DeletePeer = 104,
+    LOBMSG_EstablishedPeers = 105,
+    LOBMSG_BroadcastScript = 106,
+    LOBMSG_SendScript = 107,
     // ...
-    MSGOP_LobbyJoin = 110,
-    MSGOP_LobbyWave = 111,
+    DISCOVERMSG_Request = 110,
+    DISCOVERMSG_Response = 111,
     // ...
-    MSGOP_Msg1 = 200,
-    MSGOP_Msg2 = 201,
-    MSGOP_Msg3 = 202,
-    MSGOP_Msg4 = 203,
-    MSGOP_Msg5 = 204,
-    MSGOP_Msg6 = 205,
+    CONMSG_ConnectionFailed = 200,
+    CONMSG_ConnectionMade = 201,
+    CONMSG_ConnectionErrored = 202,
+    CONMSG_ConnectionQuiet = 203,
+    CONMSG_ConnectionTimedOut = 204,
+    CONMSG_5 = 205,
 };
 
 struct CMessage
@@ -114,5 +116,47 @@ public:
     }
 };
 
+struct CMessageDispatcher
+{
+    Moho::TDatList<Moho::SMsgReceiverLinkage, void> mLinkageList;
+    Moho::IMessageReceiver *mReceivers[256];
+
+    void PushReceiver(unsigned int lower, unsigned int upper, Moho::IMessageReceiver *rec); // 0x0047C360
+    void RemoveLinkage(Moho::SMsgReceiverLinkage *); // 0x0047C450
+    bool Dispatch(Moho::CMessage *msg); // 0x0047C4D0
+    Moho::SMsgReceiverLinkage *Find(unsigned int lower, unsigned int upper, Moho::SMsgReceiverLinkage *recr); // inline
+};
+
+
+// 0x00E03BE4
+class IMessageReceiver
+{
+public:
+    Moho::TDatList<Moho::IMessageReceiver, void> mReceiverList;
+
+    virtual void ReceiveMessage(Moho::CMessage *, Moho::CMessageDispatcher *) = 0;
+
+    ~IMessageReceiver(); // 0x0047C4F0
+};
+
+struct SMsgReceiverLinkage
+{
+    Moho::TDatList<Moho::SMsgReceiverLinkage, void> mReceiverLinkages;
+    int gap;
+    Moho::TDatList<Moho::IMessageReceiver, void> mReceivers;
+    unsigned int mLower;
+    unsigned int mUpper;
+    Moho::IMessageReceiver *mReceiver;
+    Moho::CMessageDispatcher *mDispatcher;
+
+    SMsgReceiverLinkage(unsigned int lower, unsigned int upper, Moho::IMessageReceiver *rec, Moho::CMessageDispatcher *disp) :
+        mReceiverLinkages{},
+        mReceivers{},
+        mLower{lower},
+        mUpper{upper},
+        mReceiver{rec},
+        mDispatcher{disp}
+    {} // inline 0x0047C37A
+};
 
 }

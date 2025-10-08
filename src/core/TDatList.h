@@ -65,6 +65,7 @@ struct TDatList : Moho::TDatListItem<T, U>
     {
         item_t *pos;
 
+        iterator() {}
         iterator(item_t *pos) : pos{pos} {}
         
         operator item_t*() {

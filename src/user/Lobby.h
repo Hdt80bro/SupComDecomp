@@ -1,4 +1,5 @@
-#include "core/MessageReceiver.h"
+#include "user/LaunchInfo.h"
+#include "core/Message.h"
 #include "core/NetConnector.h"
 #include "core/ScriptObject.h"
 #include "core/TDatList.h"
@@ -22,13 +23,6 @@ enum EPeerState
     PS_Established = 5,
     PS_Disconnected = 6,
     PS_Count = 7,
-};
-
-struct SSTICommandSource
-{
-    int mIndex;
-    std::string mName;
-    int mTimeouts;
 };
 
     
@@ -102,7 +96,7 @@ public:
     void Joined(Moho::CMessage *msg, Moho::INetConnection *conn); // 0x007C6BD0
     void DataReceived(Moho::CMessage *msg, Moho::INetConnection *conn); // 0x007C6EE0
     void NewPeer(Moho::CMessage *msg, Moho::INetConnection *conn); // 0x007C7010
-    void ConnectToPeer(LuaPlus::LuaState *state, const char *, const char *name, int id); // 0x007C7190
+    void ConnectToPeer(u_long addr, u_short port, const char *name, int id); // 0x007C7190
     void DeletePeer(Moho::CMessage *msg, Moho::INetConnection *conn); // 0x007C76A0
     void DisconnectFromPeer(int id); // 0x007C7790
     void PeerDisconnected(Moho::SNetPeer *plyr); // 0x007C77F0
@@ -116,3 +110,17 @@ public:
 }
 
 std::string func_PeerStateToString(Moho::EPeerState state); // 0x007C0560
+std::set<char> func_GetIgnoreNamesSeparators(); // 0x007CBC40
+std::vector<std::string> func_GetIgnoreNames(std::set<char> seps); // 0x007CBC80
+
+struct struct_1
+{
+    std::string mName;
+    int v7;
+    int v8;
+    bool v9a;
+    bool v9b;
+    bool mIsNet;
+    Moho::IClientManager *mClientManager;
+    int mSource;
+};

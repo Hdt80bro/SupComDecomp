@@ -26,7 +26,7 @@ public:
     SOCKET mSocket;
     u_long mAddr;
     u_short mPort;
-    int mState;
+    Moho::EConnectionState mState;
     int v267;
     gpg::time::Timer mTimer1;
     gpg::PipeStream mPipestream1;
@@ -54,7 +54,7 @@ public:
     std::string ToString() override; // 0x004845B0
     void ScheduleDestroy() override; // 0x004835E0
 
-    CNetTCPConnection(Moho::CNetTCPConnector *connector, SOCKET s, u_long addr, u_short port, int a7); // 0x00483650
+    CNetTCPConnection(Moho::CNetTCPConnector *connector, SOCKET s, u_long addr, u_short port, Moho::EConnectionState a7); // 0x00483650
     void Push(); // 0x004838D0
     void Pull(Moho::TDatListItem<Moho::SPartialConnection, void> *); // 0x00483A60
     void SelectSocket(HANDLE hndl); // 0x00484640
@@ -62,8 +62,7 @@ public:
 
 // 0x00E049C0
 class CNetTCPConnector :
-    public Moho::INetConnector,
-    public Moho::INetNATTraversalHandler
+    public Moho::INetConnector
 {
 public:
     struct_TCPConnLL mll;
@@ -98,7 +97,7 @@ struct SPartialConnection : Moho::TDatListItem<Moho::SPartialConnection, void>
     u_long mAddr;
     u_short mPort;
     gpg::PipeStream mStream;
-    Moho::CMessage mmessage;
+    Moho::CMessage mMessage;
 
     ~SPartialConnection(); // 0x004846E0
     SPartialConnection() = default; // 0x00484660

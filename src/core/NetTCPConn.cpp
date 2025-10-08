@@ -3,6 +3,7 @@
 #include "NetTCPConn.h"
 #include "gpgcore/General.h"
 #include "gpgcore/String.h"
+#include "gpgcore/streams/BinaryReader.h"
 #include "winsock.h"
 
 // 0x00485830
@@ -65,7 +66,7 @@ void Moho::CNetTCPConnection::ScheduleDestroy() {
 }
 
 // 0x00483650
-Moho::CNetTCPConnection::CNetTCPConnection(Moho::CNetTCPConnector *connector, SOCKET sock, u_long addr, u_short port, int state) :
+Moho::CNetTCPConnection::CNetTCPConnection(Moho::CNetTCPConnector *connector, SOCKET sock, u_long addr, u_short port, Moho::EConnectionState state) :
     Moho::INetConnection{},
     Moho::TDatListItem<Moho::CNetTCPConnection, void>{},
     mConnector{connector},
@@ -95,7 +96,7 @@ void Moho::CNetTCPConnection::Push() {
         delete(this);
         return;
     }
-    if (this->mHasShutdown || this->mPushFailed || (this->mState != 3 && this->mState != 4)) {
+    if (this->mHasShutdown || this->mPushFailed || (this->mState != Established && this->mState != TimedOut)) {
         return;
     }
 
@@ -161,7 +162,7 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection, 
         list.mNext = old;
         return;
     }
-    if (this->mState == 1) {
+    if (this->mState == Connecting) {
         fd_set writefds;
         writefds.fd_array[0] = this->mSocket;
         writefds.fd_count = 1;
@@ -177,18 +178,18 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection, 
         if (::_WSAFDIsSet(this->mSocket, &writefds)) {
             gpg::Logf("CNetTCPConnection<%s:%d>::Pull(): connection succeeded",
                     Moho::NET_GetHostName(this->mAddr).c_str(), this->mPort);
-            this->mState = 3;
-            Moho::CMessage msg{0, MSGOP_Msg1};
+            this->mState = Established;
+            Moho::CMessage msg{0, CONMSG_ConnectionMade};
             this->mPipestream1.Write(msg.mBuff.begin(), msg.mBuff.Size());
         } else if (::_WSAFDIsSet(this->mSocket, &exceptfds)) {
             gpg::Logf("CNetTCPConnection<%s:%d>::Pull(): connection failed",
                     Moho::NET_GetHostName(this->mAddr).c_str(), this->mPort);
-            this->mState = 5;
-            Moho::CMessage msg{0, MSGOP_Msg2};
+            this->mState = Errored;
+            Moho::CMessage msg{0, CONMSG_ConnectionFailed};
             auto rec = this->mReceivers[msg.GetType()];
             if (rec != nullptr) {
-                rec->Receive(&msg, static_cast<Moho::CMessageDispatcher*>(this));
-            };
+                rec->ReceiveMessage(&msg, this);
+            }
             if (this->mScheduleDestroy) {
                 delete(this);
             }
@@ -197,16 +198,17 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection, 
         Moho::CMessage msg{0, MSGOP_Advance};
         Moho::CMessageStream strm{&msg};
         u_short port = this->mConnector->GetLocalPort();
-        strm.Write((char *) &port, 2);
+        strm.Write(port);
         this->mPipestream2.Write(strm.mMsg->mBuff);
-    } else if (this->mState != 3) {
-        if (this->mState == 4 && this->mPushFailed) {
-            this->mState = 5;
-            Moho::CMessage msg{0, MSGOP_Msg4};
+    } else if (this->mState != Established) {
+        if (this->mState == TimedOut && this->mPushFailed) {
+            this->mState = Errored;
+            Moho::CMessage msg{0, CONMSG_ConnectionTimedOut};
             this->Dispatch(&msg);
         }
         return;
     }
+    bool failed = false;
     while (! this->mPullFailed) {
         char buff[2048];
         int v26 = ::recv(this->mSocket, buff, sizeof(buff), 0);
@@ -218,12 +220,13 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection, 
                     Moho::NET_GetWinsockErrorString()
                 );
                 this->mPipestream1.VirtClose(gpg::Stream::ModeWrite);
+                failed = true;
                 this->mPullFailed = true;
             }
             break;
         }
         this->mTimer1.Reset();
-        if (v26) {
+        if (v26 != 0) {
             this->mPipestream1.Write(buff, this->mPipestream1.LeftToWrite());
         } else {
             gpg::Logf("CNetTCPConnection<%s:%d>::Pull(): at end of stream.",
@@ -235,16 +238,13 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection, 
     while (this->mMessage.Read(&this->mPipestream1)) {
         Moho::IMessageReceiver *recr = this->mReceivers[this->mMessage.GetType()];
         if (recr != nullptr) {
-            recr->Receive(&this->mMessage, static_cast<Moho::CMessageDispatcher *>(this));
+            recr->ReceiveMessage(&this->mMessage, this);
         } else {
             gpg::Logf("No receiver for message type %d received from %s:%d.",
                 this->mMessage.GetType(),
                 Moho::NET_GetHostName(this->mAddr).c_str(),
                 this->mPort
             );
-        }
-        if (! ebp0) {
-            return;
         }
         if (this->mScheduleDestroy) {
             delete(this);
@@ -253,25 +253,22 @@ void Moho::CNetTCPConnection::Pull(Moho::TDatListItem<Moho::SPartialConnection, 
         this->mMessage.mBuff.Clear();
         this->mMessage.mPos = 0;
     }
-    if (unk || this->mPushFailed) {
-        this->mState = 5;
-        Moho::CMessage msg{0, MSGOP_Msg4};
+    if (failed || this->mPushFailed) {
+        this->mState = Errored;
+        Moho::CMessage msg{0, CONMSG_ConnectionErrored};
         Moho::IMessageReceiver *recr = this->mReceivers[msg.GetType()];
         if (recr != nullptr) {
-            recr->Receive(&msg, static_cast<Moho::CMessageDispatcher *>(this));
+            recr->ReceiveMessage(&msg, this);
         }
         if (this->mScheduleDestroy) {
             delete(this);
         }
-    } else {
-        if (! this->mPipestream1.CanRead() || ! this->mPipestream1.VirtAtEnd()) {
-            return;
-        }
-        this->mState = 4;
-        Moho::CMessage msg{0, MSGOP_Msg3};
+    } else if (this->mPipestream1.CanRead() && this->mPipestream1.VirtAtEnd()) {
+        this->mState = TimedOut;
+        Moho::CMessage msg{0, CONMSG_ConnectionQuiet};
         Moho::IMessageReceiver *recr = this->mReceivers[msg.GetType()];
         if (recr != nullptr) {
-            recr->Receive(&msg, static_cast<Moho::CMessageDispatcher *>(this));
+            recr->ReceiveMessage(&msg, this);
         }
         if (this->mScheduleDestroy) {
             delete(this);
@@ -286,8 +283,9 @@ void Moho::CNetTCPConnection::SelectSocket(HANDLE hndl) {
 
 
 // 0x00484AB0
-Moho::CNetTCPConnector::CNetTCPConnector(SOCKET sock)
-    : Moho::INetConnector{}, mSocket{sock}
+Moho::CNetTCPConnector::CNetTCPConnector(SOCKET sock) :
+    Moho::INetConnector{},
+    mSocket{sock}
 {}
 
 // 0x00484AE0
@@ -364,21 +362,21 @@ bool Moho::CNetTCPConnector::FindNextAddr(__out u_long &addr, __out u_short &por
 Moho::INetConnection *Moho::CNetTCPConnector::Accept(u_long addr, u_short port) {
     gpg::Logf("CNetTCPConnector::Accept(%s:%d)", Moho::NET_GetHostName(addr).c_str(), port);
     for (auto cur = this->mConnections.begin(); cur != this->mConnections.end(); ++cur) {
-        Moho::CNetTCPConnection * conn = *cur;
-        if (conn->GetAddr() == addr && conn->GetPort() == port && conn->mState != 0) {
-            conn->mState = 3;
+        Moho::CNetTCPConnection *conn = *cur;
+        if (conn->GetAddr() == addr && conn->GetPort() == port && conn->mState != Pending) {
+            conn->mState = Established;
             return conn;
         }
     }
-    return new Moho::CNetTCPConnection(this, INVALID_SOCKET, addr, port, 2);
+    return new Moho::CNetTCPConnection{this, INVALID_SOCKET, addr, port, Answering};
 }
 
 // 0x00485050
 void Moho::CNetTCPConnector::Reject(u_long addr, u_short port) {
     gpg::Logf("CNetTCPConnector::Reject(%s:%d)", Moho::NET_GetHostName(addr).c_str(), port);
     for (auto cur = this->mConnections.begin(); cur != this->mConnections.end(); ++cur) {
-        Moho::CNetTCPConnection * conn = *cur;
-        if (conn->GetAddr() == addr && conn->GetPort() == port && conn->mState != 0) {
+        Moho::CNetTCPConnection *conn = *cur;
+        if (conn->GetAddr() == addr && conn->GetPort() == port && conn->mState != Pending) {
             conn->ScheduleDestroy();
             return;
         }
@@ -454,9 +452,9 @@ struct_a3 Moho::CNetTCPConnector::Func3(LONGLONG since) {
 // 0x004853D0
 bool Moho::CNetTCPConnector::ReadFromStream(SOCKET s, u_long addr, u_short port, gpg::PipeStream *strm) {
     Moho::CNetTCPConnection *conn = this->GetConnection(s, addr, port);
-    Moho::CMessage msg{0, MSGOP_Msg2};
+    Moho::CMessage msg{0, CONMSG_ConnectionMade};
     conn->mPipestream1.Write(msg.mBuff);
-    strm->VirtClose(gpg::Stream::ModeSend);
+    strm->VirtClose(gpg::Stream::ModeWrite);
     while (! strm->CanRead() && ! strm->VirtAtEnd()) {
         char buf[2048];
         strm->Read(buf, sizeof(buf));
@@ -468,14 +466,14 @@ bool Moho::CNetTCPConnector::ReadFromStream(SOCKET s, u_long addr, u_short port,
 // inline 0x004853F8
 Moho::CNetTCPConnection *Moho::CNetTCPConnector::GetConnection(SOCKET s, u_long addr, u_short port) {
     for (auto cur = this->mConnections.begin(); cur != this->mConnections.end(); ++cur) {
-        Moho::CNetTCPConnection * conn = *cur;
-        if (conn->GetAddr() == addr && conn->GetPort() == port && conn->mState == 2) {
+        Moho::CNetTCPConnection *conn = *cur;
+        if (conn->GetAddr() == addr && conn->GetPort() == port && conn->mState == Answering) {
             conn->mSocket = s;
-            conn->mState = 3;
+            conn->mState = Established;
             return conn;
         }
     }
-    return new Moho::CNetTCPConnection{this, s, addr, port, 0};
+    return new Moho::CNetTCPConnection{this, s, addr, port, Pending};
 }
 
 // 0x004846E0
@@ -487,25 +485,26 @@ Moho::SPartialConnection::~SPartialConnection() {
 
 // 0x00484770
 void Moho::SPartialConnection::Pull() {
-    char buf[2048];
+    char buff[2048];
 
-    int res = ::recv(this->mSocket, buf, sizeof(buf), 0);
+    int res = ::recv(this->mSocket, buff, sizeof(buff), 0);
     if (res < 0) {
         delete(this);
         return;
     }
     while (res != 0) {
-        this->mStream.Write(buf, res);
-        if (this->mBuff.Read(&this->mStream)) {
-            Moho::CMessageStream msg{&this->mBuff};
-            gpg::BinaryReader v10{&msg};
-            v10.Read(&v10.mPort, 2);
-            this->mConnector->ReadFromStream(this->mSocket, this->mAddr, v10.mPort, &this->mStream);
+        this->mStream.Write(buff, res);
+        if (this->mMessage.Read(&this->mStream)) {
+            Moho::CMessageStream strm{&this->mMessage};
+            gpg::BinaryReader reader{&strm};
+            u_short port;
+            reader.Read(port);
+            this->mConnector->ReadFromStream(this->mSocket, this->mAddr, port, &this->mStream);
             this->mSocket = INVALID_SOCKET;
             delete(this);
             return;
         }
-        res = ::recv(this->mSocket, buf, sizeof(buf), 0);
+        res = ::recv(this->mSocket, buff, sizeof(buff), 0);
         if (res < 0) {
             if (::WSAGetLastError() == WSAEWOULDBLOCK) {
                 return;
@@ -531,12 +530,12 @@ Moho::CNetTCPBuf::~CNetTCPBuf() {
 }
 
 // 0x00482A90
-unsigned int Moho::CNetTCPBuf::VirtRead(char *buf, unsigned int len) {
+size_t Moho::CNetTCPBuf::VirtRead(char *buf, size_t len) {
     return this->Read(buf, len, true);
 }
 
 // 0x00482AB0
-unsigned int Moho::CNetTCPBuf::VirtReadNonBlocking(char *buf, unsigned int len) {
+size_t Moho::CNetTCPBuf::VirtReadNonBlocking(char *buf, size_t len) {
     return this->Read(buf, len, false);
 }
 
@@ -549,11 +548,11 @@ bool Moho::CNetTCPBuf::VirtAtEnd() {
 }
 
 // 0x00482B50
-void Moho::CNetTCPBuf::VirtWrite(const char *buf, unsigned int len) {
+void Moho::CNetTCPBuf::VirtWrite(const char *buf, size_t len) {
     if (this->mSocket == INVALID_SOCKET) {
         throw std::runtime_error{std::string{"socket closed"}};
     }
-    if ((this->mMode & gpg::Stream::ModeSend) == 0) {
+    if ((this->mMode & gpg::Stream::ModeWrite) == 0) {
         throw std::runtime_error{std::string{"output shutdown"}};
     }
     if (len != 0) {
@@ -577,21 +576,21 @@ void Moho::CNetTCPBuf::VirtFlush() {
 
 // 0x00482DA0
 void Moho::CNetTCPBuf::VirtClose(gpg::Stream::Mode mode) {
-    if (this->socket != INVALID_SOCKET) {
-        if ((this->mMode & mode & gpg::Stream::ModeSend) != 0) {
+    if (this->mSocket != INVALID_SOCKET) {
+        if ((this->mMode & mode & gpg::Stream::ModeWrite) != 0) {
             this->VirtFlush();
             ::shutdown(this->mSocket, SD_SEND);
-            this->mMode &=~ gpg::Stream::ModeSend;
-            this->mDataEnd = 0;
-            this->mWriteStart = 0;
-            this->mWritePtr = 0;
+            this->mMode &=~ gpg::Stream::ModeWrite;
+            this->mWriteStart = nullptr;
+            this->mWritePtr = nullptr;
+            this->mWriteEnd = nullptr;
         }
-        if ((this->mMode & mode & gpg::Stream::ModeReceive) != 0) {
+        if ((this->mMode & mode & gpg::Stream::ModeRead) != 0) {
             ::shutdown(this->mSocket, SD_RECEIVE);
-            this->mMode &=~ gpg::Stream::ModeReceive;
-            this->mEnd = 0;
-            this->mReadPtr = 0;
-            this->mStart = 0;
+            this->mMode &=~ gpg::Stream::ModeRead;
+            this->mReadStart = nullptr;
+            this->mReadPtr = nullptr;
+            this->mReadEnd = nullptr;
         }
         if (this->mMode != gpg::Stream::ModeNone) {
             ::closesocket(this->mSocket);
@@ -636,19 +635,18 @@ u_short Moho::CNetTCPBuf::GetPeerPort() {
 
 // 0x00482770
 Moho::CNetTCPBuf::CNetTCPBuf(SOCKET sock) :
-    Moho::INetTCPSocket{},
-    mSocket{sock}    
+    Moho::INetTCPSocket{sock}
 {}
 
 // 0x00482E20
-int Moho::CNetTCPBuf::Read(char *buf, unsigned int amt, bool isBlocking) {
+int Moho::CNetTCPBuf::Read(char *buf, size_t amt, bool isBlocking) {
     if (this->mSocket == INVALID_SOCKET) {
         throw std::runtime_error{std::string{"socket closed"}};
     }
     if (this->mFailed || amt == 0) {
         return 0;
     }
-    int avail = this->mEnd - this->mReadPtr;
+    int avail = this->LeftToRead();
     int totalRead = 0;
     while (amt > avail) {
         if (avail) {
@@ -657,12 +655,12 @@ int Moho::CNetTCPBuf::Read(char *buf, unsigned int amt, bool isBlocking) {
             amt -= avail;
             totalRead += avail;
         }
-        this->mEeadHead = this->mBuffer;
-        this->mEnd = this->mBuffer;
+        this->mReadPtr = this->mBuffer;
+        this->mReadEnd = this->mBuffer;
         while (buf && amt >= 2048) {
             if (! isBlocking) {
                 fd_set readfds;
-                readfds.fd_array[0] = this->socket;
+                readfds.fd_array[0] = this->mSocket;
                 readfds.fd_count = 1;
                 timeval timeout;
                 timeout.tv_sec = 0;
@@ -701,8 +699,8 @@ int Moho::CNetTCPBuf::Read(char *buf, unsigned int amt, bool isBlocking) {
             this->mFailed = true;
             return totalRead;
         }
-        this->mEnd = &this->mBuffer[res];
-        avail = this->mEnd - this->mReadPtr;
+        this->mReadEnd = &this->mBuffer[res];
+        avail = this->LeftToRead();
     }
     memcpy(buf, this->mReadPtr, amt);
     this->mReadPtr += amt;
@@ -710,26 +708,26 @@ int Moho::CNetTCPBuf::Read(char *buf, unsigned int amt, bool isBlocking) {
 }
 
 // inline 0x00482C0A
-void Moho::CNetTCPBuf::Write(const char *buf, unsigned int size) {
-    if (size > this->LeftInWriteBuffer()) {
+void Moho::CNetTCPBuf::Write(const char *buff, size_t size) {
+    if (size > this->LeftToWrite()) {
         
-        int left = this->LeftInWriteBuffer();
+        int left = this->LeftToWrite();
         if (left != 0) {
-            memcpy(writeStart, buf, left);
+            memcpy(this->mWriteStart, buff, left);
             this->mWriteStart += left;
-            buf += left;
+            buff += left;
             size -= left;
         }
         this->VirtFlush();
         if (size < 2048) {
-            memcpy(&this->mBuffer[2048], buf, size);
+            memcpy(&this->mBuffer[2048], buff, size);
             this->mWriteStart = &this->mBuffer[size + 2048];
-        } else if (send(this->mSocket, buf, size, 0) == SOCKET_ERROR) {
+        } else if (::send(this->mSocket, buff, size, 0) == SOCKET_ERROR) {
             gpg::Logf("CNetTCPBuf::Write(): send() failed: %s", Moho::NET_GetWinsockErrorString());
         }
 
     } else {
-        memcpy(this->mWriteStart, buf, size);
+        memcpy(this->mWriteStart, buff, size);
         this->mWriteStart += size;
     }
 }
@@ -748,6 +746,7 @@ BOOL Moho::CNetTCPBuf::Select() {
 
 
 
+// inline
 Moho::CNetTCPServerImpl::CNetTCPServerImpl(SOCKET sock) :
     Moho::INetTCPServer{},
     mSocket{sock}
@@ -807,7 +806,10 @@ Moho::INetTCPSocket *Moho::NET_TCPConnect(u_long addr, u_short port) {
     name.sin_addr.S_un.S_addr = ::htonl(addr);
     if (::connect(sock, (SOCKADDR *) &name, sizeof(name)) == SOCKET_ERROR) {
         gpg::Logf("NET_TCPConnect(%s:%d): connect() failed: %s",
-            Moho::NET_GetHostName(addr).c_str(), port, Moho::NET_GetWinsockErrorString());
+            Moho::NET_GetHostName(addr).c_str(),
+            port,
+            Moho::NET_GetWinsockErrorString()
+        );
         ::closesocket(sock);
         return nullptr;
     }

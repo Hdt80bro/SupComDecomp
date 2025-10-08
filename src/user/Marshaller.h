@@ -1,5 +1,6 @@
-#include "user/ClientManager.h"
+#include "user/IClientManager.h"
 #include "core/CommandSink.h"
+#include "gpgcore/streams/BinaryWriter.h"
 
 namespace Moho {
 

@@ -30,8 +30,8 @@ namespace Moho {
 
 struct SWldSessionInfo
 {
-    std::string mMapname;
-    boost::shared_ptr<Moho::SFileStarCloser> mLaunchInfo;
+    std::string mMapName;
+    boost::shared_ptr<Moho::LaunchInfoNew> mLaunchInfo;
     bool mIsBeingRecorded;
     bool mIsReplay;
     bool mIsMultiplayer;
